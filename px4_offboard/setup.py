@@ -32,6 +32,7 @@ setup(
             'teleop_keyboard.py = px4_offboard.teleop_keyboard:main',
             'velocity_offboard_control.py = px4_offboard.velocity_offboard_control:main', 
             'teleop_joystick.py = px4_offboard.teleop_joystick:main',
+            'px4_offboard_mux.py = px4_offboard.px4_offboard_mux:main'
         ],
     },
 )

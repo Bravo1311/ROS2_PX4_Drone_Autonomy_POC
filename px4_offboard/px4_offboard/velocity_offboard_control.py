@@ -61,9 +61,11 @@ class PX4Offboard(Node):
         self.get_logger().info("PX4 Offboard Teleop Node initialized.")
 
     # -------------------- Callbacks --------------------
+    # stores the PX4 status msg.
     def status_cb(self, msg):
         self.status = msg
 
+    # extracts yaw from attitude quarternion
     def att_cb(self, msg):
         q = msg.q
         if len(q) == 4:
@@ -106,6 +108,7 @@ class PX4Offboard(Node):
     def micros(self):
         return int(self.get_clock().now().nanoseconds / 1000)
 
+    # Tells PX4 we are publishing velocity setpoints
     def publish_mode(self):
         msg = OffboardControlMode()
         msg.timestamp = self.micros()
@@ -116,6 +119,8 @@ class PX4Offboard(Node):
         msg.body_rate = False
         self.ctrl_mode_pub.publish(msg)
 
+    # Builds trajectory setpoint.
+    # Commands velocity and yawrate
     def publish_setpoint(self, vx, vy, vz, yawspeed):
         msg = TrajectorySetpoint()
         msg.timestamp = self.micros()
