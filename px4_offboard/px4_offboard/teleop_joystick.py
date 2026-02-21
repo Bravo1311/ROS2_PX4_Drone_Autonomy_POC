@@ -10,8 +10,8 @@ from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy, QoSDur
 # Controller axis mappings (Based on your joy_teleop config)
 AXIS_LEFT_STICK_LR = 0      # Left stick Left/Right → Yaw rotation (angular-z)
 AXIS_LEFT_STICK_UD = 1      # Left stick Up/Down → Throttle/Altitude (linear-z)
-AXIS_RIGHT_STICK_LR = 2     # Right stick Left/Right → Strafe (linear-y)
-AXIS_RIGHT_STICK_UD = 3     # Right stick Up/Down → Forward/Back (linear-x)
+AXIS_RIGHT_STICK_LR = 2     # Right stick Left/Right → Strafe (linear-y in gazebo frame)
+AXIS_RIGHT_STICK_UD = 3     # Right stick Up/Down → Forward/Back (linear-x in gz frame)
 
 # Button mappings (Xbox controller default)
 BUTTON_A = 0                # A button → ARM
@@ -22,7 +22,7 @@ BUTTON_Y = 4                # Y button → Emergency stop (disarm + zero throttl
 # Movement parameters
 XY_VELOCITY_MAX = 1.2       # m/s for horizontal movement
 YAW_RATE_MAX = 1.5          # rad/s for yaw rotation
-HOVER_THROTTLE = 0.7        # Neutral throttle position for hovering
+HOVER_THROTTLE = 0.5        # Neutral throttle position for hovering
 
 # Deadzone for joystick axes
 AXIS_DEADZONE = 0.1
@@ -52,7 +52,7 @@ class JoystickTeleop(Node):
 
         # Publishers
         self.vel_pub = self.create_publisher(Twist, '/offboard_velocity_cmd', qos_pub)
-        self.auto_land = self.create_publisher(Bool, '/autoland_enable', qos_pub)
+        self.auto_land = self.create_publisher(Bool, '/enable_auto_land', qos_pub)
         self.arm_pub = self.create_publisher(Bool, '/arm_message', qos_pub)  #to arm/disarm the drone
 
         # Subscriber
@@ -231,11 +231,9 @@ class JoystickTeleop(Node):
     def publish_velocity(self):
         """Publish velocity at constant rate."""
         # If disarm requested, stop publishing (cuts offboard heartbeat)
-        if self.disarm_requested:
+        if self.disarm_requested or self.enable_auto_land:
             return
-        if self.enable_auto_land:
-            self.vel_pub.publish(Twist())  # zeros
-            return
+            # self.vel_pub.publish(Twist())  # zeros
         
         twist = Twist()
         twist.linear.x = self.current_vx

@@ -4,10 +4,30 @@ from rclpy.node import Node
 
 from sensor_msgs.msg import Image, CameraInfo
 from geometry_msgs.msg import PoseStamped
+from std_msgs.msg import String
 from cv_bridge import CvBridge
 
 import numpy as np
 import cv2
+import json
+
+
+def reprojection_error_px(rvec, tvec, corners_px, K, D, marker_length):
+    """Mean reprojection error in pixels for the 4 marker corners."""
+    s = marker_length / 2.0
+    obj_pts = np.array(
+        [[-s,  s, 0],
+         [ s,  s, 0],
+         [ s, -s, 0],
+         [-s, -s, 0]],
+        dtype=np.float32
+    )
+
+    img_proj, _ = cv2.projectPoints(obj_pts, rvec, tvec, K, D)  # (4,1,2)
+    img_proj = img_proj.reshape(4, 2)  # (4,2)
+
+    corners_px = np.asarray(corners_px, dtype=np.float32).reshape(4, 2)
+    return float(np.mean(np.linalg.norm(img_proj - corners_px, axis=1)))
 
 
 class ArucoDetector(Node):
@@ -15,8 +35,10 @@ class ArucoDetector(Node):
     Subscribes:
       - image_topic (sensor_msgs/Image)
       - camera_info_topic (sensor_msgs/CameraInfo)
+
     Publishes:
-      - marker_pose (geometry_msgs/PoseStamped)  # position = tvec (meters) in OpenCV camera frame
+      - marker_pose (geometry_msgs/PoseStamped)  # pose of selected marker (target or best)
+      - aruco_detections_json (std_msgs/String)  # JSON for all detections in the frame
     """
 
     def __init__(self):
@@ -25,32 +47,31 @@ class ArucoDetector(Node):
         # Params
         self.declare_parameter("image_topic", "/camera/image_raw")
         self.declare_parameter("camera_info_topic", "/camera/camera_info")
-        self.declare_parameter("marker_length_m", 0.5)           # IMPORTANT: match aruco.sdf marker size
+        self.declare_parameter("marker_length_m", 0.5)  # IMPORTANT: match marker size
         self.declare_parameter("aruco_dict", "DICT_4X4_50")
-        self.declare_parameter("target_id", -1)                  # -1 means accept any ID
+        self.declare_parameter("target_id", -1)  # -1 means accept any ID
 
         self.image_topic = self.get_parameter("image_topic").value
         self.camera_info_topic = self.get_parameter("camera_info_topic").value
         self.marker_length = float(self.get_parameter("marker_length_m").value)
         self.target_id = int(self.get_parameter("target_id").value)
-        self._printed_encoding = False
-
 
         dict_name = self.get_parameter("aruco_dict").value
         self.aruco_dict = self._make_dict(dict_name)
-        # Works on older OpenCV builds
+
+        # Detector params (compat with different OpenCV versions)
         if hasattr(cv2.aruco, "DetectorParameters_create"):
             self.aruco_params = cv2.aruco.DetectorParameters_create()
         else:
             self.aruco_params = cv2.aruco.DetectorParameters()
 
-
         self.bridge = CvBridge()
-
         self.K = None
         self.D = None
+        self._printed_encoding = False
 
         self.pose_pub = self.create_publisher(PoseStamped, "marker_pose", 10)
+        self.json_pub = self.create_publisher(String, "aruco_detections_json", 10)
 
         self.create_subscription(CameraInfo, self.camera_info_topic, self.on_camera_info, 10)
         self.create_subscription(Image, self.image_topic, self.on_image, 10)
@@ -60,40 +81,35 @@ class ArucoDetector(Node):
         self.get_logger().info(f"Marker length (m): {self.marker_length}, target_id: {self.target_id}")
 
     def _make_dict(self, name: str):
-        # Common names: DICT_4X4_50, DICT_5X5_100, DICT_6X6_250, etc.
         if not hasattr(cv2.aruco, name):
             self.get_logger().warn(f"Unknown aruco_dict '{name}', defaulting to DICT_4X4_50")
             name = "DICT_4X4_50"
         dict_id = getattr(cv2.aruco, name)
         if hasattr(cv2.aruco, "getPredefinedDictionary"):
             return cv2.aruco.getPredefinedDictionary(dict_id)
-        # older OpenCV
         return cv2.aruco.Dictionary_get(dict_id)
 
-
-
     def on_camera_info(self, msg: CameraInfo):
-        # Camera matrix K is 3x3 row-major in msg.k
         self.K = np.array(msg.k, dtype=np.float64).reshape((3, 3))
-        if self.K[0,0] <= 0 or self.K[1,1] <= 0:
+        if self.K[0, 0] <= 0 or self.K[1, 1] <= 0:
             self.get_logger().warn(f"Bad intrinsics fx/fy: {self.K[0,0]}, {self.K[1,1]}")
 
-        # Distortion may be empty in sim; handle gracefully
         if len(msg.d) > 0:
-            D = np.array(msg.d, dtype=np.float64).reshape(-1, 1)
+            self.D = np.array(msg.d, dtype=np.float64).reshape(-1, 1)
         else:
-            D = np.zeros((5, 1), dtype=np.float64)
-        self.D = D
+            self.D = np.zeros((5, 1), dtype=np.float64)
 
     def on_image(self, msg: Image):
-        if self.K is None:
+        if self.K is None or self.D is None:
             return
+
         if not self._printed_encoding:
-            self.get_logger().info(f"Incoming image encoding: {msg.encoding}, step: {msg.step}, size: {msg.width}x{msg.height}")
+            self.get_logger().info(
+                f"Incoming image encoding: {msg.encoding}, step: {msg.step}, size: {msg.width}x{msg.height}"
+            )
             self._printed_encoding = True
 
         img = self.bridge.imgmsg_to_cv2(msg, desired_encoding="passthrough")
-
         if img.dtype != np.uint8:
             img = img.astype(np.uint8, copy=False)
 
@@ -103,66 +119,93 @@ class ArucoDetector(Node):
             gray = img
         else:
             img = np.ascontiguousarray(img)
-
-            if "rgba" in enc or "bgra" in enc:
-                # 4-channel
-                if "rgba" in enc:
-                    gray = cv2.cvtColor(img, cv2.COLOR_RGBA2GRAY)
-                else:
-                    gray = cv2.cvtColor(img, cv2.COLOR_BGRA2GRAY)
-
+            if "rgba" in enc:
+                gray = cv2.cvtColor(img, cv2.COLOR_RGBA2GRAY)
+            elif "bgra" in enc:
+                gray = cv2.cvtColor(img, cv2.COLOR_BGRA2GRAY)
             elif "rgb" in enc:
                 gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-
             else:
-                # assume bgr if unknown
                 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         gray = np.ascontiguousarray(gray)
 
-
-
-        corners, ids, _ = cv2.aruco.detectMarkers(
-            gray,
-            self.aruco_dict,
-            parameters=self.aruco_params
+        # detectMarkers returns (corners, ids, rejected)
+        corners, ids, rejected = cv2.aruco.detectMarkers(
+            gray, self.aruco_dict, parameters=self.aruco_params
         )
-
 
         if ids is None or len(ids) == 0:
             return
 
-        ids = ids.flatten()
+        ids = ids.flatten().astype(int)
 
-        # Choose target ID if requested; else first marker
-        idx = 0
-        if self.target_id != -1:
-            matches = np.where(ids == self.target_id)[0]
-            if len(matches) == 0:
-                return
-            idx = int(matches[0])
-
-        # estimatePoseSingleMarkers returns rvecs/tvecs for each marker
+        # Pose estimation returns rvecs/tvecs for each marker
         rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(
             corners, self.marker_length, self.K, self.D
         )
 
-        tvec = tvecs[idx].reshape((3,))
-        rvec = rvecs[idx].reshape((3,))
+        detections = []
+        best_idx = None
+        best_err = float("inf")
 
-        # Publish PoseStamped: position = tvec (meters) in OpenCV camera frame
-        out = PoseStamped()
-        out.header = msg.header
-        out.header.frame_id = "camera_optical_frame"  # conceptual; you're in OpenCV optical frame
+        for i, marker_id in enumerate(ids):
+            corners_px = corners[i][0].astype(float)     # (4,2)
+            rvec = rvecs[i, 0, :].astype(float)          # (3,)
+            tvec = tvecs[i, 0, :].astype(float)          # (3,)
 
-        out.pose.position.x = float(tvec[0])  # +X right
-        out.pose.position.y = float(tvec[1])  # +Y down
-        out.pose.position.z = float(tvec[2])  # +Z forward (for down cam, forward ≈ down)
+            err_px = reprojection_error_px(rvec, tvec, corners_px, self.K, self.D, self.marker_length)
+            score = 1.0 / (1.0 + err_px)
 
-        # Orientation is optional for landing; leave quaternion as identity for now
-        out.pose.orientation.w = 1.0
+            detections.append({
+                "id": int(marker_id),
+                "corners_px": corners_px.tolist(),
+                "rvec": rvec.tolist(),
+                "tvec": tvec.tolist(),
+                "reproj_err_px": float(err_px),
+                "score": float(score),
+            })
 
-        self.pose_pub.publish(out)
+            # selection logic:
+            if self.target_id != -1:
+                if marker_id == self.target_id:
+                    best_idx = i
+                    best_err = err_px
+            else:
+                if err_px < best_err:
+                    best_err = err_px
+                    best_idx = i
+
+        # Publish JSON for all detections
+        payload = {
+            "header": {
+                "stamp": {"sec": int(msg.header.stamp.sec), "nanosec": int(msg.header.stamp.nanosec)},
+                "frame_id": str(msg.header.frame_id),
+            },
+            "camera_optical_frame": "camera_optical_frame",
+            "detections": detections,
+        }
+
+        json_msg = String()
+        json_msg.data = json.dumps(payload, separators=(",", ":"), ensure_ascii=False)
+        self.json_pub.publish(json_msg)
+
+        # Publish PoseStamped for selected detection (target or best)
+        if best_idx is None:
+            return
+
+        tvec_sel = tvecs[best_idx, 0, :].reshape(3)
+
+        pose = PoseStamped()
+        pose.header = msg.header
+        pose.header.frame_id = "camera_optical_frame"
+
+        pose.pose.position.x = float(tvec_sel[0])  # +X right
+        pose.pose.position.y = float(tvec_sel[1])  # +Y down
+        pose.pose.position.z = float(tvec_sel[2])  # +Z forward
+
+        pose.pose.orientation.w = 1.0
+        self.pose_pub.publish(pose)
 
 
 def main():
