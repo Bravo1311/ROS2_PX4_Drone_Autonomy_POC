@@ -6,6 +6,7 @@ Launches PX4 SITL and MicroXRCE Agent
 
 from launch import LaunchDescription
 from launch.actions import ExecuteProcess, TimerAction
+from launch_ros.actions import Node
 import os
 
 
@@ -50,6 +51,13 @@ def generate_launch_description():
                 )
             ]
         ),
+
+        rviz:= Node(
+            package='rviz2',
+            executable='rviz2',
+            name='rviz2',
+            output='screen',
+        )
 
         # (Optional) QGroundControl after another delay
         # TimerAction(
