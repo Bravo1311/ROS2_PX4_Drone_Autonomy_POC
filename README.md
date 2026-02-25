@@ -1,4 +1,4 @@
-# ROS2-PX4-X500 Autonomoy Proof of Concept
+# ROS2-PX4-X500 Autonomy Proof of Concept
 
 ## Vision-Based Autonomous UAV Landing System  
 
@@ -20,13 +20,33 @@ The system integrates:
 - A PD-based closed-loop landing controller  
 - Command multiplexing between manual teleoperation and autonomous control  
 
-The result is a modular autonomy stack that bridges perception and control in a PX4-based UAV system.
+The result is a modular autonomy stack that bridges perception and control in a PX4-based UAV system. \
+ - The system was evaluated from initial altitudes up to ~ 14m to evaluate convergence stability and oscillatory behavior. 
+ - Stable lateral convergence and controlled descent were observed across varying initial altitudes and marker poses in simulation.
 
 ---
 
 ## System Architecture
 
 Perception → Control → PX4
+
+```
+Camera
+  ↓
+Aruco Detector Node
+  ↓
+Pose Topic
+  ↓
+Landing Controller Node (PD)
+  ↓
+Velocity Command Topic
+  ↓
+Offboard MUX
+  ↓
+PX4
+  ↓
+Gazebo
+```
 
 1. **Perception Layer**
    - ArUco marker detection
@@ -54,6 +74,13 @@ This project builds upon:
 - Original Repository:  
   https://github.com/MechaMind-Labs/ROS2-PX4_Drone_Teleoperation_Using_Joystick  
 - Author: Curious-Utkarsh  
+
+### Design Decisions
+
+- PD control selected to prioritize fast lateral convergence and damping while avoiding integral windup during dynamic descent.
+- Integral action intentionally omitted due to limited external disturbances in simulation and risk of overshoot during vertical convergence.
+- Velocity control was chosen over position control to allow smoother interaction with PX4's internal cascaded controllers in Offboard mode.
+- Derivative filtering was introduced to mitigate noise amplification arising from pose-estimation jitter at higher altitudes.
 
 ### Added Components
 

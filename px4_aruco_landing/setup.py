@@ -26,6 +26,7 @@ setup(
     'console_scripts': [
         'aruco_detector = px4_aruco_landing.aruco_detector:main',
         'autoland_twist_publisher = px4_aruco_landing.autoland_twist_publisher:main',
+        'marker_kf = px4_aruco_landing.marker_kf:main',
     ],
 },
 

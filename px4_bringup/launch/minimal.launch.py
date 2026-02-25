@@ -1,76 +1,83 @@
 #!/usr/bin/env python3
-"""
-PX4 Minimal Launch File
-Launches PX4 SITL and MicroXRCE Agent
-"""
+import os
 
 from launch import LaunchDescription
-from launch.actions import ExecuteProcess, TimerAction
+from launch.actions import DeclareLaunchArgument, ExecuteProcess, TimerAction
+from launch.substitutions import LaunchConfiguration, TextSubstitution
 from launch_ros.actions import Node
-import os
 
 
 def generate_launch_description():
+    px4_dir = os.path.expanduser("~/PX4-Autopilot")
 
-    px4_dir = os.path.expanduser('~/PX4-Autopilot')
-    qgc_path = os.path.expanduser('~/Downloads/QGroundControl-x86_64.AppImage')
+    # ---- Launch args ----
+    world = LaunchConfiguration("world")
+    vehicle = LaunchConfiguration("vehicle")
 
-    # Pick the world name you want (must exist under Tools/simulation/gz/worlds/)
-    # gz_world = "aruco-moving-platform"
-    gz_world = "aruco"
+    declare_world = DeclareLaunchArgument(
+        "world",
+        default_value="walls",
+        description="Gazebo world name (without .sdf), must be discoverable via GZ_SIM_RESOURCE_PATH."
+    )
+
+    declare_vehicle = DeclareLaunchArgument(
+        "vehicle",
+        default_value="gz_x500_mono_cam_down",
+        description="PX4 SITL vehicle target (e.g., gz_x500_mono_cam_down)."
+    )
+
+    # ---- Resource paths ----
+    this_dir = os.path.dirname(__file__)
+    repo_root = os.path.abspath(os.path.join(this_dir, "..", ".."))
+
+    custom_worlds_dir = os.path.join(repo_root, "px4_custom", "worlds")
+    custom_models_dir = os.path.join(repo_root, "px4_custom", "models")
+
+    px4_models_dir = os.path.join(px4_dir, "Tools", "simulation", "gz", "models")
+    px4_worlds_dir = os.path.join(px4_dir, "Tools", "simulation", "gz", "worlds")
+    px4_resources_dir = os.path.join(px4_dir, "Tools", "simulation", "gz", "resources")
+
+    resource_paths = []
+    for p in [px4_models_dir, px4_worlds_dir, px4_resources_dir, custom_worlds_dir, custom_models_dir]:
+        if os.path.isdir(p):
+            resource_paths.append(p)
+
+    export_gz = 'export GZ_SIM_RESOURCE_PATH="$GZ_SIM_RESOURCE_PATH' + "".join([f":{p}" for p in resource_paths]) + '"; '
+
+    # ---- IMPORTANT: pass bash -lc command as substitutions list ----
+    px4_bash_cmd = [
+        TextSubstitution(text=export_gz),
+        TextSubstitution(text='cd "'), TextSubstitution(text=px4_dir), TextSubstitution(text='" && '),
+        TextSubstitution(text="PX4_GZ_WORLD="), world,
+        TextSubstitution(text=" make px4_sitl "),
+        vehicle
+    ]
 
     return LaunchDescription([
-        # 1) Launch PX4 SITL (gz sim) in a new terminal
+        declare_world,
+        declare_vehicle,
+
         ExecuteProcess(
-            cmd=[
-                'gnome-terminal',
-                '--title=PX4 SITL',
-                '--',
-                'bash', '-lc',
-                # IMPORTANT: pass PX4_GZ_WORLD as a make argument (more reliable than env prefix)
-                f'cd "{px4_dir}" && make px4_sitl gz_x500_mono_cam_down PX4_GZ_WORLD={gz_world}; exec bash'
-            ],
-            output='screen',
-            name='px4_sitl'
+            cmd=["bash", "-lc", px4_bash_cmd],
+            output="screen",
+            name="px4_sitl"
         ),
 
-        # 2) Launch MicroXRCE Agent after a short delay
         TimerAction(
             period=5.0,
             actions=[
                 ExecuteProcess(
-                    cmd=[
-                        'gnome-terminal',
-                        '--title=MicroXRCE Agent',
-                        '--',
-                        'bash', '-lc',
-                        'MicroXRCEAgent udp4 -p 8888; exec bash'
-                    ],
-                    output='screen',
-                    name='microxrce_agent'
+                    cmd=["bash", "-lc", "MicroXRCEAgent udp4 -p 8888"],
+                    output="screen",
+                    name="microxrce_agent"
                 )
             ]
         ),
 
-        rviz:= Node(
-            package='rviz2',
-            executable='rviz2',
-            name='rviz2',
-            output='screen',
-        )
-
-        # (Optional) QGroundControl after another delay
-        # TimerAction(
-        #     period=8.0,
-        #     actions=[
-        #         ExecuteProcess(
-        #             cmd=[
-        #                 'bash', '-lc',
-        #                 f'chmod +x "{qgc_path}" && "{qgc_path}"'
-        #             ],
-        #             output='screen',
-        #             name='qgroundcontrol'
-        #         )
-        #     ]
-        # ),
+        Node(
+            package="rviz2",
+            executable="rviz2",
+            name="rviz2",
+            output="screen",
+        ),
     ])

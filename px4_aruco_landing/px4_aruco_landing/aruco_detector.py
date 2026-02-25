@@ -10,6 +10,7 @@ from cv_bridge import CvBridge
 import numpy as np
 import cv2
 import json
+import math
 
 
 def reprojection_error_px(rvec, tvec, corners_px, K, D, marker_length):
@@ -30,6 +31,12 @@ def reprojection_error_px(rvec, tvec, corners_px, K, D, marker_length):
     return float(np.mean(np.linalg.norm(img_proj - corners_px, axis=1)))
 
 
+def quat_from_yaw(yaw_rad: float):
+    """Yaw-only quaternion about +Z axis: returns (x,y,z,w)"""
+    half = 0.5 * yaw_rad
+    return 0.0, 0.0, float(math.sin(half)), float(math.cos(half))
+
+
 class ArucoDetector(Node):
     """
     Subscribes:
@@ -37,8 +44,11 @@ class ArucoDetector(Node):
       - camera_info_topic (sensor_msgs/CameraInfo)
 
     Publishes:
-      - marker_pose (geometry_msgs/PoseStamped)  # pose of selected marker (target or best)
+      - marker_pose (geometry_msgs/PoseStamped)  # pose of selected marker in camera_optical_frame
       - aruco_detections_json (std_msgs/String)  # JSON for all detections in the frame
+
+    NOTE:
+      This version publishes a *yaw-only* orientation quaternion to avoid jitter from roll/pitch noise.
     """
 
     def __init__(self):
@@ -130,8 +140,7 @@ class ArucoDetector(Node):
 
         gray = np.ascontiguousarray(gray)
 
-        # detectMarkers returns (corners, ids, rejected)
-        corners, ids, rejected = cv2.aruco.detectMarkers(
+        corners, ids, _rejected = cv2.aruco.detectMarkers(
             gray, self.aruco_dict, parameters=self.aruco_params
         )
 
@@ -140,7 +149,6 @@ class ArucoDetector(Node):
 
         ids = ids.flatten().astype(int)
 
-        # Pose estimation returns rvecs/tvecs for each marker
         rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(
             corners, self.marker_length, self.K, self.D
         )
@@ -166,7 +174,7 @@ class ArucoDetector(Node):
                 "score": float(score),
             })
 
-            # selection logic:
+            # selection logic
             if self.target_id != -1:
                 if marker_id == self.target_id:
                     best_idx = i
@@ -182,7 +190,6 @@ class ArucoDetector(Node):
                 "stamp": {"sec": int(msg.header.stamp.sec), "nanosec": int(msg.header.stamp.nanosec)},
                 "frame_id": str(msg.header.frame_id),
             },
-            "camera_optical_frame": "camera_optical_frame",
             "detections": detections,
         }
 
@@ -190,21 +197,36 @@ class ArucoDetector(Node):
         json_msg.data = json.dumps(payload, separators=(",", ":"), ensure_ascii=False)
         self.json_pub.publish(json_msg)
 
-        # Publish PoseStamped for selected detection (target or best)
         if best_idx is None:
             return
 
-        tvec_sel = tvecs[best_idx, 0, :].reshape(3)
+        # Selected pose
+        rvec_sel = rvecs[best_idx, 0, :].reshape(3, 1).astype(np.float64)
+        tvec_sel = tvecs[best_idx, 0, :].reshape(3).astype(np.float64)
+
+        # Convert rvec -> R -> yaw (camera frame) -> yaw-only quaternion
+        R, _ = cv2.Rodrigues(rvec_sel)
+
+        # Yaw about camera +Z (optical axis)
+        yaw = float(math.atan2(R[1, 0], R[0, 0]))
+        qx, qy, qz, qw = quat_from_yaw(yaw)
 
         pose = PoseStamped()
         pose.header = msg.header
         pose.header.frame_id = "camera_optical_frame"
 
-        pose.pose.position.x = float(tvec_sel[0])  # +X right
-        pose.pose.position.y = float(tvec_sel[1])  # +Y down
-        pose.pose.position.z = float(tvec_sel[2])  # +Z forward
+        # OpenCV camera optical frame:
+        #   +X right, +Y down, +Z forward
+        pose.pose.position.x = float(tvec_sel[0])
+        pose.pose.position.y = float(tvec_sel[1])
+        pose.pose.position.z = float(tvec_sel[2])
 
-        pose.pose.orientation.w = 1.0
+        # Publish yaw-only orientation (stable for yaw control)
+        pose.pose.orientation.x = qx
+        pose.pose.orientation.y = qy
+        pose.pose.orientation.z = qz
+        pose.pose.orientation.w = qw
+
         self.pose_pub.publish(pose)
 
 
