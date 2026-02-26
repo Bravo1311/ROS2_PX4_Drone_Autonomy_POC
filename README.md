@@ -1,12 +1,14 @@
 # ROS2-PX4-X500 Autonomy Proof of Concept
 
 ## Vision-Based Autonomous UAV Landing System  
+[*(ROS2 + PX4 Offboard + ArUco Pose Estimation + Drone Reorientation + PD Control)*](https://youtu.be/zwz-KPHohZU) \
 
-*(ROS2 + PX4 Offboard + ArUco Pose Estimation + PD Control)* \
-https://github.com/user-attachments/assets/51e554ee-e080-40b5-a12a-aea019f1e1b4
 
-*(ROS2 + PX4 Offboard + ArUco Pose Estimation + P Control)* \
-https://github.com/user-attachments/assets/5d5315e8-6e73-4576-a0da-d5c7f383487e
+[*(ROS2 + PX4 Offboard + ArUco Pose Estimation + PD Control)*](https://youtu.be/I1ZB6Qup60M)) \
+
+
+[*(ROS2 + PX4 Offboard + ArUco Pose Estimation + P Control)*](https://youtu.be/HkAIYsaiJwk) \
+
 
 ## Overview
 
