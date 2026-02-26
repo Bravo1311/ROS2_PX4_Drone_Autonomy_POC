@@ -4,7 +4,7 @@
 [*(ROS2 + PX4 Offboard + ArUco Pose Estimation + Drone Reorientation + PD Control)*](https://youtu.be/zwz-KPHohZU) 
 
 
-[*(ROS2 + PX4 Offboard + ArUco Pose Estimation + PD Control)*](https://youtu.be/I1ZB6Qup60M)) 
+[*(ROS2 + PX4 Offboard + ArUco Pose Estimation + PD Control)*](https://youtu.be/I1ZB6Qup60M)
 
 
 [*(ROS2 + PX4 Offboard + ArUco Pose Estimation + P Control)*](https://youtu.be/HkAIYsaiJwk) 
