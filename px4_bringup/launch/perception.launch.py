@@ -32,6 +32,7 @@ def generate_launch_description():
         TextSubstitution(text="/link/camera_link/sensor/camera/camera_info")
     ]
 
+    # GZ -> ROS only (use '[')
     camera_bridge = Node(
         package="ros_gz_bridge",
         executable="parameter_bridge",
@@ -43,13 +44,14 @@ def generate_launch_description():
         ],
     )
 
-    # ---- LiDAR topic (bridged, unchanged) ----
+    # ---- LiDAR topic ----
     scan_topic = [
         TextSubstitution(text="/world/"), world,
         TextSubstitution(text="/model/"), drone,
-        TextSubstitution(text="/link/link/sensor/lidar_2d_v2/scan")
+        TextSubstitution(text="/model/lidar/link/link/sensor/lidar_2d_v2/scan")
     ]
 
+    # GZ -> ROS only (use '[')
     lidar_bridge = Node(
         package="ros_gz_bridge",
         executable="parameter_bridge",
@@ -68,17 +70,23 @@ def generate_launch_description():
         output="screen",
         parameters=[{"use_sim_time": True}],
     )
-    
+
+    # ---- Safety velocity filter ----
     safety_vel_filter = Node(
         package="px4_lidar",
         executable="safety_vel_filter",
         name="safety_vel_filter",
         output="screen",
-        parameters=[{"use_sim_time": True}],
+        parameters=[{
+            "use_sim_time": True,
+            # keep defaults unless you want to override:
+            # "cmd_in": "/cmd_vel_raw",
+            # "cmd_out": "/cmd_vel_safe",
+            # "scan_topic": "/scan_fixed",
+        }],
     )
 
     # ---- Static TF: base_link -> lidar_link ----
-    # (Adjust xyz/rpy later if lidar is offset/rotated)
     lidar_static_tf = Node(
         package="tf2_ros",
         executable="static_transform_publisher",
@@ -88,8 +96,8 @@ def generate_launch_description():
         parameters=[{"use_sim_time": True}],
     )
 
-    # ---- Scan frame fix: republish scan with frame_id=lidar_link on /scan_fixed ----
-    # NOTE: parameters are hardcoded for your current world+drone defaults.
+    # ---- Scan frame fix: make /scan_fixed with frame_id=lidar_link ----
+    # IMPORTANT: don't hardcode the in_topic; build it from world+drone
     scan_fix = Node(
         package="px4_lidar",
         executable="scan_frame_fix",
@@ -97,44 +105,57 @@ def generate_launch_description():
         output="screen",
         parameters=[{
             "use_sim_time": True,
-            "in_topic": "/world/walls/model/x500_mono_cam_down_0/link/link/sensor/lidar_2d_v2/scan",
+            "in_topic": "/world/walls/model/x500_mono_cam_down_0/model/lidar/link/link/sensor/lidar_2d_v2/scan",
             "out_topic": "/scan_fixed",
             "frame_id": "lidar_link",
         }],
     )
 
+    # ---- ArUco detector ----
     aruco = Node(
         package="px4_aruco_landing",
         executable="aruco_detector",
         name="aruco_detector",
         output="screen",
         parameters=[{
-            "image_topic": image_topic,
             "use_sim_time": True,
+            "image_topic": image_topic,
             "camera_info_topic": camera_info_topic,
             "marker_length_m": 0.5,
+            # "target_id": -1,
         }],
     )
 
+    # ---- Clock bridge ----
+    # Prefer world-scoped Gazebo clock -> ROS /clock
+    # NOTE: We hardcode the remap for the default world "walls".
+    # If you launch with a different world name, update the remap accordingly.
     clock_bridge = Node(
         package="ros_gz_bridge",
         executable="parameter_bridge",
         name="clock_bridge",
         output="screen",
-        arguments=["/clock@rosgraph_msgs/msg/Clock@gz.msgs.Clock"],
+        arguments=["/world/walls/clock@rosgraph_msgs/msg/Clock@gz.msgs.Clock"],
+        remappings=[("/world/walls/clock", "/clock")],
     )
 
     return LaunchDescription([
         declare_world,
         declare_drone,
+
+        # Start clock + sensor bridges immediately
         clock_bridge,
         lidar_bridge,
         camera_bridge,
+
+        # Start safety filter immediately (so cmd chain exists early)
         safety_vel_filter,
+
+        # Delay TF + scan_fix + aruco slightly (model may take a moment to appear)
         TimerAction(period=2.0, actions=[
             px4_odom_tf,
             lidar_static_tf,
             scan_fix,
-            aruco
+            aruco,
         ]),
     ])
