@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import os
+from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, TimerAction
 from launch.substitutions import LaunchConfiguration, TextSubstitution
@@ -24,12 +26,12 @@ def generate_launch_description():
     image_topic = [
         TextSubstitution(text="/world/"), world,
         TextSubstitution(text="/model/"), drone,
-        TextSubstitution(text="/link/camera_link/sensor/camera/image")
+        TextSubstitution(text="/model/mono_cam/link/camera_link/sensor/camera/image")
     ]
     camera_info_topic = [
         TextSubstitution(text="/world/"), world,
         TextSubstitution(text="/model/"), drone,
-        TextSubstitution(text="/link/camera_link/sensor/camera/camera_info")
+        TextSubstitution(text="/model/mono_cam/link/camera_link/sensor/camera/camera_info")
     ]
 
     # GZ -> ROS only (use '[')
@@ -105,7 +107,8 @@ def generate_launch_description():
         output="screen",
         parameters=[{
             "use_sim_time": True,
-            "in_topic": "/world/walls/model/x500_mono_cam_down_0/model/lidar/link/link/sensor/lidar_2d_v2/scan",
+            # "in_topic": "/world/walls/model/x500_mono_cam_down_0/model/lidar/link/link/sensor/lidar_2d_v2/scan",
+            "in_topic": scan_topic,
             "out_topic": "/scan_fixed",
             "frame_id": "lidar_link",
         }],
@@ -139,6 +142,36 @@ def generate_launch_description():
         remappings=[("/world/walls/clock", "/clock")],
     )
 
+    costmap_params = os.path.join(
+        get_package_share_directory("px4_lidar"),
+        "config",
+        "local_costmap.yaml"
+    )
+
+    local_costmap = Node(
+        package="nav2_costmap_2d",
+        executable="nav2_costmap_2d",
+        name="costmap",
+        namespace="local_costmap",
+        output="screen",
+        parameters=[costmap_params, {"use_sim_time": True}],
+        remappings=[("scan", "/scan_fixed")]
+    )
+
+    lifecycle_manager = Node(
+        package="nav2_lifecycle_manager",
+        executable="lifecycle_manager",
+        name="lifecycle_manager_local_costmap",
+        output="screen",
+        parameters=[{
+            "use_sim_time": True,
+            "autostart": True,
+            "node_names": ["local_costmap/costmap"],
+            # optional but good:
+            "bond_timeout": 0.0,
+        }],
+    )
+
     return LaunchDescription([
         declare_world,
         declare_drone,
@@ -151,11 +184,14 @@ def generate_launch_description():
         # Start safety filter immediately (so cmd chain exists early)
         safety_vel_filter,
 
+        lifecycle_manager,
+
         # Delay TF + scan_fix + aruco slightly (model may take a moment to appear)
         TimerAction(period=2.0, actions=[
             px4_odom_tf,
             lidar_static_tf,
             scan_fix,
             aruco,
+            local_costmap
         ]),
     ])
