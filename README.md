@@ -1,6 +1,9 @@
 # ROS2-PX4-X500 Autonomy Proof of Concept
 
 ## Vision-Based Autonomous UAV Landing System  
+[*(ROS2 + PX4 Offboard + Reactive Obstacle Avoidance using a 2D Lidar)*](https://youtu.be/1jfcPgGP5Kg) 
+
+
 [*(ROS2 + PX4 Offboard + ArUco Pose Estimation + Drone Reorientation + PD Control)*](https://youtu.be/zwz-KPHohZU) 
 
 
@@ -20,6 +23,7 @@ The system integrates:
 - Frame-consistent coordinate transformations (camera → body → world)  
 - ROS2 Offboard velocity control  
 - A PD-based closed-loop landing controller  
+- Reactive obstacle avoidance using a 2d Lidar
 - Command multiplexing between manual teleoperation and autonomous control  
 
 The result is a modular autonomy stack that bridges perception and control in a PX4-based UAV system. \
