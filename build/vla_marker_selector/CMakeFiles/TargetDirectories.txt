@@ -1,0 +1,9 @@
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/vla_marker_selector/CMakeFiles/uninstall.dir
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/vla_marker_selector/CMakeFiles/vla_marker_selector_uninstall.dir
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/vla_marker_selector/CMakeFiles/test.dir
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/vla_marker_selector/CMakeFiles/edit_cache.dir
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/vla_marker_selector/CMakeFiles/rebuild_cache.dir
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/vla_marker_selector/CMakeFiles/list_install_components.dir
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/vla_marker_selector/CMakeFiles/install.dir
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/vla_marker_selector/CMakeFiles/install/local.dir
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/vla_marker_selector/CMakeFiles/install/strip.dir

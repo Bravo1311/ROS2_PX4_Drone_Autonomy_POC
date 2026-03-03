@@ -1,0 +1,368 @@
+[0.187s] DEBUG:colcon:Command line arguments: ['/usr/bin/colcon', 'build']
+[0.187s] DEBUG:colcon:Parsed command line arguments: Namespace(log_base=None, log_level=None, verb_name='build', build_base='build', install_base='install', merge_install=False, symlink_install=False, test_result_base=None, continue_on_error=False, executor='parallel', parallel_workers=32, event_handlers=None, ignore_user_meta=False, metas=['./colcon.meta'], base_paths=['.'], packages_ignore=None, packages_ignore_regex=None, paths=None, packages_up_to=None, packages_up_to_regex=None, packages_above=None, packages_above_and_dependencies=None, packages_above_depth=None, packages_select_by_dep=None, packages_skip_by_dep=None, packages_skip_up_to=None, packages_select_build_failed=False, packages_skip_build_finished=False, packages_select_test_failures=False, packages_skip_test_passed=False, packages_select=None, packages_skip=None, packages_select_regex=None, packages_skip_regex=None, packages_start=None, packages_end=None, allow_overriding=[], cmake_args=None, cmake_target=None, cmake_target_skip_unavailable=False, cmake_clean_cache=False, cmake_clean_first=False, cmake_force_configure=False, ament_cmake_args=None, catkin_cmake_args=None, catkin_skip_building_tests=False, mixin_files=None, mixin=None, verb_parser=<colcon_mixin.mixin.mixin_argument.MixinArgumentDecorator object at 0x787648cf1760>, verb_extension=<colcon_core.verb.build.BuildVerb object at 0x787648c69c10>, main=<bound method BuildVerb.main of <colcon_core.verb.build.BuildVerb object at 0x787648c69c10>>, mixin_verb=('build',))
+[0.226s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) check parameters
+[0.226s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) check parameters
+[0.226s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) check parameters
+[0.226s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) check parameters
+[0.227s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) discover
+[0.227s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) discover
+[0.227s] INFO:colcon.colcon_core.package_discovery:Crawling recursively for packages in '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick'
+[0.227s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['ignore', 'ignore_ament_install']
+[0.227s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ignore'
+[0.227s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ignore_ament_install'
+[0.227s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['colcon_pkg']
+[0.227s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'colcon_pkg'
+[0.227s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['colcon_meta']
+[0.227s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'colcon_meta'
+[0.227s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['ros']
+[0.227s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ros'
+[0.251s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['cmake', 'python']
+[0.251s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'cmake'
+[0.251s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'python'
+[0.251s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['python_setup_py']
+[0.251s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'python_setup_py'
+[0.251s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extensions ['ignore', 'ignore_ament_install']
+[0.251s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extension 'ignore'
+[0.251s] Level 1:colcon.colcon_core.package_identification:_identify(build) ignored
+[0.251s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extensions ['ignore', 'ignore_ament_install']
+[0.251s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extension 'ignore'
+[0.251s] Level 1:colcon.colcon_core.package_identification:_identify(install) ignored
+[0.251s] Level 1:colcon.colcon_core.package_identification:_identify(log) by extensions ['ignore', 'ignore_ament_install']
+[0.251s] Level 1:colcon.colcon_core.package_identification:_identify(log) by extension 'ignore'
+[0.251s] Level 1:colcon.colcon_core.package_identification:_identify(log) ignored
+[0.252s] Level 1:colcon.colcon_core.package_identification:_identify(px4_aruco_landing) by extensions ['ignore', 'ignore_ament_install']
+[0.252s] Level 1:colcon.colcon_core.package_identification:_identify(px4_aruco_landing) by extension 'ignore'
+[0.252s] Level 1:colcon.colcon_core.package_identification:_identify(px4_aruco_landing) by extension 'ignore_ament_install'
+[0.252s] Level 1:colcon.colcon_core.package_identification:_identify(px4_aruco_landing) by extensions ['colcon_pkg']
+[0.252s] Level 1:colcon.colcon_core.package_identification:_identify(px4_aruco_landing) by extension 'colcon_pkg'
+[0.252s] Level 1:colcon.colcon_core.package_identification:_identify(px4_aruco_landing) by extensions ['colcon_meta']
+[0.252s] Level 1:colcon.colcon_core.package_identification:_identify(px4_aruco_landing) by extension 'colcon_meta'
+[0.252s] Level 1:colcon.colcon_core.package_identification:_identify(px4_aruco_landing) by extensions ['ros']
+[0.252s] Level 1:colcon.colcon_core.package_identification:_identify(px4_aruco_landing) by extension 'ros'
+[0.256s] DEBUG:colcon.colcon_core.package_identification:Package 'px4_aruco_landing' with type 'ros.ament_python' and name 'px4_aruco_landing'
+[0.256s] Level 1:colcon.colcon_core.package_identification:_identify(px4_bringup) by extensions ['ignore', 'ignore_ament_install']
+[0.256s] Level 1:colcon.colcon_core.package_identification:_identify(px4_bringup) by extension 'ignore'
+[0.256s] Level 1:colcon.colcon_core.package_identification:_identify(px4_bringup) by extension 'ignore_ament_install'
+[0.256s] Level 1:colcon.colcon_core.package_identification:_identify(px4_bringup) by extensions ['colcon_pkg']
+[0.256s] Level 1:colcon.colcon_core.package_identification:_identify(px4_bringup) by extension 'colcon_pkg'
+[0.256s] Level 1:colcon.colcon_core.package_identification:_identify(px4_bringup) by extensions ['colcon_meta']
+[0.256s] Level 1:colcon.colcon_core.package_identification:_identify(px4_bringup) by extension 'colcon_meta'
+[0.256s] Level 1:colcon.colcon_core.package_identification:_identify(px4_bringup) by extensions ['ros']
+[0.256s] Level 1:colcon.colcon_core.package_identification:_identify(px4_bringup) by extension 'ros'
+[0.257s] DEBUG:colcon.colcon_core.package_identification:Package 'px4_bringup' with type 'ros.ament_python' and name 'px4_bringup'
+[0.257s] Level 1:colcon.colcon_core.package_identification:_identify(px4_custom) by extensions ['ignore', 'ignore_ament_install']
+[0.257s] Level 1:colcon.colcon_core.package_identification:_identify(px4_custom) by extension 'ignore'
+[0.257s] Level 1:colcon.colcon_core.package_identification:_identify(px4_custom) by extension 'ignore_ament_install'
+[0.257s] Level 1:colcon.colcon_core.package_identification:_identify(px4_custom) by extensions ['colcon_pkg']
+[0.257s] Level 1:colcon.colcon_core.package_identification:_identify(px4_custom) by extension 'colcon_pkg'
+[0.257s] Level 1:colcon.colcon_core.package_identification:_identify(px4_custom) by extensions ['colcon_meta']
+[0.257s] Level 1:colcon.colcon_core.package_identification:_identify(px4_custom) by extension 'colcon_meta'
+[0.257s] Level 1:colcon.colcon_core.package_identification:_identify(px4_custom) by extensions ['ros']
+[0.257s] Level 1:colcon.colcon_core.package_identification:_identify(px4_custom) by extension 'ros'
+[0.257s] Level 1:colcon.colcon_core.package_identification:_identify(px4_custom) by extensions ['cmake', 'python']
+[0.257s] Level 1:colcon.colcon_core.package_identification:_identify(px4_custom) by extension 'cmake'
+[0.257s] Level 1:colcon.colcon_core.package_identification:_identify(px4_custom) by extension 'python'
+[0.257s] Level 1:colcon.colcon_core.package_identification:_identify(px4_custom) by extensions ['python_setup_py']
+[0.257s] Level 1:colcon.colcon_core.package_identification:_identify(px4_custom) by extension 'python_setup_py'
+[0.257s] Level 1:colcon.colcon_core.package_identification:_identify(px4_custom/worlds) by extensions ['ignore', 'ignore_ament_install']
+[0.257s] Level 1:colcon.colcon_core.package_identification:_identify(px4_custom/worlds) by extension 'ignore'
+[0.257s] Level 1:colcon.colcon_core.package_identification:_identify(px4_custom/worlds) by extension 'ignore_ament_install'
+[0.257s] Level 1:colcon.colcon_core.package_identification:_identify(px4_custom/worlds) by extensions ['colcon_pkg']
+[0.258s] Level 1:colcon.colcon_core.package_identification:_identify(px4_custom/worlds) by extension 'colcon_pkg'
+[0.258s] Level 1:colcon.colcon_core.package_identification:_identify(px4_custom/worlds) by extensions ['colcon_meta']
+[0.258s] Level 1:colcon.colcon_core.package_identification:_identify(px4_custom/worlds) by extension 'colcon_meta'
+[0.258s] Level 1:colcon.colcon_core.package_identification:_identify(px4_custom/worlds) by extensions ['ros']
+[0.258s] Level 1:colcon.colcon_core.package_identification:_identify(px4_custom/worlds) by extension 'ros'
+[0.258s] Level 1:colcon.colcon_core.package_identification:_identify(px4_custom/worlds) by extensions ['cmake', 'python']
+[0.258s] Level 1:colcon.colcon_core.package_identification:_identify(px4_custom/worlds) by extension 'cmake'
+[0.258s] Level 1:colcon.colcon_core.package_identification:_identify(px4_custom/worlds) by extension 'python'
+[0.258s] Level 1:colcon.colcon_core.package_identification:_identify(px4_custom/worlds) by extensions ['python_setup_py']
+[0.258s] Level 1:colcon.colcon_core.package_identification:_identify(px4_custom/worlds) by extension 'python_setup_py'
+[0.258s] Level 1:colcon.colcon_core.package_identification:_identify(px4_lidar) by extensions ['ignore', 'ignore_ament_install']
+[0.258s] Level 1:colcon.colcon_core.package_identification:_identify(px4_lidar) by extension 'ignore'
+[0.258s] Level 1:colcon.colcon_core.package_identification:_identify(px4_lidar) by extension 'ignore_ament_install'
+[0.258s] Level 1:colcon.colcon_core.package_identification:_identify(px4_lidar) by extensions ['colcon_pkg']
+[0.258s] Level 1:colcon.colcon_core.package_identification:_identify(px4_lidar) by extension 'colcon_pkg'
+[0.258s] Level 1:colcon.colcon_core.package_identification:_identify(px4_lidar) by extensions ['colcon_meta']
+[0.258s] Level 1:colcon.colcon_core.package_identification:_identify(px4_lidar) by extension 'colcon_meta'
+[0.258s] Level 1:colcon.colcon_core.package_identification:_identify(px4_lidar) by extensions ['ros']
+[0.258s] Level 1:colcon.colcon_core.package_identification:_identify(px4_lidar) by extension 'ros'
+[0.258s] DEBUG:colcon.colcon_core.package_identification:Package 'px4_lidar' with type 'ros.ament_python' and name 'px4_lidar'
+[0.258s] Level 1:colcon.colcon_core.package_identification:_identify(px4_msgs) by extensions ['ignore', 'ignore_ament_install']
+[0.258s] Level 1:colcon.colcon_core.package_identification:_identify(px4_msgs) by extension 'ignore'
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(px4_msgs) by extension 'ignore_ament_install'
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(px4_msgs) by extensions ['colcon_pkg']
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(px4_msgs) by extension 'colcon_pkg'
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(px4_msgs) by extensions ['colcon_meta']
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(px4_msgs) by extension 'colcon_meta'
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(px4_msgs) by extensions ['ros']
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(px4_msgs) by extension 'ros'
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(px4_msgs) by extensions ['cmake', 'python']
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(px4_msgs) by extension 'cmake'
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(px4_msgs) by extension 'python'
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(px4_msgs) by extensions ['python_setup_py']
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(px4_msgs) by extension 'python_setup_py'
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(px4_offboard) by extensions ['ignore', 'ignore_ament_install']
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(px4_offboard) by extension 'ignore'
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(px4_offboard) by extension 'ignore_ament_install'
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(px4_offboard) by extensions ['colcon_pkg']
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(px4_offboard) by extension 'colcon_pkg'
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(px4_offboard) by extensions ['colcon_meta']
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(px4_offboard) by extension 'colcon_meta'
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(px4_offboard) by extensions ['ros']
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(px4_offboard) by extension 'ros'
+[0.260s] DEBUG:colcon.colcon_core.package_identification:Package 'px4_offboard' with type 'ros.ament_python' and name 'px4_offboard'
+[0.260s] Level 1:colcon.colcon_core.package_identification:_identify(vla_marker_selector) by extensions ['ignore', 'ignore_ament_install']
+[0.260s] Level 1:colcon.colcon_core.package_identification:_identify(vla_marker_selector) by extension 'ignore'
+[0.260s] Level 1:colcon.colcon_core.package_identification:_identify(vla_marker_selector) by extension 'ignore_ament_install'
+[0.260s] Level 1:colcon.colcon_core.package_identification:_identify(vla_marker_selector) by extensions ['colcon_pkg']
+[0.260s] Level 1:colcon.colcon_core.package_identification:_identify(vla_marker_selector) by extension 'colcon_pkg'
+[0.260s] Level 1:colcon.colcon_core.package_identification:_identify(vla_marker_selector) by extensions ['colcon_meta']
+[0.260s] Level 1:colcon.colcon_core.package_identification:_identify(vla_marker_selector) by extension 'colcon_meta'
+[0.260s] Level 1:colcon.colcon_core.package_identification:_identify(vla_marker_selector) by extensions ['ros']
+[0.260s] Level 1:colcon.colcon_core.package_identification:_identify(vla_marker_selector) by extension 'ros'
+[0.261s] DEBUG:colcon.colcon_core.package_identification:Package 'vla_marker_selector' with type 'ros.ament_cmake' and name 'vla_marker_selector'
+[0.261s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) using defaults
+[0.261s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) discover
+[0.261s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) using defaults
+[0.261s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) discover
+[0.261s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) using defaults
+[0.281s] Level 1:colcon.colcon_core.package_discovery:discover_packages(prefix_path) check parameters
+[0.281s] Level 1:colcon.colcon_core.package_discovery:discover_packages(prefix_path) discover
+[0.285s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 475 installed packages in /opt/ros/jazzy
+[0.287s] Level 1:colcon.colcon_core.package_discovery:discover_packages(prefix_path) using defaults
+[0.334s] Level 5:colcon.colcon_core.verb:set package 'px4_aruco_landing' build argument 'cmake_args' from command line to 'None'
+[0.334s] Level 5:colcon.colcon_core.verb:set package 'px4_aruco_landing' build argument 'cmake_target' from command line to 'None'
+[0.334s] Level 5:colcon.colcon_core.verb:set package 'px4_aruco_landing' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.334s] Level 5:colcon.colcon_core.verb:set package 'px4_aruco_landing' build argument 'cmake_clean_cache' from command line to 'False'
+[0.334s] Level 5:colcon.colcon_core.verb:set package 'px4_aruco_landing' build argument 'cmake_clean_first' from command line to 'False'
+[0.334s] Level 5:colcon.colcon_core.verb:set package 'px4_aruco_landing' build argument 'cmake_force_configure' from command line to 'False'
+[0.334s] Level 5:colcon.colcon_core.verb:set package 'px4_aruco_landing' build argument 'ament_cmake_args' from command line to 'None'
+[0.334s] Level 5:colcon.colcon_core.verb:set package 'px4_aruco_landing' build argument 'catkin_cmake_args' from command line to 'None'
+[0.334s] Level 5:colcon.colcon_core.verb:set package 'px4_aruco_landing' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.334s] DEBUG:colcon.colcon_core.verb:Building package 'px4_aruco_landing' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing', 'merge_install': False, 'path': '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/px4_aruco_landing', 'symlink_install': False, 'test_result_base': None}
+[0.334s] Level 5:colcon.colcon_core.verb:set package 'px4_lidar' build argument 'cmake_args' from command line to 'None'
+[0.335s] Level 5:colcon.colcon_core.verb:set package 'px4_lidar' build argument 'cmake_target' from command line to 'None'
+[0.335s] Level 5:colcon.colcon_core.verb:set package 'px4_lidar' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.335s] Level 5:colcon.colcon_core.verb:set package 'px4_lidar' build argument 'cmake_clean_cache' from command line to 'False'
+[0.335s] Level 5:colcon.colcon_core.verb:set package 'px4_lidar' build argument 'cmake_clean_first' from command line to 'False'
+[0.335s] Level 5:colcon.colcon_core.verb:set package 'px4_lidar' build argument 'cmake_force_configure' from command line to 'False'
+[0.335s] Level 5:colcon.colcon_core.verb:set package 'px4_lidar' build argument 'ament_cmake_args' from command line to 'None'
+[0.335s] Level 5:colcon.colcon_core.verb:set package 'px4_lidar' build argument 'catkin_cmake_args' from command line to 'None'
+[0.335s] Level 5:colcon.colcon_core.verb:set package 'px4_lidar' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.335s] DEBUG:colcon.colcon_core.verb:Building package 'px4_lidar' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_lidar', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar', 'merge_install': False, 'path': '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/px4_lidar', 'symlink_install': False, 'test_result_base': None}
+[0.335s] Level 5:colcon.colcon_core.verb:set package 'px4_offboard' build argument 'cmake_args' from command line to 'None'
+[0.335s] Level 5:colcon.colcon_core.verb:set package 'px4_offboard' build argument 'cmake_target' from command line to 'None'
+[0.335s] Level 5:colcon.colcon_core.verb:set package 'px4_offboard' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.335s] Level 5:colcon.colcon_core.verb:set package 'px4_offboard' build argument 'cmake_clean_cache' from command line to 'False'
+[0.335s] Level 5:colcon.colcon_core.verb:set package 'px4_offboard' build argument 'cmake_clean_first' from command line to 'False'
+[0.335s] Level 5:colcon.colcon_core.verb:set package 'px4_offboard' build argument 'cmake_force_configure' from command line to 'False'
+[0.335s] Level 5:colcon.colcon_core.verb:set package 'px4_offboard' build argument 'ament_cmake_args' from command line to 'None'
+[0.335s] Level 5:colcon.colcon_core.verb:set package 'px4_offboard' build argument 'catkin_cmake_args' from command line to 'None'
+[0.335s] Level 5:colcon.colcon_core.verb:set package 'px4_offboard' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.335s] DEBUG:colcon.colcon_core.verb:Building package 'px4_offboard' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_offboard', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard', 'merge_install': False, 'path': '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/px4_offboard', 'symlink_install': False, 'test_result_base': None}
+[0.335s] Level 5:colcon.colcon_core.verb:set package 'vla_marker_selector' build argument 'cmake_args' from command line to 'None'
+[0.335s] Level 5:colcon.colcon_core.verb:set package 'vla_marker_selector' build argument 'cmake_target' from command line to 'None'
+[0.335s] Level 5:colcon.colcon_core.verb:set package 'vla_marker_selector' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.335s] Level 5:colcon.colcon_core.verb:set package 'vla_marker_selector' build argument 'cmake_clean_cache' from command line to 'False'
+[0.335s] Level 5:colcon.colcon_core.verb:set package 'vla_marker_selector' build argument 'cmake_clean_first' from command line to 'False'
+[0.335s] Level 5:colcon.colcon_core.verb:set package 'vla_marker_selector' build argument 'cmake_force_configure' from command line to 'False'
+[0.335s] Level 5:colcon.colcon_core.verb:set package 'vla_marker_selector' build argument 'ament_cmake_args' from command line to 'None'
+[0.335s] Level 5:colcon.colcon_core.verb:set package 'vla_marker_selector' build argument 'catkin_cmake_args' from command line to 'None'
+[0.335s] Level 5:colcon.colcon_core.verb:set package 'vla_marker_selector' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.335s] DEBUG:colcon.colcon_core.verb:Building package 'vla_marker_selector' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/vla_marker_selector', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/vla_marker_selector', 'merge_install': False, 'path': '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/vla_marker_selector', 'symlink_install': False, 'test_result_base': None}
+[0.335s] Level 5:colcon.colcon_core.verb:set package 'px4_bringup' build argument 'cmake_args' from command line to 'None'
+[0.335s] Level 5:colcon.colcon_core.verb:set package 'px4_bringup' build argument 'cmake_target' from command line to 'None'
+[0.335s] Level 5:colcon.colcon_core.verb:set package 'px4_bringup' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.336s] Level 5:colcon.colcon_core.verb:set package 'px4_bringup' build argument 'cmake_clean_cache' from command line to 'False'
+[0.336s] Level 5:colcon.colcon_core.verb:set package 'px4_bringup' build argument 'cmake_clean_first' from command line to 'False'
+[0.336s] Level 5:colcon.colcon_core.verb:set package 'px4_bringup' build argument 'cmake_force_configure' from command line to 'False'
+[0.336s] Level 5:colcon.colcon_core.verb:set package 'px4_bringup' build argument 'ament_cmake_args' from command line to 'None'
+[0.336s] Level 5:colcon.colcon_core.verb:set package 'px4_bringup' build argument 'catkin_cmake_args' from command line to 'None'
+[0.336s] Level 5:colcon.colcon_core.verb:set package 'px4_bringup' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.336s] DEBUG:colcon.colcon_core.verb:Building package 'px4_bringup' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_bringup', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_bringup', 'merge_install': False, 'path': '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/px4_bringup', 'symlink_install': False, 'test_result_base': None}
+[0.336s] INFO:colcon.colcon_core.executor:Executing jobs using 'parallel' executor
+[0.337s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:run_until_complete
+[0.337s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/px4_offboard' with build type 'ament_python'
+[0.337s] Level 1:colcon.colcon_core.shell:create_environment_hook('px4_offboard', 'ament_prefix_path')
+[0.342s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_core.shell.bat': Not used on non-Windows systems
+[0.342s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/share/px4_offboard/hook/ament_prefix_path.ps1'
+[0.342s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/share/px4_offboard/hook/ament_prefix_path.dsv'
+[0.343s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/share/px4_offboard/hook/ament_prefix_path.sh'
+[0.343s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[0.343s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[0.346s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/px4_aruco_landing' with build type 'ament_python'
+[0.346s] Level 1:colcon.colcon_core.shell:create_environment_hook('px4_aruco_landing', 'ament_prefix_path')
+[0.346s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/share/px4_aruco_landing/hook/ament_prefix_path.ps1'
+[0.347s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/share/px4_aruco_landing/hook/ament_prefix_path.dsv'
+[0.347s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/share/px4_aruco_landing/hook/ament_prefix_path.sh'
+[0.347s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[0.347s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[0.350s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/px4_lidar' with build type 'ament_python'
+[0.350s] Level 1:colcon.colcon_core.shell:create_environment_hook('px4_lidar', 'ament_prefix_path')
+[0.350s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/share/px4_lidar/hook/ament_prefix_path.ps1'
+[0.350s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/share/px4_lidar/hook/ament_prefix_path.dsv'
+[0.351s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/share/px4_lidar/hook/ament_prefix_path.sh'
+[0.351s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[0.351s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[0.354s] INFO:colcon.colcon_ros.task.ament_cmake.build:Building ROS package in '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/vla_marker_selector' with build type 'ament_cmake'
+[0.354s] INFO:colcon.colcon_cmake.task.cmake.build:Building CMake package in '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/vla_marker_selector'
+[0.354s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[0.354s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[0.532s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/px4_offboard'
+[0.533s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[0.533s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[0.709s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/px4_aruco_landing'
+[0.709s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[0.709s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[0.887s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/px4_lidar'
+[0.888s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[0.888s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[0.894s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/vla_marker_selector': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/vla_marker_selector -DCMAKE_INSTALL_PREFIX=/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/vla_marker_selector
+[1.485s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/px4_lidar': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_lidar/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../build/px4_lidar build --build-base /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_lidar/build install --record /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_lidar/install.log --single-version-externally-managed install_data
+[1.491s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/px4_aruco_landing': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../build/px4_aruco_landing build --build-base /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/build install --record /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/install.log --single-version-externally-managed install_data
+[1.511s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/px4_offboard': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_offboard/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../build/px4_offboard build --build-base /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_offboard/build install --record /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_offboard/install.log --single-version-externally-managed install_data
+[1.740s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/vla_marker_selector' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/vla_marker_selector -DCMAKE_INSTALL_PREFIX=/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/vla_marker_selector
+[1.742s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/vla_marker_selector': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --build /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/vla_marker_selector -- -j32 -l32
+[1.788s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/vla_marker_selector' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --build /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/vla_marker_selector -- -j32 -l32
+[1.803s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/vla_marker_selector': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --install /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/vla_marker_selector
+[1.817s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(vla_marker_selector)
+[1.818s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/vla_marker_selector' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --install /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/vla_marker_selector
+[1.824s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/vla_marker_selector' for CMake module files
+[1.825s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/vla_marker_selector' for CMake config files
+[1.825s] Level 1:colcon.colcon_core.shell:create_environment_hook('vla_marker_selector', 'cmake_prefix_path')
+[1.825s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/vla_marker_selector/share/vla_marker_selector/hook/cmake_prefix_path.ps1'
+[1.826s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/vla_marker_selector/share/vla_marker_selector/hook/cmake_prefix_path.dsv'
+[1.826s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/vla_marker_selector/share/vla_marker_selector/hook/cmake_prefix_path.sh'
+[1.826s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/vla_marker_selector/bin'
+[1.826s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/vla_marker_selector/lib/pkgconfig/vla_marker_selector.pc'
+[1.827s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/vla_marker_selector/lib/python3.12/site-packages'
+[1.827s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/vla_marker_selector/bin'
+[1.827s] INFO:colcon.colcon_core.shell:Creating package script '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/vla_marker_selector/share/vla_marker_selector/package.ps1'
+[1.829s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/vla_marker_selector/share/vla_marker_selector/package.dsv'
+[1.829s] INFO:colcon.colcon_core.shell:Creating package script '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/vla_marker_selector/share/vla_marker_selector/package.sh'
+[1.830s] INFO:colcon.colcon_core.shell:Creating package script '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/vla_marker_selector/share/vla_marker_selector/package.bash'
+[1.830s] INFO:colcon.colcon_core.shell:Creating package script '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/vla_marker_selector/share/vla_marker_selector/package.zsh'
+[1.831s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/vla_marker_selector/share/colcon-core/packages/vla_marker_selector)
+[1.831s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(vla_marker_selector)
+[1.831s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/vla_marker_selector' for CMake module files
+[1.832s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/vla_marker_selector' for CMake config files
+[1.833s] Level 1:colcon.colcon_core.shell:create_environment_hook('vla_marker_selector', 'cmake_prefix_path')
+[1.833s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/vla_marker_selector/share/vla_marker_selector/hook/cmake_prefix_path.ps1'
+[1.834s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/vla_marker_selector/share/vla_marker_selector/hook/cmake_prefix_path.dsv'
+[1.835s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/vla_marker_selector/share/vla_marker_selector/hook/cmake_prefix_path.sh'
+[1.836s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/vla_marker_selector/bin'
+[1.836s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/vla_marker_selector/lib/pkgconfig/vla_marker_selector.pc'
+[1.836s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/vla_marker_selector/lib/python3.12/site-packages'
+[1.837s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/vla_marker_selector/bin'
+[1.837s] INFO:colcon.colcon_core.shell:Creating package script '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/vla_marker_selector/share/vla_marker_selector/package.ps1'
+[1.837s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/vla_marker_selector/share/vla_marker_selector/package.dsv'
+[1.838s] INFO:colcon.colcon_core.shell:Creating package script '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/vla_marker_selector/share/vla_marker_selector/package.sh'
+[1.838s] INFO:colcon.colcon_core.shell:Creating package script '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/vla_marker_selector/share/vla_marker_selector/package.bash'
+[1.838s] INFO:colcon.colcon_core.shell:Creating package script '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/vla_marker_selector/share/vla_marker_selector/package.zsh'
+[1.839s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/vla_marker_selector/share/colcon-core/packages/vla_marker_selector)
+[2.026s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing' for CMake module files
+[2.026s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/px4_aruco_landing' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../build/px4_aruco_landing build --build-base /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/build install --record /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/install.log --single-version-externally-managed install_data
+[2.027s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing' for CMake config files
+[2.028s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib'
+[2.028s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/bin'
+[2.028s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib/pkgconfig/px4_aruco_landing.pc'
+[2.028s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib/python3.12/site-packages'
+[2.028s] Level 1:colcon.colcon_core.shell:create_environment_hook('px4_aruco_landing', 'pythonpath')
+[2.029s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/share/px4_aruco_landing/hook/pythonpath.ps1'
+[2.029s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/share/px4_aruco_landing/hook/pythonpath.dsv'
+[2.030s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/share/px4_aruco_landing/hook/pythonpath.sh'
+[2.031s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/bin'
+[2.031s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(px4_aruco_landing)
+[2.031s] INFO:colcon.colcon_core.shell:Creating package script '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/share/px4_aruco_landing/package.ps1'
+[2.032s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/share/px4_aruco_landing/package.dsv'
+[2.032s] INFO:colcon.colcon_core.shell:Creating package script '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/share/px4_aruco_landing/package.sh'
+[2.035s] INFO:colcon.colcon_core.shell:Creating package script '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/share/px4_aruco_landing/package.bash'
+[2.036s] INFO:colcon.colcon_core.shell:Creating package script '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/share/px4_aruco_landing/package.zsh'
+[2.036s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/share/colcon-core/packages/px4_aruco_landing)
+[2.038s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar' for CMake module files
+[2.038s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/px4_lidar' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_lidar/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../build/px4_lidar build --build-base /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_lidar/build install --record /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_lidar/install.log --single-version-externally-managed install_data
+[2.039s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar' for CMake config files
+[2.039s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/lib'
+[2.039s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/bin'
+[2.040s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/lib/pkgconfig/px4_lidar.pc'
+[2.040s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/lib/python3.12/site-packages'
+[2.040s] Level 1:colcon.colcon_core.shell:create_environment_hook('px4_lidar', 'pythonpath')
+[2.040s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/share/px4_lidar/hook/pythonpath.ps1'
+[2.041s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/share/px4_lidar/hook/pythonpath.dsv'
+[2.041s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/share/px4_lidar/hook/pythonpath.sh'
+[2.042s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/bin'
+[2.042s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(px4_lidar)
+[2.042s] INFO:colcon.colcon_core.shell:Creating package script '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/share/px4_lidar/package.ps1'
+[2.042s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/share/px4_lidar/package.dsv'
+[2.043s] INFO:colcon.colcon_core.shell:Creating package script '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/share/px4_lidar/package.sh'
+[2.043s] INFO:colcon.colcon_core.shell:Creating package script '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/share/px4_lidar/package.bash'
+[2.043s] INFO:colcon.colcon_core.shell:Creating package script '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/share/px4_lidar/package.zsh'
+[2.043s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/share/colcon-core/packages/px4_lidar)
+[2.044s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard' for CMake module files
+[2.045s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/px4_offboard' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_offboard/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../build/px4_offboard build --build-base /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_offboard/build install --record /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_offboard/install.log --single-version-externally-managed install_data
+[2.045s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard' for CMake config files
+[2.046s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/lib'
+[2.046s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/bin'
+[2.046s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/lib/pkgconfig/px4_offboard.pc'
+[2.046s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/lib/python3.12/site-packages'
+[2.047s] Level 1:colcon.colcon_core.shell:create_environment_hook('px4_offboard', 'pythonpath')
+[2.047s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/share/px4_offboard/hook/pythonpath.ps1'
+[2.047s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/share/px4_offboard/hook/pythonpath.dsv'
+[2.048s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/share/px4_offboard/hook/pythonpath.sh'
+[2.048s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/bin'
+[2.049s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(px4_offboard)
+[2.049s] INFO:colcon.colcon_core.shell:Creating package script '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/share/px4_offboard/package.ps1'
+[2.049s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/share/px4_offboard/package.dsv'
+[2.050s] INFO:colcon.colcon_core.shell:Creating package script '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/share/px4_offboard/package.sh'
+[2.050s] INFO:colcon.colcon_core.shell:Creating package script '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/share/px4_offboard/package.bash'
+[2.051s] INFO:colcon.colcon_core.shell:Creating package script '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/share/px4_offboard/package.zsh'
+[2.051s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/share/colcon-core/packages/px4_offboard)
+[2.051s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/px4_bringup' with build type 'ament_python'
+[2.052s] Level 1:colcon.colcon_core.shell:create_environment_hook('px4_bringup', 'ament_prefix_path')
+[2.052s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_bringup/share/px4_bringup/hook/ament_prefix_path.ps1'
+[2.053s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_bringup/share/px4_bringup/hook/ament_prefix_path.dsv'
+[2.053s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_bringup/share/px4_bringup/hook/ament_prefix_path.sh'
+[2.054s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[2.054s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[2.242s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/px4_bringup'
+[2.242s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[2.242s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[2.772s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/px4_bringup': AMENT_PREFIX_PATH=/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard:${AMENT_PREFIX_PATH} DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_bringup/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_bringup/lib/python3.12/site-packages:/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../build/px4_bringup build --build-base /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_bringup/build install --record /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_bringup/install.log --single-version-externally-managed install_data
+[3.284s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_bringup' for CMake module files
+[3.285s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/px4_bringup' returned '0': AMENT_PREFIX_PATH=/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard:${AMENT_PREFIX_PATH} DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_bringup/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_bringup/lib/python3.12/site-packages:/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../build/px4_bringup build --build-base /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_bringup/build install --record /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_bringup/install.log --single-version-externally-managed install_data
+[3.285s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_bringup' for CMake config files
+[3.285s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_bringup/lib'
+[3.286s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_bringup/bin'
+[3.286s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_bringup/lib/pkgconfig/px4_bringup.pc'
+[3.286s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_bringup/lib/python3.12/site-packages'
+[3.286s] Level 1:colcon.colcon_core.shell:create_environment_hook('px4_bringup', 'pythonpath')
+[3.286s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_bringup/share/px4_bringup/hook/pythonpath.ps1'
+[3.287s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_bringup/share/px4_bringup/hook/pythonpath.dsv'
+[3.287s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_bringup/share/px4_bringup/hook/pythonpath.sh'
+[3.287s] Level 1:colcon.colcon_core.environment:checking '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_bringup/bin'
+[3.287s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(px4_bringup)
+[3.287s] INFO:colcon.colcon_core.shell:Creating package script '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_bringup/share/px4_bringup/package.ps1'
+[3.288s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_bringup/share/px4_bringup/package.dsv'
+[3.288s] INFO:colcon.colcon_core.shell:Creating package script '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_bringup/share/px4_bringup/package.sh'
+[3.288s] INFO:colcon.colcon_core.shell:Creating package script '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_bringup/share/px4_bringup/package.bash'
+[3.289s] INFO:colcon.colcon_core.shell:Creating package script '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_bringup/share/px4_bringup/package.zsh'
+[3.289s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_bringup/share/colcon-core/packages/px4_bringup)
+[3.289s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:closing loop
+[3.289s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:loop closed
+[3.289s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:run_until_complete finished with '0'
+[3.289s] DEBUG:colcon.colcon_core.event_reactor:joining thread
+[3.307s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_notification.desktop_notification.terminal_notifier': Not used on non-Darwin systems
+[3.307s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_notification.desktop_notification.win32': Not used on non-Windows systems
+[3.307s] INFO:colcon.colcon_notification.desktop_notification:Sending desktop notification using 'notify2'
+[3.336s] DEBUG:colcon.colcon_core.event_reactor:joined thread
+[3.336s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/local_setup.ps1'
+[3.336s] INFO:colcon.colcon_core.shell:Creating prefix util module '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/_local_setup_util_ps1.py'
+[3.337s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/setup.ps1'
+[3.338s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/local_setup.sh'
+[3.338s] INFO:colcon.colcon_core.shell:Creating prefix util module '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/_local_setup_util_sh.py'
+[3.339s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/setup.sh'
+[3.339s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/local_setup.bash'
+[3.339s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/setup.bash'
+[3.340s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/local_setup.zsh'
+[3.340s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/setup.zsh'

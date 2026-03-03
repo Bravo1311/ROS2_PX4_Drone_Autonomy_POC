@@ -1,0 +1,5 @@
+[console_scripts]
+gz_odom_tf = px4_lidar.gz_odom_tf:main
+px4_odom_tf = px4_lidar.px4_odom_tf:main
+safety_vel_filter = px4_lidar.safety_vel_filter:main
+scan_frame_fix = px4_lidar.scan_frame_fix:main

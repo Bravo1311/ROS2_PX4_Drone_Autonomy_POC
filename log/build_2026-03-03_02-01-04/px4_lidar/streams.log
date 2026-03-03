@@ -1,0 +1,52 @@
+[1.135s] Invoking command in '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/px4_lidar': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_lidar/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../build/px4_lidar build --build-base /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_lidar/build install --record /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_lidar/install.log --single-version-externally-managed install_data
+[1.418s] running egg_info
+[1.418s] creating ../build/px4_lidar/px4_lidar.egg-info
+[1.438s] writing ../build/px4_lidar/px4_lidar.egg-info/PKG-INFO
+[1.438s] writing dependency_links to ../build/px4_lidar/px4_lidar.egg-info/dependency_links.txt
+[1.438s] writing entry points to ../build/px4_lidar/px4_lidar.egg-info/entry_points.txt
+[1.438s] writing requirements to ../build/px4_lidar/px4_lidar.egg-info/requires.txt
+[1.438s] writing top-level names to ../build/px4_lidar/px4_lidar.egg-info/top_level.txt
+[1.438s] writing manifest file '../build/px4_lidar/px4_lidar.egg-info/SOURCES.txt'
+[1.478s] reading manifest file '../build/px4_lidar/px4_lidar.egg-info/SOURCES.txt'
+[1.478s] writing manifest file '../build/px4_lidar/px4_lidar.egg-info/SOURCES.txt'
+[1.478s] running build
+[1.478s] running build_py
+[1.478s] creating /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_lidar/build
+[1.478s] creating /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_lidar/build/lib
+[1.478s] creating /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_lidar/build/lib/px4_lidar
+[1.478s] copying px4_lidar/scan_frame_fix.py -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_lidar/build/lib/px4_lidar
+[1.478s] copying px4_lidar/__init__.py -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_lidar/build/lib/px4_lidar
+[1.478s] copying px4_lidar/px4_odom_tf.py -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_lidar/build/lib/px4_lidar
+[1.478s] copying px4_lidar/safety_vel_filter.py -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_lidar/build/lib/px4_lidar
+[1.479s] copying px4_lidar/gz_odom_tf.py -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_lidar/build/lib/px4_lidar
+[1.479s] running install
+[1.485s] running install_lib
+[1.504s] creating /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/lib/python3.12/site-packages/px4_lidar
+[1.505s] copying /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_lidar/build/lib/px4_lidar/scan_frame_fix.py -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/lib/python3.12/site-packages/px4_lidar
+[1.505s] copying /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_lidar/build/lib/px4_lidar/__init__.py -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/lib/python3.12/site-packages/px4_lidar
+[1.505s] copying /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_lidar/build/lib/px4_lidar/px4_odom_tf.py -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/lib/python3.12/site-packages/px4_lidar
+[1.505s] copying /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_lidar/build/lib/px4_lidar/safety_vel_filter.py -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/lib/python3.12/site-packages/px4_lidar
+[1.505s] copying /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_lidar/build/lib/px4_lidar/gz_odom_tf.py -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/lib/python3.12/site-packages/px4_lidar
+[1.505s] byte-compiling /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/lib/python3.12/site-packages/px4_lidar/scan_frame_fix.py to scan_frame_fix.cpython-312.pyc
+[1.506s] byte-compiling /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/lib/python3.12/site-packages/px4_lidar/__init__.py to __init__.cpython-312.pyc
+[1.506s] byte-compiling /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/lib/python3.12/site-packages/px4_lidar/px4_odom_tf.py to px4_odom_tf.cpython-312.pyc
+[1.507s] byte-compiling /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/lib/python3.12/site-packages/px4_lidar/safety_vel_filter.py to safety_vel_filter.cpython-312.pyc
+[1.509s] byte-compiling /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/lib/python3.12/site-packages/px4_lidar/gz_odom_tf.py to gz_odom_tf.cpython-312.pyc
+[1.510s] running install_data
+[1.510s] creating /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/share/ament_index
+[1.510s] creating /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/share/ament_index/resource_index
+[1.510s] creating /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/share/ament_index/resource_index/packages
+[1.510s] copying resource/px4_lidar -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/share/ament_index/resource_index/packages
+[1.510s] copying package.xml -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/share/px4_lidar
+[1.511s] creating /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/share/px4_lidar/config
+[1.511s] copying config/slam_toolbox.yaml -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/share/px4_lidar/config
+[1.511s] copying config/local_costmap.yaml -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/share/px4_lidar/config
+[1.511s] running install_egg_info
+[1.531s] Copying ../build/px4_lidar/px4_lidar.egg-info to /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/lib/python3.12/site-packages/px4_lidar-0.0.0-py3.12.egg-info
+[1.532s] running install_scripts
+[1.656s] Installing gz_odom_tf script to /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/lib/px4_lidar
+[1.656s] Installing px4_odom_tf script to /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/lib/px4_lidar
+[1.656s] Installing safety_vel_filter script to /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/lib/px4_lidar
+[1.656s] Installing scan_frame_fix script to /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/lib/px4_lidar
+[1.656s] writing list of installed files to '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_lidar/install.log'
+[1.688s] Invoked command in '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/px4_lidar' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_lidar/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_lidar/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../build/px4_lidar build --build-base /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_lidar/build install --record /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_lidar/install.log --single-version-externally-managed install_data

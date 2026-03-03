@@ -1,0 +1,46 @@
+running egg_info
+creating ../build/px4_aruco_landing/px4_aruco_landing.egg-info
+writing ../build/px4_aruco_landing/px4_aruco_landing.egg-info/PKG-INFO
+writing dependency_links to ../build/px4_aruco_landing/px4_aruco_landing.egg-info/dependency_links.txt
+writing entry points to ../build/px4_aruco_landing/px4_aruco_landing.egg-info/entry_points.txt
+writing requirements to ../build/px4_aruco_landing/px4_aruco_landing.egg-info/requires.txt
+writing top-level names to ../build/px4_aruco_landing/px4_aruco_landing.egg-info/top_level.txt
+writing manifest file '../build/px4_aruco_landing/px4_aruco_landing.egg-info/SOURCES.txt'
+reading manifest file '../build/px4_aruco_landing/px4_aruco_landing.egg-info/SOURCES.txt'
+writing manifest file '../build/px4_aruco_landing/px4_aruco_landing.egg-info/SOURCES.txt'
+running build
+running build_py
+creating /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/build
+creating /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/build/lib
+creating /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/build/lib/px4_aruco_landing
+copying px4_aruco_landing/autoland_twist_publisher.py -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/build/lib/px4_aruco_landing
+copying px4_aruco_landing/__init__.py -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/build/lib/px4_aruco_landing
+copying px4_aruco_landing/auto_land_offboard.py -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/build/lib/px4_aruco_landing
+copying px4_aruco_landing/marker_kf.py -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/build/lib/px4_aruco_landing
+copying px4_aruco_landing/aruco_detector.py -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/build/lib/px4_aruco_landing
+running install
+running install_lib
+creating /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib/python3.12/site-packages/px4_aruco_landing
+copying /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/build/lib/px4_aruco_landing/autoland_twist_publisher.py -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib/python3.12/site-packages/px4_aruco_landing
+copying /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/build/lib/px4_aruco_landing/__init__.py -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib/python3.12/site-packages/px4_aruco_landing
+copying /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/build/lib/px4_aruco_landing/auto_land_offboard.py -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib/python3.12/site-packages/px4_aruco_landing
+copying /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/build/lib/px4_aruco_landing/marker_kf.py -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib/python3.12/site-packages/px4_aruco_landing
+copying /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/build/lib/px4_aruco_landing/aruco_detector.py -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib/python3.12/site-packages/px4_aruco_landing
+byte-compiling /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib/python3.12/site-packages/px4_aruco_landing/autoland_twist_publisher.py to autoland_twist_publisher.cpython-312.pyc
+byte-compiling /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib/python3.12/site-packages/px4_aruco_landing/__init__.py to __init__.cpython-312.pyc
+byte-compiling /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib/python3.12/site-packages/px4_aruco_landing/auto_land_offboard.py to auto_land_offboard.cpython-312.pyc
+byte-compiling /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib/python3.12/site-packages/px4_aruco_landing/marker_kf.py to marker_kf.cpython-312.pyc
+byte-compiling /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib/python3.12/site-packages/px4_aruco_landing/aruco_detector.py to aruco_detector.cpython-312.pyc
+running install_data
+creating /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/share/ament_index
+creating /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/share/ament_index/resource_index
+creating /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/share/ament_index/resource_index/packages
+copying resource/px4_aruco_landing -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/share/ament_index/resource_index/packages
+copying package.xml -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/share/px4_aruco_landing
+running install_egg_info
+Copying ../build/px4_aruco_landing/px4_aruco_landing.egg-info to /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib/python3.12/site-packages/px4_aruco_landing-0.0.0-py3.12.egg-info
+running install_scripts
+Installing aruco_detector script to /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib/px4_aruco_landing
+Installing autoland_twist_publisher script to /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib/px4_aruco_landing
+Installing marker_kf script to /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib/px4_aruco_landing
+writing list of installed files to '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/install.log'

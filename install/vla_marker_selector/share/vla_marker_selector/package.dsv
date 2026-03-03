@@ -1,0 +1,8 @@
+source;share/vla_marker_selector/hook/cmake_prefix_path.ps1
+source;share/vla_marker_selector/hook/cmake_prefix_path.dsv
+source;share/vla_marker_selector/hook/cmake_prefix_path.sh
+source;share/vla_marker_selector/local_setup.bash
+source;share/vla_marker_selector/local_setup.dsv
+source;share/vla_marker_selector/local_setup.ps1
+source;share/vla_marker_selector/local_setup.sh
+source;share/vla_marker_selector/local_setup.zsh

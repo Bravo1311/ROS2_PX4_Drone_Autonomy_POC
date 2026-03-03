@@ -1,0 +1,7 @@
+Metadata-Version: 2.1
+Name: px4-bringup
+Version: 0.0.1
+Summary: Complete bringup package for PX4 with ROS2
+Maintainer: Your Name
+Maintainer-email: your.email@example.com
+License: BSD

@@ -1,0 +1,48 @@
+[1.144s] Invoking command in '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/px4_aruco_landing': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../build/px4_aruco_landing build --build-base /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/build install --record /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/install.log --single-version-externally-managed install_data
+[1.415s] running egg_info
+[1.415s] creating ../build/px4_aruco_landing/px4_aruco_landing.egg-info
+[1.434s] writing ../build/px4_aruco_landing/px4_aruco_landing.egg-info/PKG-INFO
+[1.434s] writing dependency_links to ../build/px4_aruco_landing/px4_aruco_landing.egg-info/dependency_links.txt
+[1.435s] writing entry points to ../build/px4_aruco_landing/px4_aruco_landing.egg-info/entry_points.txt
+[1.435s] writing requirements to ../build/px4_aruco_landing/px4_aruco_landing.egg-info/requires.txt
+[1.435s] writing top-level names to ../build/px4_aruco_landing/px4_aruco_landing.egg-info/top_level.txt
+[1.435s] writing manifest file '../build/px4_aruco_landing/px4_aruco_landing.egg-info/SOURCES.txt'
+[1.475s] reading manifest file '../build/px4_aruco_landing/px4_aruco_landing.egg-info/SOURCES.txt'
+[1.476s] writing manifest file '../build/px4_aruco_landing/px4_aruco_landing.egg-info/SOURCES.txt'
+[1.476s] running build
+[1.476s] running build_py
+[1.476s] creating /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/build
+[1.476s] creating /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/build/lib
+[1.476s] creating /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/build/lib/px4_aruco_landing
+[1.476s] copying px4_aruco_landing/autoland_twist_publisher.py -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/build/lib/px4_aruco_landing
+[1.476s] copying px4_aruco_landing/__init__.py -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/build/lib/px4_aruco_landing
+[1.476s] copying px4_aruco_landing/auto_land_offboard.py -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/build/lib/px4_aruco_landing
+[1.476s] copying px4_aruco_landing/marker_kf.py -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/build/lib/px4_aruco_landing
+[1.476s] copying px4_aruco_landing/aruco_detector.py -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/build/lib/px4_aruco_landing
+[1.477s] running install
+[1.482s] running install_lib
+[1.501s] creating /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib/python3.12/site-packages/px4_aruco_landing
+[1.501s] copying /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/build/lib/px4_aruco_landing/autoland_twist_publisher.py -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib/python3.12/site-packages/px4_aruco_landing
+[1.501s] copying /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/build/lib/px4_aruco_landing/__init__.py -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib/python3.12/site-packages/px4_aruco_landing
+[1.502s] copying /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/build/lib/px4_aruco_landing/auto_land_offboard.py -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib/python3.12/site-packages/px4_aruco_landing
+[1.502s] copying /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/build/lib/px4_aruco_landing/marker_kf.py -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib/python3.12/site-packages/px4_aruco_landing
+[1.502s] copying /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/build/lib/px4_aruco_landing/aruco_detector.py -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib/python3.12/site-packages/px4_aruco_landing
+[1.502s] byte-compiling /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib/python3.12/site-packages/px4_aruco_landing/autoland_twist_publisher.py to autoland_twist_publisher.cpython-312.pyc
+[1.504s] byte-compiling /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib/python3.12/site-packages/px4_aruco_landing/__init__.py to __init__.cpython-312.pyc
+[1.504s] byte-compiling /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib/python3.12/site-packages/px4_aruco_landing/auto_land_offboard.py to auto_land_offboard.cpython-312.pyc
+[1.506s] byte-compiling /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib/python3.12/site-packages/px4_aruco_landing/marker_kf.py to marker_kf.cpython-312.pyc
+[1.507s] byte-compiling /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib/python3.12/site-packages/px4_aruco_landing/aruco_detector.py to aruco_detector.cpython-312.pyc
+[1.509s] running install_data
+[1.509s] creating /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/share/ament_index
+[1.510s] creating /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/share/ament_index/resource_index
+[1.510s] creating /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/share/ament_index/resource_index/packages
+[1.510s] copying resource/px4_aruco_landing -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/share/ament_index/resource_index/packages
+[1.510s] copying package.xml -> /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/share/px4_aruco_landing
+[1.510s] running install_egg_info
+[1.530s] Copying ../build/px4_aruco_landing/px4_aruco_landing.egg-info to /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib/python3.12/site-packages/px4_aruco_landing-0.0.0-py3.12.egg-info
+[1.530s] running install_scripts
+[1.652s] Installing aruco_detector script to /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib/px4_aruco_landing
+[1.653s] Installing autoland_twist_publisher script to /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib/px4_aruco_landing
+[1.653s] Installing marker_kf script to /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib/px4_aruco_landing
+[1.653s] writing list of installed files to '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/install.log'
+[1.680s] Invoked command in '/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/px4_aruco_landing' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_aruco_landing/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../build/px4_aruco_landing build --build-base /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/build install --record /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/build/px4_aruco_landing/install.log --single-version-externally-managed install_data

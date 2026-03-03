@@ -1,0 +1,32 @@
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/lib/python3.12/site-packages/px4_offboard/teleop_joystick.py
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/lib/python3.12/site-packages/px4_offboard/__init__.py
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/lib/python3.12/site-packages/px4_offboard/teleop_keyboard.py
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/lib/python3.12/site-packages/px4_offboard/velocity_offboard_control.py
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/lib/python3.12/site-packages/px4_offboard/teleop_joystick copy.py
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/lib/python3.12/site-packages/px4_offboard/position_offboard_control.py
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/lib/python3.12/site-packages/px4_offboard/px4_offboard_mux.py
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/lib/python3.12/site-packages/px4_offboard/__pycache__/teleop_joystick.cpython-312.pyc
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/lib/python3.12/site-packages/px4_offboard/__pycache__/__init__.cpython-312.pyc
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/lib/python3.12/site-packages/px4_offboard/__pycache__/teleop_keyboard.cpython-312.pyc
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/lib/python3.12/site-packages/px4_offboard/__pycache__/velocity_offboard_control.cpython-312.pyc
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/lib/python3.12/site-packages/px4_offboard/__pycache__/teleop_joystick copy.cpython-312.pyc
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/lib/python3.12/site-packages/px4_offboard/__pycache__/position_offboard_control.cpython-312.pyc
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/lib/python3.12/site-packages/px4_offboard/__pycache__/px4_offboard_mux.cpython-312.pyc
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/share/ament_index/resource_index/packages/px4_offboard
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/share/px4_offboard/package.xml
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/share/px4_offboard/launch/joystick_teleop.launch.py
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/share/px4_offboard/launch/auto_joystick_teleop.launch.py
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/share/px4_offboard/launch/keyboard_teleop.launch.py
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/share/px4_offboard/config/joy_config.yaml
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/lib/python3.12/site-packages/px4_offboard-0.0.1-py3.12.egg-info/requires.txt
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/lib/python3.12/site-packages/px4_offboard-0.0.1-py3.12.egg-info/top_level.txt
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/lib/python3.12/site-packages/px4_offboard-0.0.1-py3.12.egg-info/SOURCES.txt
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/lib/python3.12/site-packages/px4_offboard-0.0.1-py3.12.egg-info/zip-safe
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/lib/python3.12/site-packages/px4_offboard-0.0.1-py3.12.egg-info/entry_points.txt
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/lib/python3.12/site-packages/px4_offboard-0.0.1-py3.12.egg-info/dependency_links.txt
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/lib/python3.12/site-packages/px4_offboard-0.0.1-py3.12.egg-info/PKG-INFO
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/lib/px4_offboard/position_offboard_control.py
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/lib/px4_offboard/px4_offboard_mux.py
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/lib/px4_offboard/teleop_joystick.py
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/lib/px4_offboard/teleop_keyboard.py
+/home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/install/px4_offboard/lib/px4_offboard/velocity_offboard_control.py
