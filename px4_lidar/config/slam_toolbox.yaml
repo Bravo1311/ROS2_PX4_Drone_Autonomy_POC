@@ -1,6 +1,7 @@
 slam_toolbox:
   ros__parameters:
     use_sim_time: true
+    # scan_queue_size: 1
 
     # Frames
     map_frame: map
@@ -10,16 +11,27 @@ slam_toolbox:
     # Inputs
     scan_topic: /scan_fixed
 
+    # Pose-graph file to load on startup (used in localization mode)
+    # NOTE: this is NOT the Nav2 map yaml/pgm; it is the slam_toolbox serialized pose-graph.
+    # It will be overridden by the launch argument `posegraph_file` in slam.launch.py.
+    map_file_name: ""
+
     # Behavior
     mode: mapping                # mapping | localization
+    resolution: 0.05
+    max_laser_range: 30.0
+    minimum_time_interval: 0.0
+
+    transform_publish_period: 0.02
+    tf_buffer_duration: 30.0
+
     publish_tf: true
-    transform_publish_period: 0.05
 
     # Performance / stability
-    minimum_time_interval: 0.05
     throttle_scans: 1
-    map_update_interval: 2.0
-    resolution: 0.05
+    minimum_travel_distance: 0.05
+    minimum_travel_heading: 0.05
+    map_update_interval: 0.5
 
     # Useful in sim
     use_scan_matching: true

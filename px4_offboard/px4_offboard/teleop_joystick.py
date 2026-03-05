@@ -18,6 +18,7 @@ BUTTON_A = 0                # A button → ARM
 BUTTON_B = 1                # B Button -> enables/disables autonomous landing
 BUTTON_X = 3                # X button → Enable auto-hover (throttle = 0.5)
 BUTTON_Y = 4                # Y button → Emergency stop (disarm + zero throttle)
+BUTTON_SELECT = 10          # Select button -> Toggle nav2 control
 
 # Movement parameters
 XY_VELOCITY_MAX = 1.2       # m/s for horizontal movement
@@ -53,6 +54,7 @@ class JoystickTeleop(Node):
         # Publishers
         self.vel_pub = self.create_publisher(Twist, '/offboard_velocity_cmd', qos_pub)
         self.auto_land = self.create_publisher(Bool, '/enable_auto_land', qos_pub)
+        self.nav_cmd = self.create_publisher(Bool, '/enable_nav_cmd', qos_pub)
         self.arm_pub = self.create_publisher(Bool, '/arm_message', qos_pub)  #to arm/disarm the drone
 
         # Subscriber
@@ -64,6 +66,7 @@ class JoystickTeleop(Node):
         self.last_button_state = []
         self.auto_hover = False  # When enabled, throttle locks to 0.5
         self.enable_auto_land = False
+        self.enable_nav_cmd = False
         
         # Store current velocities
         self.current_vx = 0.0
@@ -159,16 +162,27 @@ class JoystickTeleop(Node):
             self.armed = False
             self.disarm_requested = True
             self.auto_hover = False
+            self.enable_nav_cmd = False
             arm_msg = Bool()
             arm_msg.data = False
             self.arm_pub.publish(arm_msg)
             self.get_logger().warn("EMERGENCY STOP - DISARMED")
 
+        if self.is_button_pressed(buttons, BUTTON_SELECT):
+            self.armed = True
+            self.auto_hover = False
+            self.enable_auto_land = False
+            self.enable_nav_cmd = not self.enable_nav_cmd
+            self.nav_cmd.publish(Bool(data=self.enable_nav_cmd))
+            self.get_logger().info(
+                f"Nav2 Control {'Enabled' if self.enable_nav_cmd else 'Disabled'}"
+            )
+
         if self.is_button_pressed(buttons, BUTTON_B):
             self.disarm_requested = False
             self.auto_hover = False
+            self.enable_nav_cmd = False
             self.enable_auto_land = not self.enable_auto_land
-
             self.auto_land.publish(Bool(data=self.enable_auto_land))
 
             # zero stored manual command

@@ -38,7 +38,6 @@ YAW_RATE_LIMIT = 2.0
 
 SAFE_TIMEOUT_S = 1.0
 
-
 def clamp(v, lo, hi):
     return max(lo, min(hi, v))
 
@@ -80,9 +79,11 @@ class PX4OffboardMux(Node):
         # Teleop/auto subs (subscribe to BOTH teleop topics to avoid remap headaches)
         self.create_subscription(Twist, "/cmd_vel", self.teleop_cb, qos_teleop)
         self.create_subscription(Twist, "/offboard_velocity_cmd", self.teleop_cb, qos_teleop)
-        self.create_subscription(Twist, "/autoland_velocity_cmd", self.auto_cb, qos_teleop)
+        self.create_subscription(Twist, "/autoland_velocity_cmd", self.marker_cb, qos_teleop)
+        self.create_subscription(Twist, "/nav_velocity_cmd", self.nav_cb, qos_teleop)
 
         self.create_subscription(Bool, "/enable_auto_land", self.enable_auto_cb, qos_px4)
+        self.create_subscription(Bool, "/enable_nav_cmd", self.enable_nav_cb, qos_px4)
         self.create_subscription(Bool, "/arm_message", self.arm_cb, qos_px4)
 
         # Safety output (RELIABLE)
@@ -92,14 +93,17 @@ class PX4OffboardMux(Node):
         self.offboard_active = False
         self.armed = False
         self.warmed_up = False
-
+        
         self.yaw = 0.0
 
+        self.nav_cmd = Twist()
         self.teleop_cmd = Twist()
         self.auto_cmd = Twist()
         self.last_teleop_t = 0.0
         self.last_auto_t = 0.0
+        self.last_nav_t = 0.0
         self.auto_enabled = False
+        self.nav_enabled = False
 
         self.safe_cmd = Twist()
         self.last_safe_t = 0.0
@@ -127,14 +131,23 @@ class PX4OffboardMux(Node):
         if not self.warmed_up and self.armed:
             self.start_offboard()
 
-    def auto_cb(self, msg: Twist):
+    def marker_cb(self, msg: Twist):
         self.auto_cmd = msg
         self.last_auto_t = time.time()
         if not self.warmed_up and self.armed:
             self.start_offboard()
 
+    def nav_cb(self, msg: Twist):
+        self.nav_cmd = msg
+        self.last_nav_t = time.time()
+        if not self.warmed_up and self.armed:
+            self.start_offboard()
+
     def enable_auto_cb(self, msg: Bool):
         self.auto_enabled = bool(msg.data)
+
+    def enable_nav_cb(self, msg: Bool):
+        self.nav_enabled = bool(msg.data)
 
     def arm_cb(self, msg: Bool):
         if msg.data and not self.armed:
@@ -213,10 +226,15 @@ class PX4OffboardMux(Node):
         now = time.time()
         teleop_fresh = (now - self.last_teleop_t) <= INACTIVITY_TIMEOUT
         auto_fresh = (now - self.last_auto_t) <= INACTIVITY_TIMEOUT
+        nav_fresh = (now - self.last_nav_t) <= INACTIVITY_TIMEOUT
 
         if self.auto_enabled and auto_fresh:
             src = "AUTO"
             cmd = self.auto_cmd
+            fresh = True
+        elif self.nav_enabled and nav_fresh:
+            src = "NAV2"
+            cmd = self.nav_cmd
             fresh = True
         elif teleop_fresh:
             src = "TELEOP"

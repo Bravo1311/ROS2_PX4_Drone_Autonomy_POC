@@ -184,7 +184,7 @@ def generate_launch_description():
         # Start safety filter immediately (so cmd chain exists early)
         safety_vel_filter,
 
-        lifecycle_manager,
+        # lifecycle_manager,
 
         # Delay TF + scan_fix + aruco slightly (model may take a moment to appear)
         TimerAction(period=2.0, actions=[
@@ -192,6 +192,6 @@ def generate_launch_description():
             lidar_static_tf,
             scan_fix,
             aruco,
-            local_costmap
+            # local_costmap
         ]),
     ])

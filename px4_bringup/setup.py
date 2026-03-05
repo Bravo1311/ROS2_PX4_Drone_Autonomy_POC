@@ -12,9 +12,20 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        # Include all launch files
-        (os.path.join('share', package_name, 'launch'), 
+
+        # launch files
+        (os.path.join('share', package_name, 'launch'),
             glob('launch/*.launch.py')),
+
+        # configs
+        (os.path.join('share', package_name, 'config'),
+            glob('config/*.yaml')),
+
+        # optional maps folder (safe even if empty)
+        (os.path.join('share', package_name, 'maps'),
+            glob('maps/*')),
+        (os.path.join('share', package_name, 'rviz'), 
+            glob('rviz/*.rviz')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -24,7 +35,6 @@ setup(
     license='BSD',
     tests_require=['pytest'],
     entry_points={
-        'console_scripts': [
-        ],
+        'console_scripts': [],
     },
 )

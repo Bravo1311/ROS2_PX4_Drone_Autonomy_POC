@@ -32,6 +32,14 @@ def generate_launch_description():
         output='screen',
         emulate_tty=True,  # This ensures Python's print() statements are shown
     )
+    
+    nav2_relay_node = Node(
+        package=package_name,
+        executable='nav2_cmd_relay.py',
+        name='nav2_cmd_relay',
+        output='screen',
+        emulate_tty=True,  # This ensures Python's print() statements are shown
+    )
 
     joy_node = Node(
         package="joy",
@@ -48,4 +56,5 @@ def generate_launch_description():
         controller_node,
         joy_node,
         joystick_teleop_node,
+        nav2_relay_node
     ])
