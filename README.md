@@ -29,7 +29,7 @@ The system provides end-to-end autonomy from sensor fusion through mission plann
 - SLAM-based localisation (SLAM Toolbox) with a custom Gazebo ground-truth odometry bridge
 - Full 2D autonomous navigation via Nav2 (adapted for holonomic drone dynamics)
 - Real-time ArUco marker detection
-- Diffusion Transformer-based Flow-matching precision landing policy based on a PD controller, takes marker pose from the ArUco detector
+- Diffusion Transformer-style conditional-flow-matching precision landing policy based on a PD controller, takes marker pose from the ArUco detector
 - Vision-guided precision landing using a PD velocity controller
 - Reactive obstacle avoidance via a 2D LiDAR safety filter
 - Command multiplexing between teleoperation, autonomous navigation, and landing modes
@@ -147,7 +147,8 @@ autoland_twist_publisher.py
   OR
 
 flow_landing_policy/policy_node.py
-  - Ingests marker_pose from aruco_detector, pose passed on as input to the policy
+  - Ingests marker_pose from aruco_detector, pose is converted from MuJoCo to px4-gazebo convention, converted pose passed on as input to the policy
+  - Uses a receding horizon approach that implements (default) 3 out of 8 next steps from the generated action chunk.
   - policy trained through imitation learning. More details can be foundin the repo: [Flow Matching Landing](https://github.com/Bravo1311/Flow_Matching_Landing)
           ↓
 px4_offboard_mux.py (AUTO mode)
@@ -212,8 +213,11 @@ ros2 launch px4_offboard auto_joystick_teleop.launch.py
 # Terminal 5 — Precision Landing Velocity Publisher
 ros2 run px4_aruco_landing autoland_twist_publisher.py
 
-# Terminal 6 — Precision Landing Velocity Publisher
+# Terminal 6 — Precision Landing Velocity Publisher using autoland_twist_publisher
 ros2 run flow_landing_policy policy_landing.launch.py
+          --------- or -----------
+# Terminal 6 — Precision Landing Velocity Publisher using flow_matching policy
+ros2 launch flow_landing_policy policy_landing.launch.py use_policy:=true weights_path:=/path/to/model.pt
 
 ```
 
@@ -303,7 +307,7 @@ This project builds upon:
 
 ### Design Decisions
 
-- Gazebo odometry over PX4 EKF2 for simulation** — PX4 EKF2 introduces 1–5° yaw offset from simulated magnetic declination. Gazebo ground truth gives perfect frame alignment for SLAM and Nav2.
+- **Gazebo odometry over PX4 EKF2 for simulation** — PX4 EKF2 introduces 1–5° yaw offset from simulated magnetic declination. Gazebo ground truth gives perfect frame alignment for SLAM and Nav2.
 - PD control selected to prioritize fast lateral convergence and damping while avoiding integral windup during dynamic descent.
 - Integral action intentionally omitted due to limited external disturbances in simulation and risk of overshoot during vertical convergence.
 - Velocity control was chosen over position control to allow smoother interaction with PX4's internal cascaded controllers in Offboard mode.
