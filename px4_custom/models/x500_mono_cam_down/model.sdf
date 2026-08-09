@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sdf version='1.9'>
+  <model name='x500_mono_cam_down'>
+    <self_collide>false</self_collide>
+
+    <include merge='true'>
+      <uri>x500</uri>
+    </include>
+
+    <!-- Downward camera - merge=true, exports 'camera_link' -->
+    <include merge='true'>
+      <uri>model://mono_cam</uri>
+      <pose>0 0 .10 0 1.5707 0</pose>
+      <name>mono_cam</name>
+    </include>
+    <joint name="CameraJointDown" type="fixed">
+      <parent>base_link</parent>
+      <child>camera_link</child>   <!-- actual link name from mono_cam -->
+    </joint>
+
+    <!-- Lidar -->
+    <include merge='true'>
+      <uri>model://lidar_2d_v2</uri>
+      <pose>.12 0 .26 0 0 0</pose>
+    </include>
+    <joint name="LidarJoint" type="fixed">
+      <parent>base_link</parent>
+      <child>link</child>          <!-- actual link name from lidar_2d_v2 -->
+    </joint>
+
+    <!-- Front camera - NO merge so links get namespaced as 'OakD::camera_link' -->
+    <include>
+      <uri>model://OakD-Lite</uri>
+      <pose>.12 .03 .242 0 0 0</pose>
+      <name>OakD</name>            <!-- gives namespace to avoid conflict -->
+    </include>
+    <joint name="CameraJointFront" type="fixed">
+      <parent>base_link</parent>
+      <child>OakD::camera_link</child>   <!-- namespaced link -->
+    </joint>
+
+  </model>
+</sdf>

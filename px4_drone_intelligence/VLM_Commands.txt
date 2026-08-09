@@ -1,0 +1,21 @@
+sudo systemctl stop ollama
+OLLAMA_GPU_LAYERS=999 ollama serve &
+
+verify:
+curl http://localhost:11434/api/tags
+
+sample script:
+python3 stage1_target_selection.py \
+  --image /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/px4_drone_intelligence/maps/mapz.jpg \
+  --instruction "Go to the lowest marker" \
+  --model "qwen2.5vl:3b"
+
+python3 stage1_target_selection.py \
+--image /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/maps/maps.png \
+--instruction "Go to the lowest marker" \
+--model "qwen2.5vl:3b"
+
+python3 stage1_target_selection.py \
+--image /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/maps/maps.png \
+--instruction "Assume the drone is at Marker 0. Chart a plan that covers all the markers in the shortest path possible" \
+--model "qwen2.5vl:3b"

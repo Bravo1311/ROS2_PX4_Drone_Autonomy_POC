@@ -1,0 +1,21 @@
+slam_toolbox:
+  ros__parameters:
+    use_sim_time: true
+    map_frame: map
+    odom_frame: odom
+    base_frame: base_link
+    scan_topic: /scan_fixed
+    mode: localization                          # ← tells SLAM which mode
+
+    # Path to your saved map — update this to your actual path
+    map_file_name: /home/bravo1311/px4_ros2_ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/maps/walls_posegraph
+    map_start_at_dock: true
+
+    publish_tf: true
+    transform_publish_period: 0.05
+    tf_buffer_duration: 60.0
+
+    resolution: 0.05
+    max_laser_range: 30.0
+    minimum_time_interval: 0.5
+    transform_tolerance: 0.5

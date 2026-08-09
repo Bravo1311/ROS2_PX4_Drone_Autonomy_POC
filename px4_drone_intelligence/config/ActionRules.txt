@@ -1,0 +1,3 @@
+1. The only available actions are: 
+
+2. The drone should always remain inside the map area. 

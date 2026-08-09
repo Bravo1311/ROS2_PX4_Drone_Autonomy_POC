@@ -1,0 +1,7 @@
+.vscode/
+venv/
+maps/
+
+build/
+install/
+log/

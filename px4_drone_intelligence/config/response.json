@@ -1,0 +1,12 @@
+{
+    "navTarget":{
+        "goal_coords": {},
+        "auto_navigation": false
+    },
+    "teleoperation": true,
+    "marker":{
+        "markerName": "",
+        "markerId": "",
+        "landing": false
+    }
+}
