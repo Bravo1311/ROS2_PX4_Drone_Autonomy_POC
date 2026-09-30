@@ -15,7 +15,7 @@ setup(
     zip_safe=True,
     maintainer='bravo1311',
     maintainer_email='agrawalkartik1999@gmail.com',
-    description='TODO: Package description',
+    description='ArUco marker detection and PD-controller vision-guided precision landing',
     license='MIT',
     extras_require={
         'test': [

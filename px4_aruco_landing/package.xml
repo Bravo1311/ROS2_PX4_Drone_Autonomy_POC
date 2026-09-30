@@ -3,7 +3,7 @@
 <package format="3">
   <name>px4_aruco_landing</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>ArUco marker detection and PD-controller vision-guided precision landing</description>
   <maintainer email="agrawalkartik1999@gmail.com">bravo1311</maintainer>
   <license>MIT</license>
 
