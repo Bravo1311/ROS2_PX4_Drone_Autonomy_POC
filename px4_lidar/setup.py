@@ -19,7 +19,7 @@ setup(
     maintainer='bravo1311',
     maintainer_email='agrawalkartik1999@gmail.com',
     description='TODO: Package description',
-    license='TODO: License declaration',
+    license='MIT',
     extras_require={
         'test': [
             'pytest',

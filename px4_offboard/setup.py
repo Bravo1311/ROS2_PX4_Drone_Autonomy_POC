@@ -24,7 +24,7 @@ setup(
     maintainer='Your Name',
     maintainer_email='your.email@example.com',
     description='PX4 Offboard Control with Teleop',
-    license='BSD',
+    license='MIT',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [

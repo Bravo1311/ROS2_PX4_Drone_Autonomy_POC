@@ -32,7 +32,7 @@ setup(
     maintainer='Your Name',
     maintainer_email='your.email@example.com',
     description='Complete bringup package for PX4 with ROS2',
-    license='BSD',
+    license='MIT',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [],
