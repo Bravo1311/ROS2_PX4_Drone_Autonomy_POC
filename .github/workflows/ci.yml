@@ -85,6 +85,7 @@ jobs:
       - name: rosdep install
         working-directory: ws
         run: |
+          apt-get update
           rosdep update
           rosdep install --from-paths src --ignore-src -y --rosdistro jazzy
 
