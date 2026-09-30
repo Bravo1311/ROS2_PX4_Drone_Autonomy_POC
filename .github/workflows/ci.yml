@@ -15,6 +15,10 @@ permissions:
   contents: read
   packages: read
 
+defaults:
+  run:
+    shell:bash
+
 env:
   IMAGE: ghcr.io/bravo1311/ros2-px4-drone-autonomy-poc-ci
   PX4_MSGS_SHA: 98517583c52b9c9b811606f75b28f31dfd7d67db
