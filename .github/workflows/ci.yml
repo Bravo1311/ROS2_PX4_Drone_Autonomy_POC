@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull-request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{github.ref}}
+  cancel-in-progress: true
+
+permission:
+  content: read
+  packages: read
+
+env:
+  IMAGE: ghcr.io/bravo1311/ros2-px4-drone-autonomy-poc-ci
+  PX4_MSGS_SHA: 98517583c52b9c9b811606f75b28f31dfd7d67db
+
+jobs:
+  image:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      ref: ${{ steps.tag.outputs.ref}}
+    steps:
+      - uses: actions/checkout@v7
+
+      - id: tag
+        run: |
+          h=$(sha256sum .github/ci.Dockerfile | cut -c1-16)
+          echo "ref=${IMAGE}:${h}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: probe
+        run: |
+          docker manifest inspect "${{ steps.tag.outputs.ref }}" >/dev/null 2>&1 \
+            && echo "exists=true" >> "$GITHUB_OUTPUT" \
+            || echo "exists=false" >> "$GITHUB_OUTPUT"
+
+      - if: steps.probe.outputs.exists == 'false'
+        uses: docker/setup-buildx-action@v4
+
+      - if: steps.probe.outputs.exists == 'false'
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: .github/ci.Dockerfile
+          tags: ${{ steps.tag.outputs.ref }}
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=min
+
+  build:
+    needs: image
+    runs-on: ubuntu-24.04
+    container:
+      image: ${{ needs.image.outputs.ref }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v7
+        with:
+          path: ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick
+
+      - name: Fetch px4_msgs (pinned commit)
+        run: |
+          git init -q ws/src/px4_msgs
+          cd ws/src/px4_msgs
+          git remote add origin https://github.com/PX4/px4_msgs.git
+          git fetch --depth 1 origin ${{ env.PX4_MSGS_SHA }}
+          git checkout -q FETCH_HEAD
+
+      - name: rosdep install
+        working-directory: ws
+        run: |
+          rosdep update
+          rosdep install --from-paths src --ignore-src -y --rosdistro jazzy
+
+      - name: Build
+        working-directory: ws
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          colcon build --symlink-install --event-handlers console_cohesion+

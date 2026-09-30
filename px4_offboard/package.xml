@@ -15,6 +15,7 @@
   <depend>trajectory_msgs</depend>
   <depend>twist_mux_msgs</depend>
   <depend>visualization_msgs</depend>
+  <depend>px4_msgs</depend>
   
   <exec_depend>joy</exec_depend>
   <exec_depend>joy_teleop</exec_depend>
