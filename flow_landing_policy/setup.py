@@ -19,7 +19,7 @@ setup(
     zip_safe=True,
     maintainer='bravo1311',
     maintainer_email='agrawalkartik1999@gmail.com',
-    description='TODO: Package description',
+    description='Flow-matching precision landing policy for vision-guided PX4 descent',
     license='MIT',
     extras_require={
         'test': [

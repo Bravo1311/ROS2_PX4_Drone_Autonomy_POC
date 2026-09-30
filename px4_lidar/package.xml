@@ -3,7 +3,7 @@
 <package format="3">
   <name>px4_lidar</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>2D LiDAR safety filtering and SLAM odometry bridging for the PX4 drone</description>
   <maintainer email="agrawalkartik1999@gmail.com">bravo1311</maintainer>
   <license>MIT</license>
 

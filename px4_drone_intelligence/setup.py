@@ -21,7 +21,7 @@ setup(
     zip_safe=True,
     maintainer='bravo1311',
     maintainer_email='agrawalkartik1999@gmail.com',
-    description='TODO: Package description',
+    description='VLM-based natural language mission intelligence via OpenRouter',
     license='MIT',
     extras_require={
         'test': [
