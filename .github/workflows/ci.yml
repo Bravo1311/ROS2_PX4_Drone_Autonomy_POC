@@ -91,7 +91,7 @@ jobs:
         run: |
           apt-get update
           rosdep update
-          rosdep install --from-paths src --ignore-src -y --rosdistro jazzy
+          rosdep install --from-paths src --ignore-src -y --rosdistro jazzy --skip-keys nlohmann_json
 
       - name: Build
         working-directory: ws
