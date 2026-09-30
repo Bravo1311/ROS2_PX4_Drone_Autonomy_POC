@@ -39,7 +39,7 @@ class AutoLandTwist(Node):
 
         qos = QoSProfile(
             reliability=QoSReliabilityPolicy.BEST_EFFORT,
-            durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+            durability=QoSDurabilityPolicy.VOLATILE,
             history=QoSHistoryPolicy.KEEP_LAST,
             depth=5
         )
@@ -130,6 +130,9 @@ class AutoLandTwist(Node):
             f"yaw_align={self.yaw_align_enable} lock_h={self.yaw_lock_h}m"
         )
 
+    def _now(self) -> float:
+        return self.get_clock().now().nanoseconds * 1e-9
+
     def reset_pid_states(self):
         # Reset I and D states (useful when marker is lost)
         self.ix = 0.0
@@ -167,10 +170,10 @@ class AutoLandTwist(Node):
         self.yaw_err_rel = wrap_to_pi(yaw_marker)  # we want this -> 0 when aligned
 
         self.marker_seen = True
-        self.last_marker_time = time.time()
+        self.last_marker_time = self._now()
 
     def loop(self):
-        now = time.time()
+        now = self._now()
 
         # marker freshness check
         if self.last_marker_time is None or (now - self.last_marker_time) > self.lost_timeout:
@@ -190,7 +193,7 @@ class AutoLandTwist(Node):
             return
 
         # timing
-        t = time.time()
+        t = self._now()
         if self.prev_t is None:
             dt = 1.0 / 20.0
         else:

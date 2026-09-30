@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import time, math, rclpy
+import math, rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy, QoSDurabilityPolicy
 
@@ -20,6 +20,12 @@ INACTIVITY_TIMEOUT = 5.0  # seconds
 VEL_LIMIT_XY = 3.0
 VEL_LIMIT_Z = 2.0
 YAW_RATE_LIMIT = 2.0
+
+ST_IDLE = 0
+ST_WARMUP = 1
+ST_OFFBOARD_REQUESTED = 2
+ST_READY = 3
+OFFBOARD_REQUEST_DELAY_S = 0.2  # gap between requesting OFFBOARD and sending ARM
 
 
 class PX4Offboard(Node):
@@ -51,19 +57,27 @@ class PX4Offboard(Node):
         self.use_yaw_position = False  # Flag to switch between rate and position control
         self.status = VehicleStatus()
         self.offboard_active = False
-        self.armed = False
+        self.armed = False           # authoritative: set from VehicleStatus, never assigned elsewhere
+        self.arm_requested = False   # intention flag driven by /arm_message
         self.warmed_up = False
-        self.last_cmd_time = time.time()
-        self.last_yaw_update = time.time()
+        self.startup_state = ST_IDLE
+        self.warmup_count = 0
+        self.state_enter_time = 0.0
+        self.last_cmd_time = self._now()
+        self.last_yaw_update = self._now()
 
         # Timer
         self.create_timer(1.0 / SETPOINT_RATE_HZ, self.loop)
         self.get_logger().info("PX4 Offboard Teleop Node initialized.")
 
+    def _now(self) -> float:
+        return self.get_clock().now().nanoseconds * 1e-9
+
     # -------------------- Callbacks --------------------
     # stores the PX4 status msg.
     def status_cb(self, msg):
         self.status = msg
+        self.armed = (msg.arming_state == VehicleStatus.ARMING_STATE_ARMED)
 
     # extracts yaw from attitude quarternion
     def att_cb(self, msg):
@@ -74,35 +88,36 @@ class PX4Offboard(Node):
 
     def vel_cb(self, msg: Twist):
         """Handle velocity commands from teleop."""
-        self.last_cmd_time = time.time()
+        self.last_cmd_time = self._now()
+
+        vals = (msg.linear.x, msg.linear.y, msg.linear.z, msg.angular.z)
+        if not all(math.isfinite(v) for v in vals):
+            self.get_logger().error("Non-finite teleop command, ignoring", throttle_duration_sec=1.0)
+            return
 
         self.vx = max(-VEL_LIMIT_XY, min(VEL_LIMIT_XY, msg.linear.x))
         self.vy = max(-VEL_LIMIT_XY, min(VEL_LIMIT_XY, msg.linear.y))
         self.vz = max(-VEL_LIMIT_Z, min(VEL_LIMIT_Z, msg.linear.z))
         self.yawspeed = max(-YAW_RATE_LIMIT, min(YAW_RATE_LIMIT, msg.angular.z))
 
-        # Start offboard mode on first velocity command (if armed)
-        if not self.warmed_up and self.armed:
-            self.start_offboard()
-
     def arm_cb(self, msg: Bool):
         """Handle external arm/disarm command"""
-        if msg.data and not self.armed:
+        if msg.data and not self.arm_requested:
             self.get_logger().info("ARM command received")
-            self.start_offboard()  # Prepare offboard mode
-            time.sleep(0.2)
-            self.publish_cmd(VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM, param1=1.0)
-            self.armed = True
-            self.get_logger().info("ARMED - Ready to fly!")
-            
-        elif not msg.data and self.armed:
+            self.arm_requested = True
+            if self.startup_state == ST_IDLE:
+                self.startup_state = ST_WARMUP
+                self.warmup_count = 0
+
+        elif not msg.data and self.arm_requested:
             self.get_logger().info("DISARM command received")
             self.publish_cmd(VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM, param1=0.0)
-            self.armed = False
+            self.arm_requested = False
+            self.startup_state = ST_IDLE
             self.warmed_up = False
             self.offboard_active = False
             self.vx = self.vy = self.vz = self.yawspeed = 0.0
-            self.get_logger().info("DISARMED")
+            self.get_logger().info("DISARM command sent")
 
     # -------------------- Helpers --------------------
     def micros(self):
@@ -146,26 +161,30 @@ class PX4Offboard(Node):
         self.cmd_pub.publish(m)
 
     # -------------------- Sequence Control --------------------
-    def start_offboard(self):
-        """Send dummy setpoints before activating OFFBOARD."""
-        if self.warmed_up:
-            return
-        self.get_logger().info("Warming up Offboard mode...")
-        for _ in range(SETPOINT_WARMUP_COUNT):
-            self.publish_mode()
-            self.publish_setpoint(0.0, 0.0, 0.0, 0.0)
-            time.sleep(1.0 / SETPOINT_RATE_HZ)
-        
-        self.get_logger().info("Requesting OFFBOARD mode...")
-        self.publish_cmd(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, param1=1.0, param2=6.0)
-        self.warmed_up = True
-        time.sleep(0.2)
-        self.get_logger().info("Offboard mode ready!")
+    def advance_startup_state(self):
+        """Non-blocking replacement for the old sleep-based start_offboard()."""
+        if self.startup_state == ST_WARMUP:
+            self.warmup_count += 1
+            if self.warmup_count == 1:
+                self.get_logger().info("Warming up Offboard mode...")
+            if self.warmup_count >= SETPOINT_WARMUP_COUNT:
+                self.get_logger().info("Requesting OFFBOARD mode...")
+                self.publish_cmd(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, param1=1.0, param2=6.0)
+                self.startup_state = ST_OFFBOARD_REQUESTED
+                self.state_enter_time = self._now()
+
+        elif self.startup_state == ST_OFFBOARD_REQUESTED:
+            if (self._now() - self.state_enter_time) >= OFFBOARD_REQUEST_DELAY_S:
+                self.publish_cmd(VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM, param1=1.0)
+                self.warmed_up = True
+                self.startup_state = ST_READY
+                self.get_logger().info("ARM command sent - offboard warmup complete.")
 
     # -------------------- Main Loop --------------------
     def loop(self):
-        now = time.time()
+        now = self._now()
         self.publish_mode()
+        self.advance_startup_state()
 
         # Check if PX4 reports Offboard mode
         if self.status.nav_state == VehicleStatus.NAVIGATION_STATE_OFFBOARD:

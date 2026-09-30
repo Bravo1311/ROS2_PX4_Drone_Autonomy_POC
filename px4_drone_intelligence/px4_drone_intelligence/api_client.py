@@ -65,7 +65,7 @@ def _post(url, payload, key, timeout):
         data = json.dumps(payload).encode(),
         headers={
             "Authorization": f"Bearer {key}",
-            "Content-Type": "applicaiton/json",
+            "Content-Type": "application/json",
         },
         method="POST"
     )

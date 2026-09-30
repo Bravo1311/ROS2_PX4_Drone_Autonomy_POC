@@ -4,6 +4,7 @@ import time
 
 import rclpy
 from rclpy.node import Node
+from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy, QoSDurabilityPolicy
 
 from geometry_msgs.msg import PoseStamped
 
@@ -20,7 +21,7 @@ class AutoLandOffboard(Node):
     Subscribes:
       - marker_pose (PoseStamped) from ArUco node (tvec in camera optical frame, meters)
       - /fmu/out/vehicle_local_position
-      - /fmu/out/vehicle_status
+      - /fmu/out/vehicle_status_v1
 
     Publishes:
       - /fmu/in/offboard_control_mode
@@ -30,6 +31,13 @@ class AutoLandOffboard(Node):
 
     def __init__(self):
         super().__init__("auto_land_offboard")
+
+        qos_px4 = QoSProfile(
+             reliability=QoSReliabilityPolicy.BEST_EFFORT,
+             durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+             history=QoSHistoryPolicy.KEEP_LAST,
+             depth=5
+         )
 
         # --- Params ---
         self.declare_parameter("marker_pose_topic", "marker_pose")
@@ -64,14 +72,14 @@ class AutoLandOffboard(Node):
         self.status = None
 
         # Publishers
-        self.offboard_pub = self.create_publisher(OffboardControlMode, "/fmu/in/offboard_control_mode", 10)
-        self.setpoint_pub = self.create_publisher(TrajectorySetpoint, "/fmu/in/trajectory_setpoint", 10)
-        self.cmd_pub = self.create_publisher(VehicleCommand, "/fmu/in/vehicle_command", 10)
+        self.offboard_pub = self.create_publisher(OffboardControlMode, "/fmu/in/offboard_control_mode", qos_px4)
+        self.setpoint_pub = self.create_publisher(TrajectorySetpoint, "/fmu/in/trajectory_setpoint", qos_px4)
+        self.cmd_pub = self.create_publisher(VehicleCommand, "/fmu/in/vehicle_command", qos_px4)
 
         # Subscribers
         self.create_subscription(PoseStamped, self.marker_topic, self.on_marker_pose, 10)
-        self.create_subscription(VehicleLocalPosition, "/fmu/out/vehicle_local_position", self.on_local_pos, 10)
-        self.create_subscription(VehicleStatus, "/fmu/out/vehicle_status", self.on_status, 10)
+        self.create_subscription(VehicleLocalPosition, "/fmu/out/vehicle_local_position", self.on_local_pos, qos_px4)
+        self.create_subscription(VehicleStatus, "/fmu/out/vehicle_status_v1", self.on_status, qos_px4)
 
         # Timer (setpoint stream)
         self.timer = self.create_timer(0.05, self.on_timer)  # 20 Hz

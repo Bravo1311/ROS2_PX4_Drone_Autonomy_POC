@@ -1,4 +1,3 @@
-import time
 import math
 import numpy as np
 import torch
@@ -44,7 +43,7 @@ class FlowLandingPolicyNode(Node):
 
         qos = QoSProfile(
             reliability=QoSReliabilityPolicy.BEST_EFFORT,
-            durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+            durability=QoSDurabilityPolicy.VOLATILE,
             history=QoSHistoryPolicy.KEEP_LAST,
             depth=5
         )
@@ -95,6 +94,9 @@ class FlowLandingPolicyNode(Node):
             f"steps_per_chunk={self.steps_per_chunk}"
         )
 
+    def _now(self) -> float:
+        return self.get_clock().now().nanoseconds * 1e-9
+
     def reset_state(self):
         self.history_buffer = []
         self.current_chunk = None
@@ -110,10 +112,10 @@ class FlowLandingPolicyNode(Node):
             self.history_buffer.pop(0)
 
         self.marker_seen = True
-        self.last_marker_time = time.time()
+        self.last_marker_time = self._now()
 
     def loop(self):
-        now = time.time()
+        now = self._now()
 
         if self.last_marker_time is None or (now - self.last_marker_time) > self.lost_timeout:
             if self.marker_seen:
@@ -145,6 +147,15 @@ class FlowLandingPolicyNode(Node):
         self.steps_since_replan += 1
 
         vx, vy, vz, yaw_rate = cmd_vel
+
+        if not all(math.isfinite(v) for v in (vx, vy, vz, yaw_rate)):
+            self.get_logger().error(
+                "Policy produced non-finite output. Therefore publishing zero + resetting policy state",
+                throttle_duration_sec=1.0
+            )
+            self.cmd_pub.publish(Twist())
+            self.reset_state()
+            return
 
         # ---------------- safety clamps ----------------
         vx = clamp(float(vx), -self.vmax_xy, self.vmax_xy)
