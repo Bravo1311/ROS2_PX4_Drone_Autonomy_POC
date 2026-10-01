@@ -1,6 +1,7 @@
-from setuptools import setup
-import os
 from glob import glob
+import os
+
+from setuptools import setup
 
 package_name = 'px4_bringup'
 
@@ -9,23 +10,15 @@ setup(
     version='0.0.1',
     packages=[package_name],
     data_files=[
-        ('share/ament_index/resource_index/packages',
-            ['resource/' + package_name]),
+        ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-
         # launch files
-        (os.path.join('share', package_name, 'launch'),
-            glob('launch/*.launch.py')),
-
+        (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
         # configs
-        (os.path.join('share', package_name, 'config'),
-            glob('config/*.yaml')),
-
+        (os.path.join('share', package_name, 'config'), glob('config/*.yaml')),
         # optional maps folder (safe even if empty)
-        (os.path.join('share', package_name, 'maps'),
-            glob('maps/*')),
-        (os.path.join('share', package_name, 'rviz'), 
-            glob('rviz/*.rviz')),
+        (os.path.join('share', package_name, 'maps'), glob('maps/*')),
+        (os.path.join('share', package_name, 'rviz'), glob('rviz/*.rviz')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,

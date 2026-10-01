@@ -31,23 +31,25 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    use_sim_time = LaunchConfiguration("use_sim_time")
+    use_sim_time = LaunchConfiguration('use_sim_time')
 
     params = os.path.join(
-        get_package_share_directory("px4_bringup"),
-        "config",
-        "slam_clean.yaml",
+        get_package_share_directory('px4_bringup'),
+        'config',
+        'slam_clean.yaml',
     )
 
     slam = Node(
-        package="slam_toolbox",
-        executable="async_slam_toolbox_node",
-        name="slam_toolbox",
-        output="screen",
-        parameters=[params, {"use_sim_time": use_sim_time}],
+        package='slam_toolbox',
+        executable='async_slam_toolbox_node',
+        name='slam_toolbox',
+        output='screen',
+        parameters=[params, {'use_sim_time': use_sim_time}],
     )
 
-    return LaunchDescription([
-        DeclareLaunchArgument("use_sim_time", default_value="true"),
-        slam,
-    ])
+    return LaunchDescription(
+        [
+            DeclareLaunchArgument('use_sim_time', default_value='true'),
+            slam,
+        ]
+    )

@@ -29,13 +29,12 @@ from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PythonExpression
-from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    world        = LaunchConfiguration('world')
-    drone        = LaunchConfiguration('drone')
-    mode         = LaunchConfiguration('mode')
+    world = LaunchConfiguration('world')
+    drone = LaunchConfiguration('drone')
+    mode = LaunchConfiguration('mode')
     use_sim_time = LaunchConfiguration('use_sim_time')
     slam_params_file = LaunchConfiguration('slam_params_file')
 
@@ -78,11 +77,9 @@ def generate_launch_description():
         ),
         launch_arguments={
             'slam_params_file': slam_params_file,
-            'use_sim_time':     use_sim_time,
+            'use_sim_time': use_sim_time,
         }.items(),
-        condition=IfCondition(
-            PythonExpression(["'", mode, "' == 'mapping'"])
-        ),
+        condition=IfCondition(PythonExpression(["'", mode, "' == 'mapping'"])),
     )
 
     # ── SLAM Toolbox — localization mode ─────────────────────────
@@ -101,29 +98,26 @@ def generate_launch_description():
         ),
         launch_arguments={
             'slam_params_file': slam_params_file,
-            'use_sim_time':     use_sim_time,
+            'use_sim_time': use_sim_time,
         }.items(),
-        condition=IfCondition(
-            PythonExpression(["'", mode, "' == 'localization'"])
-        ),
+        condition=IfCondition(PythonExpression(["'", mode, "' == 'localization'"])),
     )
 
-    return LaunchDescription([
-        DeclareLaunchArgument('world',        default_value='walls'),
-        DeclareLaunchArgument('drone',        default_value='x500_mono_cam_down_0'),
-        DeclareLaunchArgument('use_sim_time', default_value='true'),
-        DeclareLaunchArgument(
-            'mode',
-            default_value='mapping',
-            description='mapping | localization'
-        ),
-        DeclareLaunchArgument(
-            'slam_params_file',
-            default_value=default_slam_params,
-            description='SLAM Toolbox params yaml',
-        ),
-
-        perception_launch,
-        slam_mapping,
-        slam_localization,
-    ])
+    return LaunchDescription(
+        [
+            DeclareLaunchArgument('world', default_value='walls'),
+            DeclareLaunchArgument('drone', default_value='x500_mono_cam_down_0'),
+            DeclareLaunchArgument('use_sim_time', default_value='true'),
+            DeclareLaunchArgument(
+                'mode', default_value='mapping', description='mapping | localization'
+            ),
+            DeclareLaunchArgument(
+                'slam_params_file',
+                default_value=default_slam_params,
+                description='SLAM Toolbox params yaml',
+            ),
+            perception_launch,
+            slam_mapping,
+            slam_localization,
+        ]
+    )
