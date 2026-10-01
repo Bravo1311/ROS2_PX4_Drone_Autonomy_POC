@@ -21,17 +21,22 @@
 # THE SOFTWARE.
 
 
-import rclpy
-import time
-from rclpy.node import Node
-from geometry_msgs.msg import Twist
-from std_msgs.msg import Bool
-from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy, QoSDurabilityPolicy
-
+import select
 import sys
 import termios
+import time
 import tty
-import select
+
+from geometry_msgs.msg import Twist
+import rclpy
+from rclpy.node import Node
+from rclpy.qos import (
+    QoSDurabilityPolicy,
+    QoSHistoryPolicy,
+    QoSProfile,
+    QoSReliabilityPolicy,
+)
+from std_msgs.msg import Bool
 
 # Throttle increments (like a real drone)
 THROTTLE_INCREMENT = 0.05  # Small increments
@@ -41,9 +46,11 @@ HOVER_THROTTLE = 0.5  # Middle point for hovering
 
 # Movement speeds
 XY_VELOCITY = 0.8  # m/s for horizontal movement
-YAW_RATE = 1.5     # rad/s for yaw rotation (~86 deg/s - very visible!)
+YAW_RATE = 1.5  # rad/s for yaw rotation (~86 deg/s - very visible!)
+
 
 class KeyboardTeleop(Node):
+
     def __init__(self):
         super().__init__('keyboard_teleop')
 
@@ -51,7 +58,7 @@ class KeyboardTeleop(Node):
             reliability=QoSReliabilityPolicy.BEST_EFFORT,
             durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
             history=QoSHistoryPolicy.KEEP_LAST,
-            depth=5
+            depth=5,
         )
 
         self.pub = self.create_publisher(Twist, '/offboard_velocity_cmd', qos)
@@ -63,24 +70,24 @@ class KeyboardTeleop(Node):
         self.yaw_rate = 0.0  # Rotation
 
         self.armed = False
-        
+
         # Track which movement keys are currently being "held"
         self.key_held_time = {}  # key -> last_time_seen
         self.key_timeout = 0.15  # If key not seen for 150ms, consider released
 
-        self.get_logger().info("\n" + "="*50)
-        self.get_logger().info("Realistic Drone Keyboard Teleop Ready!")
-        self.get_logger().info("="*50)
-        self.get_logger().info("SPACE       = Arm / Disarm")
-        self.get_logger().info("W           = Throttle UP (incremental)")
-        self.get_logger().info("S           = Throttle DOWN (incremental)")
-        self.get_logger().info("Arrow UP    = Move Forward (hold key)")
-        self.get_logger().info("Arrow DOWN  = Move Backward (hold key)")
-        self.get_logger().info("Arrow LEFT  = Move Left (hold key)")
-        self.get_logger().info("Arrow RIGHT = Move Right (hold key)")
-        self.get_logger().info("A           = Yaw Left (hold key)")
-        self.get_logger().info("D           = Yaw Right (hold key)")
-        self.get_logger().info("="*50 + "\n")
+        self.get_logger().info('\n' + '=' * 50)
+        self.get_logger().info('Realistic Drone Keyboard Teleop Ready!')
+        self.get_logger().info('=' * 50)
+        self.get_logger().info('SPACE       = Arm / Disarm')
+        self.get_logger().info('W           = Throttle UP (incremental)')
+        self.get_logger().info('S           = Throttle DOWN (incremental)')
+        self.get_logger().info('Arrow UP    = Move Forward (hold key)')
+        self.get_logger().info('Arrow DOWN  = Move Backward (hold key)')
+        self.get_logger().info('Arrow LEFT  = Move Left (hold key)')
+        self.get_logger().info('Arrow RIGHT = Move Right (hold key)')
+        self.get_logger().info('A           = Yaw Left (hold key)')
+        self.get_logger().info('D           = Yaw Right (hold key)')
+        self.get_logger().info('=' * 50 + '\n')
 
         self.timer = self.create_timer(0.05, self.loop)  # 20 Hz
 
@@ -93,7 +100,7 @@ class KeyboardTeleop(Node):
     def loop(self):
         key = self.get_key()
         current_time = time.time()
-        
+
         # Reset velocities
         self.vx = 0.0
         self.vy = 0.0
@@ -111,13 +118,13 @@ class KeyboardTeleop(Node):
             # ------------------------
             # SPACE → Toggle Arm/Disarm
             # ------------------------
-            elif key == " ":
+            elif key == ' ':
                 self.armed = not self.armed
                 msg = Bool()
                 msg.data = self.armed
                 self.arm_pub.publish(msg)
-                status = "ARMED" if self.armed else "DISARMED"
-                self.get_logger().info(f"*** {status} ***")
+                status = 'ARMED' if self.armed else 'DISARMED'
+                self.get_logger().info(f'*** {status} ***')
                 if not self.armed:
                     self.throttle = 0.0  # Reset throttle on disarm
 
@@ -126,11 +133,11 @@ class KeyboardTeleop(Node):
             # ------------------------
             elif key.lower() == 'w':
                 self.throttle = max(MIN_THROTTLE, self.throttle - THROTTLE_INCREMENT)
-                self.get_logger().info(f"Throttle UP: {self.throttle:.2f}")
+                self.get_logger().info(f'Throttle UP: {self.throttle:.2f}')
 
             elif key.lower() == 's':
                 self.throttle = min(MAX_THROTTLE, self.throttle + THROTTLE_INCREMENT)
-                self.get_logger().info(f"Throttle DOWN: {self.throttle:.2f}")
+                self.get_logger().info(f'Throttle DOWN: {self.throttle:.2f}')
 
             # ------------------------
             # A/D → Yaw Control (Mark as held for continuous rotation)
@@ -146,22 +153,26 @@ class KeyboardTeleop(Node):
             # ------------------------
             elif key == '\x1b':  # Arrow key prefix
                 seq = sys.stdin.read(2)
-                if seq == "[A":  # UP arrow
+                if seq == '[A':  # UP arrow
                     self.key_held_time['up'] = current_time
-                elif seq == "[B":  # DOWN arrow
+                elif seq == '[B':  # DOWN arrow
                     self.key_held_time['down'] = current_time
-                elif seq == "[D":  # RIGHT arrow
+                elif seq == '[D':  # RIGHT arrow
                     self.key_held_time['right'] = current_time
-                elif seq == "[C":  # LEFT arrow
+                elif seq == '[C':  # LEFT arrow
                     self.key_held_time['left'] = current_time
 
         # Apply velocities for all currently held keys
         if 'a' in self.key_held_time:
             self.yaw_rate = -YAW_RATE
-            self.get_logger().info(f"YAW LEFT active: {YAW_RATE:.2f} rad/s", throttle_duration_sec=0.3)
+            self.get_logger().info(
+                f'YAW LEFT active: {YAW_RATE:.2f} rad/s', throttle_duration_sec=0.3
+            )
         if 'd' in self.key_held_time:
             self.yaw_rate = YAW_RATE
-            self.get_logger().info(f"YAW RIGHT active: {-YAW_RATE:.2f} rad/s", throttle_duration_sec=0.3)
+            self.get_logger().info(
+                f'YAW RIGHT active: {-YAW_RATE:.2f} rad/s', throttle_duration_sec=0.3
+            )
         if 'up' in self.key_held_time:
             self.vx = XY_VELOCITY
         if 'down' in self.key_held_time:

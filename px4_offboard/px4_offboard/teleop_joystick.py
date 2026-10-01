@@ -21,37 +21,43 @@
 # THE SOFTWARE.
 
 
+from geometry_msgs.msg import Twist
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import Twist
-from std_msgs.msg import Bool
+from rclpy.qos import (
+    QoSDurabilityPolicy,
+    QoSHistoryPolicy,
+    QoSProfile,
+    QoSReliabilityPolicy,
+)
 from sensor_msgs.msg import Joy
-from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy, QoSDurabilityPolicy
+from std_msgs.msg import Bool
 
 # Controller axis mappings (Based on your joy_teleop config)
-AXIS_LEFT_STICK_LR = 0      # Left stick Left/Right → Yaw rotation (angular-z)
-AXIS_LEFT_STICK_UD = 1      # Left stick Up/Down → Throttle/Altitude (linear-z)
-AXIS_RIGHT_STICK_LR = 2     # Right stick Left/Right → Strafe (linear-y in gazebo frame)
-AXIS_RIGHT_STICK_UD = 3     # Right stick Up/Down → Forward/Back (linear-x in gz frame)
+AXIS_LEFT_STICK_LR = 0  # Left stick Left/Right → Yaw rotation (angular-z)
+AXIS_LEFT_STICK_UD = 1  # Left stick Up/Down → Throttle/Altitude (linear-z)
+AXIS_RIGHT_STICK_LR = 2  # Right stick Left/Right → Strafe (linear-y in gazebo frame)
+AXIS_RIGHT_STICK_UD = 3  # Right stick Up/Down → Forward/Back (linear-x in gz frame)
 
 # Button mappings (Xbox controller default)
-BUTTON_A = 0                # A button → ARM
-BUTTON_B = 1                # B Button -> enables/disables autonomous landing
-BUTTON_X = 3                # X button → Enable auto-hover (throttle = 0.5)
-BUTTON_Y = 4                # Y button → Emergency stop (disarm + zero throttle)
-BUTTON_SELECT = 10          # Select button -> Toggle nav2 control
+BUTTON_A = 0  # A button → ARM
+BUTTON_B = 1  # B Button -> enables/disables autonomous landing
+BUTTON_X = 3  # X button → Enable auto-hover (throttle = 0.5)
+BUTTON_Y = 4  # Y button → Emergency stop (disarm + zero throttle)
+BUTTON_SELECT = 10  # Select button -> Toggle nav2 control
 
 # Movement parameters
-XY_VELOCITY_MAX = 1.2       # m/s for horizontal movement
-YAW_RATE_MAX = 1.5          # rad/s for yaw rotation
-HOVER_THROTTLE = 0.5        # Neutral throttle position for hovering
+XY_VELOCITY_MAX = 1.2  # m/s for horizontal movement
+YAW_RATE_MAX = 1.5  # rad/s for yaw rotation
+HOVER_THROTTLE = 0.5  # Neutral throttle position for hovering
 
 # Deadzone for joystick axes
 AXIS_DEADZONE = 0.1
-THROTTLE_DEADZONE = 0.15    # Larger deadzone for throttle stick
+THROTTLE_DEADZONE = 0.15  # Larger deadzone for throttle stick
 
 
 class JoystickTeleop(Node):
+
     def __init__(self):
         super().__init__('joystick_teleop')
 
@@ -61,7 +67,7 @@ class JoystickTeleop(Node):
             reliability=QoSReliabilityPolicy.BEST_EFFORT,
             durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
             history=QoSHistoryPolicy.KEEP_LAST,
-            depth=5
+            depth=5,
         )
 
         # QoS for joy subscriber (to match joy_node's VOLATILE durability)
@@ -69,14 +75,16 @@ class JoystickTeleop(Node):
             reliability=QoSReliabilityPolicy.RELIABLE,
             durability=QoSDurabilityPolicy.VOLATILE,
             history=QoSHistoryPolicy.KEEP_LAST,
-            depth=10
+            depth=10,
         )
 
         # Publishers
         self.vel_pub = self.create_publisher(Twist, '/offboard_velocity_cmd', qos_pub)
         self.auto_land = self.create_publisher(Bool, '/enable_auto_land', qos_pub)
         self.nav_cmd = self.create_publisher(Bool, '/enable_nav_cmd', qos_pub)
-        self.arm_pub = self.create_publisher(Bool, '/arm_message', qos_pub)  #to arm/disarm the drone
+        self.arm_pub = self.create_publisher(
+            Bool, '/arm_message', qos_pub
+        )  # to arm/disarm the drone
 
         # Subscriber
         self.create_subscription(Joy, '/joy', self.joy_callback, qos_joy)
@@ -88,7 +96,7 @@ class JoystickTeleop(Node):
         self.auto_hover = False  # When enabled, throttle locks to 0.5
         self.enable_auto_land = False
         self.enable_nav_cmd = False
-        
+
         # Store current velocities
         self.current_vx = 0.0
         self.current_vy = 0.0
@@ -106,23 +114,23 @@ class JoystickTeleop(Node):
         self.print_instructions()
 
     def print_instructions(self):
-        self.get_logger().info("\n" + "="*60)
-        self.get_logger().info("Joystick Teleop for PX4 Drone Ready!")
-        self.get_logger().info("="*60)
-        self.get_logger().info(f"Controller Type: {self.controller_type.upper()}")
-        self.get_logger().info("-"*60)
-        self.get_logger().info("LEFT STICK LR   = Yaw (Rotate)")
-        self.get_logger().info("LEFT STICK UD   = Throttle (Direct control)")
-        self.get_logger().info("  • Stick DOWN  = Descend (throttle 0.0)")
-        self.get_logger().info("  • Stick CENTER= Hover (throttle 0.5)")
-        self.get_logger().info("  • Stick UP    = Ascend (throttle 1.0)")
-        self.get_logger().info("RIGHT STICK LR  = Strafe Left/Right")
-        self.get_logger().info("RIGHT STICK UD  = Move Forward/Backward")
-        self.get_logger().info("")
-        self.get_logger().info("A Button (⬇)    = ARM drone")
-        self.get_logger().info("Y Button (⬅)    = DISARM drone")
-        self.get_logger().info("B Button (⬅)    = ENABLE/DISABLE Auto land")
-        self.get_logger().info("="*60 + "\n")
+        self.get_logger().info('\n' + '=' * 60)
+        self.get_logger().info('Joystick Teleop for PX4 Drone Ready!')
+        self.get_logger().info('=' * 60)
+        self.get_logger().info(f'Controller Type: {self.controller_type.upper()}')
+        self.get_logger().info('-' * 60)
+        self.get_logger().info('LEFT STICK LR   = Yaw (Rotate)')
+        self.get_logger().info('LEFT STICK UD   = Throttle (Direct control)')
+        self.get_logger().info('  • Stick DOWN  = Descend (throttle 0.0)')
+        self.get_logger().info('  • Stick CENTER= Hover (throttle 0.5)')
+        self.get_logger().info('  • Stick UP    = Ascend (throttle 1.0)')
+        self.get_logger().info('RIGHT STICK LR  = Strafe Left/Right')
+        self.get_logger().info('RIGHT STICK UD  = Move Forward/Backward')
+        self.get_logger().info('')
+        self.get_logger().info('A Button (⬇)    = ARM drone')
+        self.get_logger().info('Y Button (⬅)    = DISARM drone')
+        self.get_logger().info('B Button (⬅)    = ENABLE/DISABLE Auto land')
+        self.get_logger().info('=' * 60 + '\n')
 
     def apply_deadzone(self, value, deadzone=AXIS_DEADZONE):
         """Apply deadzone to joystick axis."""
@@ -135,14 +143,15 @@ class JoystickTeleop(Node):
 
     def map_throttle_axis(self, axis_value):
         """
-        Map joystick axis to throttle (0.0 to 1.0)
+        Map joystick axis to throttle (0.0 to 1.0).
+
         Joystick typically returns -1.0 (up) to +1.0 (down)
         We want: -1.0 → 1.0 (max up), 0.0 → 0.5 (hover), +1.0 → 0.0 (max down)
         """
         # Apply deadzone first
         if abs(axis_value) < THROTTLE_DEADZONE:
             return HOVER_THROTTLE
-        
+
         # Map -1.0 (stick up) to 1.0 (max throttle)
         # Map +1.0 (stick down) to 0.0 (min throttle)
         throttle = (1.0 - axis_value) / 2.0
@@ -156,12 +165,14 @@ class JoystickTeleop(Node):
         # Initialize button state tracking on first message
         if not self.last_button_state:
             self.last_button_state = [0] * len(buttons)
-            self.get_logger().info(f"Controller connected! Axes: {len(axes)}, Buttons: {len(buttons)}")
+            self.get_logger().info(
+                f'Controller connected! Axes: {len(axes)}, Buttons: {len(buttons)}'
+            )
 
         # =====================================================================
         # BUTTON HANDLING (Edge Detection)
         # =====================================================================
-        
+
         # A Button → ARM
         if self.is_button_pressed(buttons, BUTTON_A):
             if not self.armed:
@@ -170,13 +181,13 @@ class JoystickTeleop(Node):
                 arm_msg = Bool()
                 arm_msg.data = True
                 self.arm_pub.publish(arm_msg)
-                self.get_logger().info("ARMED")
+                self.get_logger().info('ARMED')
 
         # X Button → Toggle AUTO-HOVER
         if self.is_button_pressed(buttons, BUTTON_X):
             self.auto_hover = not self.auto_hover
-            status = "ENABLED (throttle locked at 0.5)" if self.auto_hover else "DISABLED"
-            self.get_logger().info(f"AUTO-HOVER {status}")
+            status = 'ENABLED (throttle locked at 0.5)' if self.auto_hover else 'DISABLED'
+            self.get_logger().info(f'AUTO-HOVER {status}')
 
         # Y Button → DISARM/ EMERGENCY STOP
         if self.is_button_pressed(buttons, BUTTON_Y):
@@ -187,7 +198,7 @@ class JoystickTeleop(Node):
             arm_msg = Bool()
             arm_msg.data = False
             self.arm_pub.publish(arm_msg)
-            self.get_logger().warn("EMERGENCY STOP - DISARMED")
+            self.get_logger().warn('EMERGENCY STOP - DISARMED')
 
         if self.is_button_pressed(buttons, BUTTON_SELECT):
             self.armed = True
@@ -196,7 +207,7 @@ class JoystickTeleop(Node):
             self.enable_nav_cmd = not self.enable_nav_cmd
             self.nav_cmd.publish(Bool(data=self.enable_nav_cmd))
             self.get_logger().info(
-                f"Nav2 Control {'Enabled' if self.enable_nav_cmd else 'Disabled'}"
+                f'Nav2 Control {"Enabled" if self.enable_nav_cmd else "Disabled"}'
             )
 
         if self.is_button_pressed(buttons, BUTTON_B):
@@ -214,14 +225,12 @@ class JoystickTeleop(Node):
             self.current_throttle = HOVER_THROTTLE
 
             self.get_logger().info(
-                f"Autonomous Landing: {'Enabled' if self.enable_auto_land else 'Disabled'}"
+                f'Autonomous Landing: {"Enabled" if self.enable_auto_land else "Disabled"}'
             )
 
             if self.enable_auto_land:
                 self.last_button_state = list(buttons)
                 return
-
-
 
         # Update button state for next iteration
         self.last_button_state = list(buttons)
@@ -231,7 +240,7 @@ class JoystickTeleop(Node):
         # =====================================================================
 
         # RIGHT stick → Forward/Back (vx) and Left/Right strafe (vy)
-        vx_raw =  axes[AXIS_RIGHT_STICK_UD] if len(axes) > AXIS_RIGHT_STICK_UD else 0.0
+        vx_raw = axes[AXIS_RIGHT_STICK_UD] if len(axes) > AXIS_RIGHT_STICK_UD else 0.0
         vy_raw = -axes[AXIS_RIGHT_STICK_LR] if len(axes) > AXIS_RIGHT_STICK_LR else 0.0
 
         vx = self.apply_deadzone(vx_raw) * XY_VELOCITY_MAX
@@ -269,7 +278,7 @@ class JoystickTeleop(Node):
         if self.disarm_requested or self.enable_auto_land:
             return
             # self.vel_pub.publish(Twist())  # zeros
-        
+
         twist = Twist()
         twist.linear.x = self.current_vx
         twist.linear.y = self.current_vy
@@ -278,13 +287,18 @@ class JoystickTeleop(Node):
         self.vel_pub.publish(twist)
 
         # Debug logging (throttled to avoid spam)
-        if (abs(self.current_vx) > 0.01 or abs(self.current_vy) > 0.01 or 
-            abs(self.current_yaw_rate) > 0.01 or abs(self.current_vz) > 0.01):
-            hover_indicator = " [AUTO-HOVER]" if self.auto_hover else ""
+        if (
+            abs(self.current_vx) > 0.01
+            or abs(self.current_vy) > 0.01
+            or abs(self.current_yaw_rate) > 0.01
+            or abs(self.current_vz) > 0.01
+        ):
+            hover_indicator = ' [AUTO-HOVER]' if self.auto_hover else ''
             self.get_logger().info(
-                f"vx={self.current_vx:.2f} vy={self.current_vy:.2f} vz={self.current_vz:.2f} "
-                f"yaw={self.current_yaw_rate:.2f} | throttle={self.current_throttle:.2f}{hover_indicator}",
-                throttle_duration_sec=0.5
+                f'vx={self.current_vx:.2f} vy={self.current_vy:.2f} vz={self.current_vz:.2f} '
+                f'yaw={self.current_yaw_rate:.2f} | '
+                f'throttle={self.current_throttle:.2f}{hover_indicator}',
+                throttle_duration_sec=0.5,
             )
 
     def is_button_pressed(self, buttons, button_index):
@@ -301,7 +315,7 @@ def main(args=None):
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
-        node.get_logger().info("Joystick Teleop shutting down...")
+        node.get_logger().info('Joystick Teleop shutting down...')
     finally:
         node.destroy_node()
         rclpy.shutdown()

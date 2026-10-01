@@ -24,30 +24,31 @@
 # px4_offboard_mux_with_safety.py
 #
 # QoS contract:
-#   - Teleop inputs (/cmd_vel, /offboard_velocity_cmd, /autoland_velocity_cmd): BEST_EFFORT (teleop compatible)
+#   - Teleop inputs (/cmd_vel, /offboard_velocity_cmd, /autoland_velocity_cmd):
+#     BEST_EFFORT (teleop compatible)
 #   - Internal chain (/cmd_vel_raw, /cmd_vel_safe): RELIABLE (robust + echo-friendly)
 #   - PX4 topics: your existing BEST_EFFORT + TRANSIENT_LOCAL pattern
 
 import math
 
-import rclpy
-from rclpy.node import Node
-from rclpy.qos import (
-    QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy, QoSDurabilityPolicy,
-    qos_profile_sensor_data
-)
-
+from geometry_msgs.msg import Twist
 from px4_msgs.msg import (
     OffboardControlMode,
     TrajectorySetpoint,
+    VehicleAttitude,
     VehicleCommand,
     VehicleStatus,
-    VehicleAttitude
 )
-
-from geometry_msgs.msg import Twist
+import rclpy
+from rclpy.node import Node
+from rclpy.qos import (
+    qos_profile_sensor_data,
+    QoSDurabilityPolicy,
+    QoSHistoryPolicy,
+    QoSProfile,
+    QoSReliabilityPolicy,
+)
 from std_msgs.msg import Bool
-
 
 SETPOINT_RATE_HZ = 50.0
 SETPOINT_WARMUP_COUNT = 30
@@ -57,7 +58,7 @@ ST_IDLE = 0
 ST_WARMUP = 1
 ST_OFFBOARD_REQUESTED = 2
 ST_READY = 3
-OFFBOARD_REQUEST_DELAY_S = 0.2   # gap between requesting OFFBOARD and sending ARM
+OFFBOARD_REQUEST_DELAY_S = 0.2  # gap between requesting OFFBOARD and sending ARM
 
 VEL_LIMIT_XY = 3.0
 VEL_LIMIT_Z = 2.0
@@ -65,22 +66,25 @@ YAW_RATE_LIMIT = 2.0
 
 SAFE_TIMEOUT_S = 1.0
 
+
 def clamp(v, lo, hi):
     return max(lo, min(hi, v))
+
 
 def is_finite_twist(t: Twist) -> bool:
     return all(math.isfinite(v) for v in (t.linear.x, t.linear.y, t.linear.z, t.angular.z))
 
 
 class PX4OffboardMux(Node):
+
     def __init__(self):
-        super().__init__("px4_offboard_mux")
+        super().__init__('px4_offboard_mux')
 
         qos_px4 = QoSProfile(
             reliability=QoSReliabilityPolicy.BEST_EFFORT,
             durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
             history=QoSHistoryPolicy.KEEP_LAST,
-            depth=5
+            depth=5,
         )
 
         # Teleop QoS (compatible with most joystick publishers)
@@ -91,45 +95,53 @@ class PX4OffboardMux(Node):
             reliability=QoSReliabilityPolicy.RELIABLE,
             durability=QoSDurabilityPolicy.VOLATILE,
             history=QoSHistoryPolicy.KEEP_LAST,
-            depth=10
+            depth=10,
         )
 
         # PX4 pubs
-        self.ctrl_mode_pub = self.create_publisher(OffboardControlMode, "/fmu/in/offboard_control_mode", qos_px4)
-        self.setpoint_pub = self.create_publisher(TrajectorySetpoint, "/fmu/in/trajectory_setpoint", qos_px4)
-        self.cmd_pub = self.create_publisher(VehicleCommand, "/fmu/in/vehicle_command", qos_px4)
+        self.ctrl_mode_pub = self.create_publisher(
+            OffboardControlMode, '/fmu/in/offboard_control_mode', qos_px4
+        )
+        self.setpoint_pub = self.create_publisher(
+            TrajectorySetpoint, '/fmu/in/trajectory_setpoint', qos_px4
+        )
+        self.cmd_pub = self.create_publisher(VehicleCommand, '/fmu/in/vehicle_command', qos_px4)
 
         # Internal chain
-        self.cmd_raw_pub = self.create_publisher(Twist, "/cmd_vel_raw", qos_cmd)
+        self.cmd_raw_pub = self.create_publisher(Twist, '/cmd_vel_raw', qos_cmd)
 
         # PX4 subs
-        self.create_subscription(VehicleStatus, "/fmu/out/vehicle_status_v1", self.status_cb, qos_px4)
-        self.create_subscription(VehicleAttitude, "/fmu/out/vehicle_attitude", self.att_cb, qos_px4)
+        self.create_subscription(
+            VehicleStatus, '/fmu/out/vehicle_status_v1', self.status_cb, qos_px4
+        )
+        self.create_subscription(
+            VehicleAttitude, '/fmu/out/vehicle_attitude', self.att_cb, qos_px4
+        )
 
         # Teleop/auto subs (subscribe to BOTH teleop topics to avoid remap headaches)
-        self.create_subscription(Twist, "/cmd_vel", self.teleop_cb, qos_teleop)
-        self.create_subscription(Twist, "/offboard_velocity_cmd", self.teleop_cb, qos_teleop)
-        
-        self.create_subscription(Twist, "/autoland_velocity_cmd", self.marker_cb, qos_teleop)
-        # self.create_subscription(Twist, "/autoland_velocity_cmd", self.marker_cb, qos_teleop)
-        self.create_subscription(Twist, "/nav_velocity_cmd", self.nav_cb, qos_teleop)
+        self.create_subscription(Twist, '/cmd_vel', self.teleop_cb, qos_teleop)
+        self.create_subscription(Twist, '/offboard_velocity_cmd', self.teleop_cb, qos_teleop)
 
-        self.create_subscription(Bool, "/enable_auto_land", self.enable_auto_cb, qos_px4)
-        self.create_subscription(Bool, "/enable_nav_cmd", self.enable_nav_cb, qos_px4)
-        self.create_subscription(Bool, "/arm_message", self.arm_cb, qos_px4)
+        self.create_subscription(Twist, '/autoland_velocity_cmd', self.marker_cb, qos_teleop)
+        # self.create_subscription(Twist, "/autoland_velocity_cmd", self.marker_cb, qos_teleop)
+        self.create_subscription(Twist, '/nav_velocity_cmd', self.nav_cb, qos_teleop)
+
+        self.create_subscription(Bool, '/enable_auto_land', self.enable_auto_cb, qos_px4)
+        self.create_subscription(Bool, '/enable_nav_cmd', self.enable_nav_cb, qos_px4)
+        self.create_subscription(Bool, '/arm_message', self.arm_cb, qos_px4)
 
         # Safety output (RELIABLE)
-        self.create_subscription(Twist, "/cmd_vel_safe", self.safe_cb, qos_cmd)
+        self.create_subscription(Twist, '/cmd_vel_safe', self.safe_cb, qos_cmd)
 
         self.status = VehicleStatus()
         self.offboard_active = False
-        self.armed = False    # authoritative: set from VehicleStatus, never assigned elsewhere
-        self.arm_requested = False   #intention flag driven by /arm_message
-        self.warmed_up = False   
+        self.armed = False  # authoritative: set from VehicleStatus, never assigned elsewhere
+        self.arm_requested = False  # intention flag driven by /arm_message
+        self.warmed_up = False
         self.startup_state = ST_IDLE
         self.warmup_count = 0
         self.state_enter_time = 0.0
-        
+
         self.yaw = 0.0
 
         self.nav_cmd = Twist()
@@ -145,14 +157,14 @@ class PX4OffboardMux(Node):
         self.last_safe_t = 0.0
 
         self.create_timer(1.0 / SETPOINT_RATE_HZ, self.loop)
-        self.get_logger().info("PX4 Offboard Mux (with safety) initialized.")
+        self.get_logger().info('PX4 Offboard Mux (with safety) initialized.')
 
     def _now(self) -> float:
         return self.get_clock().now().nanoseconds * 1e-9
 
     def status_cb(self, msg: VehicleStatus):
         self.status = msg
-        self.armed = (msg.arming_state == VehicleStatus.ARMING_STATE_ARMED)
+        self.armed = msg.arming_state == VehicleStatus.ARMING_STATE_ARMED
 
     def att_cb(self, msg: VehicleAttitude):
         q = msg.q
@@ -185,13 +197,13 @@ class PX4OffboardMux(Node):
 
     def arm_cb(self, msg: Bool):
         if msg.data and not self.arm_requested:
-            self.get_logger().info("ARM command received")
+            self.get_logger().info('ARM command received')
             self.arm_requested = True
             if self.startup_state == ST_IDLE:
                 self.startup_state = ST_WARMUP
                 self.warmup_count = 0
         elif (not msg.data) and self.arm_requested:
-            self.get_logger().info("DISARM command received")
+            self.get_logger().info('DISARM command received')
             self.publish_cmd(VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM, param1=0.0)
             self.arm_requested = False
             self.startup_state = ST_IDLE
@@ -201,7 +213,7 @@ class PX4OffboardMux(Node):
             self.auto_cmd = Twist()
             self.safe_cmd = Twist()
             self.last_safe_t = 0.0
-            self.get_logger().info("DISARM command sent")
+            self.get_logger().info('DISARM command sent')
 
     def micros(self):
         return int(self.get_clock().now().nanoseconds / 1000)
@@ -219,11 +231,11 @@ class PX4OffboardMux(Node):
     def publish_setpoint_world(self, vx, vy, vz, yawspeed):
         msg = TrajectorySetpoint()
         msg.timestamp = self.micros()
-        msg.position = [float("nan")] * 3
+        msg.position = [float('nan')] * 3
         msg.velocity = [float(vx), float(vy), float(vz)]
-        msg.acceleration = [float("nan")] * 3
-        msg.jerk = [float("nan")] * 3
-        msg.yaw = float("nan")
+        msg.acceleration = [float('nan')] * 3
+        msg.jerk = [float('nan')] * 3
+        msg.yaw = float('nan')
         msg.yawspeed = float(yawspeed)
         self.setpoint_pub.publish(msg)
 
@@ -236,19 +248,19 @@ class PX4OffboardMux(Node):
         m.source_system = 1
         m.source_component = 1
         m.from_external = True
-        for k in ["param1", "param2", "param3", "param4", "param5", "param6", "param7"]:
+        for k in ['param1', 'param2', 'param3', 'param4', 'param5', 'param6', 'param7']:
             setattr(m, k, float(params.get(k, 0.0)))
         self.cmd_pub.publish(m)
 
     def advance_startup_state(self):
-        """Non-blocking replacement for the old sleep-based start_offboard()"""
+        """Non-blocking replacement for the old sleep-based start_offboard()."""
         if self.startup_state == ST_WARMUP:
             self.warmup_count += 1
             if self.warmup_count == 1:
-                self.get_logger().info("Warming up Offboard mode...")
+                self.get_logger().info('Warming up Offboard mode...')
             if self.warmup_count >= SETPOINT_WARMUP_COUNT:
-                self.get_logger().info("Requesting Offboard mode...")
-                self.publish_cmd(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, param1 = 1.0, param2 = 6.0)
+                self.get_logger().info('Requesting Offboard mode...')
+                self.publish_cmd(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, param1=1.0, param2=6.0)
                 self.startup_state = ST_OFFBOARD_REQUESTED
                 self.state_enter_time = self._now()
         elif self.startup_state == ST_OFFBOARD_REQUESTED:
@@ -256,8 +268,8 @@ class PX4OffboardMux(Node):
                 self.publish_cmd(VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM, param1=1.0)
                 self.warmed_up = True
                 self.startup_state = ST_READY
-                self.get_logger().info("ARM command sent - offboard warmup complete.")
-   
+                self.get_logger().info('ARM command sent - offboard warmup complete.')
+
     def select_cmd_body(self):
         now = self._now()
         teleop_fresh = (now - self.last_teleop_t) <= INACTIVITY_TIMEOUT
@@ -265,25 +277,25 @@ class PX4OffboardMux(Node):
         nav_fresh = (now - self.last_nav_t) <= INACTIVITY_TIMEOUT
 
         if self.auto_enabled and auto_fresh:
-            src = "AUTO"
+            src = 'AUTO'
             cmd = self.auto_cmd
             fresh = True
         elif self.nav_enabled and nav_fresh:
-            src = "NAV2"
+            src = 'NAV2'
             cmd = self.nav_cmd
             fresh = True
         elif teleop_fresh:
-            src = "TELEOP"
+            src = 'TELEOP'
             cmd = self.teleop_cmd
             fresh = True
         else:
-            src = "IDLE"
+            src = 'IDLE'
             cmd = Twist()
             fresh = False
 
         if fresh and not is_finite_twist(cmd):
             self.get_logger().error(
-                f"Non-finite command from {src}, discarding", throttle_duration_sec=1.0
+                f'Non-finite command from {src}, discarding', throttle_duration_sec=1.0
             )
             cmd = Twist()
             fresh = False
@@ -297,7 +309,7 @@ class PX4OffboardMux(Node):
 
     def loop(self):
         self.publish_mode()
-        self.offboard_active = (self.status.nav_state == VehicleStatus.NAVIGATION_STATE_OFFBOARD)
+        self.offboard_active = self.status.nav_state == VehicleStatus.NAVIGATION_STATE_OFFBOARD
         self.advance_startup_state()
 
         src, body_raw, fresh = self.select_cmd_body()
@@ -316,20 +328,20 @@ class PX4OffboardMux(Node):
 
         safe_fresh = (self._now() - self.last_safe_t) <= SAFE_TIMEOUT_S
         if not safe_fresh:
-            self.get_logger().warn("cmd_vel_safe stale -> hover", throttle_duration_sec=1.0)
+            self.get_logger().warn('cmd_vel_safe stale -> hover', throttle_duration_sec=1.0)
             self.publish_setpoint_world(0.0, 0.0, 0.0, 0.0)
             return
 
-        vx_b     = self.safe_cmd.linear.x
-        vy_b     = self.safe_cmd.linear.y
-        vz_b     = self.safe_cmd.linear.z
+        vx_b = self.safe_cmd.linear.x
+        vy_b = self.safe_cmd.linear.y
+        vz_b = self.safe_cmd.linear.z
         yawspeed = self.safe_cmd.angular.z
 
-        if src == "NAV2":
+        if src == 'NAV2':
             cy = math.cos(self.yaw)
             sy = math.sin(self.yaw)
-            vx_nav =  vx_b
-            vy_nav = -vy_b      # negate to match teleop convention
+            vx_nav = vx_b
+            vy_nav = -vy_b  # negate to match teleop convention
             wx = vx_nav * cy - vy_nav * sy
             wy = vx_nav * sy + vy_nav * cy
             wz = 0.0
@@ -337,8 +349,7 @@ class PX4OffboardMux(Node):
             if speed > 0.1:
                 desired_yaw = math.atan2(wy, wx)
                 yaw_error = math.atan2(
-                    math.sin(desired_yaw - self.yaw),
-                    math.cos(desired_yaw - self.yaw)
+                    math.sin(desired_yaw - self.yaw), math.cos(desired_yaw - self.yaw)
                 )
                 yawspeed = clamp(1.0 * yaw_error, -YAW_RATE_LIMIT, YAW_RATE_LIMIT)
             else:
@@ -353,10 +364,11 @@ class PX4OffboardMux(Node):
         self.publish_setpoint_world(wx, wy, wz, yawspeed)
 
         self.get_logger().info(
-            f"[{src}] body_safe vx={vx_b:.2f} vy={vy_b:.2f} vz={vz_b:.2f} yr={yawspeed:.2f} | "
-            f"world vx={wx:.2f} vy={wy:.2f} vz={wz:.2f}",
-            throttle_duration_sec=0.5
+            f'[{src}] body_safe vx={vx_b:.2f} vy={vy_b:.2f} vz={vz_b:.2f} yr={yawspeed:.2f} | '
+            f'world vx={wx:.2f} vy={wy:.2f} vz={wz:.2f}',
+            throttle_duration_sec=0.5,
         )
+
 
 def main(args=None):
     rclpy.init(args=args)
@@ -364,11 +376,11 @@ def main(args=None):
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
-        node.get_logger().info("PX4 Offboard Mux node shutting down...")
+        node.get_logger().info('PX4 Offboard Mux node shutting down...')
     finally:
         node.destroy_node()
         rclpy.shutdown()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
