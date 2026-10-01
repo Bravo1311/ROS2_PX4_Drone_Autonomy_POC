@@ -23,36 +23,34 @@
 
 import rclpy
 from rclpy.node import Node
-from sensor_msgs.msg import LaserScan
 from rclpy.qos import qos_profile_sensor_data
-from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
+from sensor_msgs.msg import LaserScan
 
 
 class ScanFrameFix(Node):
+
     def __init__(self):
-        super().__init__("scan_frame_fix")
+        super().__init__('scan_frame_fix')
 
-        pub_qos = QoSProfile(
-            reliability=QoSReliabilityPolicy.RELIABLE,
-            history=QoSHistoryPolicy.KEEP_LAST,
-            depth=10
-        )
-        self.declare_parameter("in_topic", "/scan")
-        self.declare_parameter("out_topic", "/scan_fixed")
-        self.declare_parameter("frame_id", "lidar_link")
-        self.declare_parameter("assumed_scan_rate_hz", 10.0)  # used only if scan_time==0
+        self.declare_parameter('in_topic', '/scan')
+        self.declare_parameter('out_topic', '/scan_fixed')
+        self.declare_parameter('frame_id', 'lidar_link')
+        self.declare_parameter('assumed_scan_rate_hz', 10.0)  # used only if scan_time==0
 
-        self.in_topic = self.get_parameter("in_topic").value
-        self.out_topic = self.get_parameter("out_topic").value
-        self.frame_id = self.get_parameter("frame_id").value
-        self.assumed_rate = float(self.get_parameter("assumed_scan_rate_hz").value)
+        self.in_topic = self.get_parameter('in_topic').value
+        self.out_topic = self.get_parameter('out_topic').value
+        self.frame_id = self.get_parameter('frame_id').value
+        self.assumed_rate = float(self.get_parameter('assumed_scan_rate_hz').value)
 
         # Sensor QoS on BOTH ends (BEST_EFFORT + VOLATILE)
         self.pub = self.create_publisher(LaserScan, self.out_topic, 10)
-        self.sub = self.create_subscription(LaserScan, self.in_topic, self.cb, qos_profile_sensor_data)
+        self.sub = self.create_subscription(
+            LaserScan, self.in_topic, self.cb, qos_profile_sensor_data
+        )
 
         self.get_logger().info(
-            f"Rewriting LaserScan frame_id -> '{self.frame_id}'  ({self.in_topic} -> {self.out_topic})"
+            f"Rewriting LaserScan frame_id -> '{self.frame_id}'  "
+            f'({self.in_topic} -> {self.out_topic})'
         )
 
     def cb(self, msg: LaserScan):
@@ -78,6 +76,7 @@ class ScanFrameFix(Node):
 
         self.pub.publish(out)
 
+
 def main():
     rclpy.init()
     node = ScanFrameFix()
@@ -85,5 +84,6 @@ def main():
     node.destroy_node()
     rclpy.shutdown()
 
-if __name__ == "__main__":
+
+if __name__ == '__main__':
     main()
