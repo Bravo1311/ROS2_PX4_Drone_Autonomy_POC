@@ -23,17 +23,17 @@
 
 import math
 
-from geometry_msgs.msg import Twist
 import rclpy
+from geometry_msgs.msg import Twist
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 from rclpy.qos import (
-    qos_profile_sensor_data,
     QoSDurabilityPolicy,
     QoSHistoryPolicy,
     QoSProfile,
     QoSReliabilityPolicy,
+    qos_profile_sensor_data,
 )
 from sensor_msgs.msg import LaserScan
 
@@ -155,8 +155,8 @@ class SafetyVelFilter(Node):
         left = center_angle + half
         right = center_angle - half
 
-        i_min = int(math.floor((right - a0) / da))
-        i_max = int(math.ceil((left - a0) / da))
+        i_min = math.floor((right - a0) / da)
+        i_max = math.ceil((left - a0) / da)
 
         i_min = max(0, min(n - 1, i_min))
         i_max = max(0, min(n - 1, i_max))
@@ -203,8 +203,7 @@ class SafetyVelFilter(Node):
 
             stop = self.stop_dist + self.stop_gain * vxy
             slow = self.slow_dist + self.slow_gain * vxy
-            if slow <= stop + 1e-3:
-                slow = stop + 1e-3
+            slow = max(stop + 1e-3, slow)
 
             if dmin < stop:
                 out.linear.x = 0.0

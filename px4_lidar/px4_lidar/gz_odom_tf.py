@@ -23,11 +23,11 @@
 
 import threading
 
+import rclpy
 from geometry_msgs.msg import TransformStamped
 from gz.msgs10.pose_v_pb2 import Pose_V
 from gz.transport13 import Node as GzNode
 from nav_msgs.msg import Odometry
-import rclpy
 from rclpy.node import Node
 from tf2_ros import TransformBroadcaster
 
