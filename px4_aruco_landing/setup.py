@@ -7,8 +7,7 @@ setup(
     version='0.0.0',
     packages=find_packages(exclude=['test']),
     data_files=[
-        ('share/ament_index/resource_index/packages',
-            ['resource/' + package_name]),
+        ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
     ],
     install_requires=['setuptools'],
@@ -23,11 +22,10 @@ setup(
         ],
     },
     entry_points={
-    'console_scripts': [
-        'aruco_detector = px4_aruco_landing.aruco_detector:main',
-        'autoland_twist_publisher = px4_aruco_landing.autoland_twist_publisher:main',
-        'marker_kf = px4_aruco_landing.marker_kf:main',
-    ],
-},
-
+        'console_scripts': [
+            'aruco_detector = px4_aruco_landing.aruco_detector:main',
+            'autoland_twist_publisher = px4_aruco_landing.autoland_twist_publisher:main',
+            'marker_kf = px4_aruco_landing.marker_kf:main',
+        ],
+    },
 )

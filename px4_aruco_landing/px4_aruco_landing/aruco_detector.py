@@ -21,30 +21,23 @@
 # THE SOFTWARE.
 
 
-import rclpy
-from rclpy.node import Node
-
-from sensor_msgs.msg import Image, CameraInfo
-from geometry_msgs.msg import PoseStamped
-from std_msgs.msg import String
-from cv_bridge import CvBridge
-
-import numpy as np
-import cv2
 import json
 import math
+
+import cv2
+from cv_bridge import CvBridge
+from geometry_msgs.msg import PoseStamped
+import numpy as np
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import CameraInfo, Image
+from std_msgs.msg import String
 
 
 def reprojection_error_px(rvec, tvec, corners_px, K, D, marker_length):
     """Mean reprojection error in pixels for the 4 marker corners."""
     s = marker_length / 2.0
-    obj_pts = np.array(
-        [[-s,  s, 0],
-         [ s,  s, 0],
-         [ s, -s, 0],
-         [-s, -s, 0]],
-        dtype=np.float32
-    )
+    obj_pts = np.array([[-s, s, 0], [s, s, 0], [s, -s, 0], [-s, -s, 0]], dtype=np.float32)
 
     img_proj, _ = cv2.projectPoints(obj_pts, rvec, tvec, K, D)  # (4,1,2)
     img_proj = img_proj.reshape(4, 2)  # (4,2)
@@ -54,14 +47,15 @@ def reprojection_error_px(rvec, tvec, corners_px, K, D, marker_length):
 
 
 def quat_from_yaw(yaw_rad: float):
-    """Yaw-only quaternion about +Z axis: returns (x,y,z,w)"""
+    """Yaw-only quaternion about +Z axis: returns (x,y,z,w)."""
     half = 0.5 * yaw_rad
     return 0.0, 0.0, float(math.sin(half)), float(math.cos(half))
 
 
-
 class ArucoDetector(Node):
     """
+    Detect ArUco markers in incoming camera images.
+
     Subscribes:
       - image_topic (sensor_msgs/Image)
       - camera_info_topic (sensor_msgs/CameraInfo)
@@ -70,34 +64,36 @@ class ArucoDetector(Node):
       - marker_pose (geometry_msgs/PoseStamped)  # pose of selected marker in camera_optical_frame
       - aruco_detections_json (std_msgs/String)  # JSON for all detections in the frame
 
-    NOTE:
-      This version publishes a *yaw-only* orientation quaternion to avoid jitter from roll/pitch noise.
+    This version publishes a *yaw-only* orientation quaternion to avoid jitter from
+    roll/pitch noise.
     """
 
     def __init__(self):
-        super().__init__("aruco_detector")
+        super().__init__('aruco_detector')
 
         # Params
-        self.declare_parameter("image_topic", "/camera/image_raw")
-        self.declare_parameter("camera_info_topic", "/camera/camera_info")
-        self.declare_parameter("marker_length_m", 0.5)  # IMPORTANT: match marker size
-        self.declare_parameter("aruco_dict", "DICT_4X4_50")
-        self.declare_parameter("target_id", -1)  # -1 means accept any ID
-        self.declare_parameter("frame_skip", 3)  # -1 means accept any ID
+        self.declare_parameter('image_topic', '/camera/image_raw')
+        self.declare_parameter('camera_info_topic', '/camera/camera_info')
+        self.declare_parameter('marker_length_m', 0.5)  # IMPORTANT: match marker size
+        self.declare_parameter('aruco_dict', 'DICT_4X4_50')
+        self.declare_parameter('target_id', -1)  # -1 means accept any ID
+        self.declare_parameter('frame_skip', 3)  # -1 means accept any ID
 
-        self.image_topic = self.get_parameter("image_topic").value
-        self.camera_info_topic = self.get_parameter("camera_info_topic").value
-        self.marker_length = float(self.get_parameter("marker_length_m").value)
-        self.target_id = int(self.get_parameter("target_id").value)
+        self.image_topic = self.get_parameter('image_topic').value
+        self.camera_info_topic = self.get_parameter('camera_info_topic').value
+        self.marker_length = float(self.get_parameter('marker_length_m').value)
+        self.target_id = int(self.get_parameter('target_id').value)
 
-        self.frame_skip = int(self.get_parameter("frame_skip").value)   # process 1 out of every 3 frames
+        self.frame_skip = int(
+            self.get_parameter('frame_skip').value
+        )  # process 1 out of every 3 frames
         self.frame_counter = 0
 
-        dict_name = self.get_parameter("aruco_dict").value
+        dict_name = self.get_parameter('aruco_dict').value
         self.aruco_dict = self._make_dict(dict_name)
 
         # Detector params (compat with different OpenCV versions)
-        if hasattr(cv2.aruco, "DetectorParameters_create"):
+        if hasattr(cv2.aruco, 'DetectorParameters_create'):
             self.aruco_params = cv2.aruco.DetectorParameters_create()
         else:
             self.aruco_params = cv2.aruco.DetectorParameters()
@@ -107,29 +103,31 @@ class ArucoDetector(Node):
         self.D = None
         self._printed_encoding = False
 
-        self.pose_pub = self.create_publisher(PoseStamped, "marker_pose", 10)
-        self.json_pub = self.create_publisher(String, "aruco_detections_json", 10)
+        self.pose_pub = self.create_publisher(PoseStamped, 'marker_pose', 10)
+        self.json_pub = self.create_publisher(String, 'aruco_detections_json', 10)
 
         self.create_subscription(CameraInfo, self.camera_info_topic, self.on_camera_info, 1)
         self.create_subscription(Image, self.image_topic, self.on_image, 10)
 
-        self.get_logger().info(f"Listening image: {self.image_topic}")
-        self.get_logger().info(f"Listening camera_info: {self.camera_info_topic}")
-        self.get_logger().info(f"Marker length (m): {self.marker_length}, target_id: {self.target_id}")
+        self.get_logger().info(f'Listening image: {self.image_topic}')
+        self.get_logger().info(f'Listening camera_info: {self.camera_info_topic}')
+        self.get_logger().info(
+            f'Marker length (m): {self.marker_length}, target_id: {self.target_id}'
+        )
 
     def _make_dict(self, name: str):
         if not hasattr(cv2.aruco, name):
             self.get_logger().warn(f"Unknown aruco_dict '{name}', defaulting to DICT_4X4_50")
-            name = "DICT_4X4_50"
+            name = 'DICT_4X4_50'
         dict_id = getattr(cv2.aruco, name)
-        if hasattr(cv2.aruco, "getPredefinedDictionary"):
+        if hasattr(cv2.aruco, 'getPredefinedDictionary'):
             return cv2.aruco.getPredefinedDictionary(dict_id)
         return cv2.aruco.Dictionary_get(dict_id)
 
     def on_camera_info(self, msg: CameraInfo):
         self.K = np.array(msg.k, dtype=np.float64).reshape((3, 3))
         if self.K[0, 0] <= 0 or self.K[1, 1] <= 0:
-            self.get_logger().warn(f"Bad intrinsics fx/fy: {self.K[0,0]}, {self.K[1,1]}")
+            self.get_logger().warn(f'Bad intrinsics fx/fy: {self.K[0, 0]}, {self.K[1, 1]}')
 
         if len(msg.d) > 0:
             self.D = np.array(msg.d, dtype=np.float64).reshape(-1, 1)
@@ -138,18 +136,19 @@ class ArucoDetector(Node):
 
     def on_image(self, msg: Image):
         self.frame_counter += 1
-        if self.frame_counter % self.frame_skip !=0:
+        if self.frame_counter % self.frame_skip != 0:
             return
         if self.K is None or self.D is None:
             return
 
         if not self._printed_encoding:
             self.get_logger().info(
-                f"Incoming image encoding: {msg.encoding}, step: {msg.step}, size: {msg.width}x{msg.height}"
+                f'Incoming image encoding: {msg.encoding}, step: {msg.step}, '
+                f'size: {msg.width}x{msg.height}'
             )
             self._printed_encoding = True
 
-        img = self.bridge.imgmsg_to_cv2(msg, desired_encoding="passthrough")
+        img = self.bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
         if img.dtype != np.uint8:
             img = img.astype(np.uint8, copy=False)
 
@@ -159,19 +158,16 @@ class ArucoDetector(Node):
             gray = img
         else:
             img = np.ascontiguousarray(img)
-            if "rgba" in enc:
+            if 'rgba' in enc:
                 gray = cv2.cvtColor(img, cv2.COLOR_RGBA2GRAY)
-            elif "bgra" in enc:
+            elif 'bgra' in enc:
                 gray = cv2.cvtColor(img, cv2.COLOR_BGRA2GRAY)
-            elif "rgb" in enc:
+            elif 'rgb' in enc:
                 gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
             else:
                 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         gray = np.ascontiguousarray(gray)
-
-        scale = 0.9
-        small_gray = cv2.resize(gray, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
 
         corners, ids, _rejected = cv2.aruco.detectMarkers(
             gray, self.aruco_dict, parameters=self.aruco_params
@@ -192,24 +188,28 @@ class ArucoDetector(Node):
 
         detections = []
         best_idx = None
-        best_err = float("inf")
+        best_err = float('inf')
 
         for i, marker_id in enumerate(ids):
-            corners_px = corners[i][0].astype(float)     # (4,2)
-            rvec = rvecs[i, 0, :].astype(float)          # (3,)
-            tvec = tvecs[i, 0, :].astype(float)          # (3,)
+            corners_px = corners[i][0].astype(float)  # (4,2)
+            rvec = rvecs[i, 0, :].astype(float)  # (3,)
+            tvec = tvecs[i, 0, :].astype(float)  # (3,)
 
-            err_px = reprojection_error_px(rvec, tvec, corners_px, self.K, self.D, self.marker_length)
+            err_px = reprojection_error_px(
+                rvec, tvec, corners_px, self.K, self.D, self.marker_length
+            )
             score = 1.0 / (1.0 + err_px)
 
-            detections.append({
-                "id": int(marker_id),
-                "corners_px": corners_px.tolist(),
-                "rvec": rvec.tolist(),
-                "tvec": tvec.tolist(),
-                "reproj_err_px": float(err_px),
-                "score": float(score),
-            })
+            detections.append(
+                {
+                    'id': int(marker_id),
+                    'corners_px': corners_px.tolist(),
+                    'rvec': rvec.tolist(),
+                    'tvec': tvec.tolist(),
+                    'reproj_err_px': float(err_px),
+                    'score': float(score),
+                }
+            )
 
             # selection logic
             if self.target_id != -1:
@@ -223,15 +223,18 @@ class ArucoDetector(Node):
 
         # Publish JSON for all detections
         payload = {
-            "header": {
-                "stamp": {"sec": int(msg.header.stamp.sec), "nanosec": int(msg.header.stamp.nanosec)},
-                "frame_id": str(msg.header.frame_id),
+            'header': {
+                'stamp': {
+                    'sec': int(msg.header.stamp.sec),
+                    'nanosec': int(msg.header.stamp.nanosec),
+                },
+                'frame_id': str(msg.header.frame_id),
             },
-            "detections": detections,
+            'detections': detections,
         }
 
         json_msg = String()
-        json_msg.data = json.dumps(payload, separators=(",", ":"), ensure_ascii=False)
+        json_msg.data = json.dumps(payload, separators=(',', ':'), ensure_ascii=False)
         self.json_pub.publish(json_msg)
 
         if best_idx is None:
@@ -250,7 +253,7 @@ class ArucoDetector(Node):
 
         pose = PoseStamped()
         pose.header = msg.header
-        pose.header.frame_id = "camera_optical_frame"
+        pose.header.frame_id = 'camera_optical_frame'
 
         # OpenCV camera optical frame:
         #   +X right, +Y down, +Z forward
@@ -275,5 +278,5 @@ def main():
     rclpy.shutdown()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
