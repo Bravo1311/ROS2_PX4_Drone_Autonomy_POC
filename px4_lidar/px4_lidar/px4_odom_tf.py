@@ -21,28 +21,36 @@
 # THE SOFTWARE.
 
 
+from geometry_msgs.msg import TransformStamped
+import numpy as np
+from px4_msgs.msg import VehicleOdometry
 import rclpy
 from rclpy.node import Node
-from px4_msgs.msg import VehicleOdometry
-from geometry_msgs.msg import TransformStamped
+from rclpy.qos import (
+    QoSDurabilityPolicy,
+    QoSHistoryPolicy,
+    QoSProfile,
+    QoSReliabilityPolicy,
+)
 from tf2_ros import TransformBroadcaster
-from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy, QoSDurabilityPolicy
-import numpy as np
 
 
 def quat_wxyz_to_rotmat(qw, qx, qy, qz) -> np.ndarray:
     """Quaternion (w,x,y,z) -> 3x3 rotation matrix."""
     # normalize just in case
-    n = np.sqrt(qw*qw + qx*qx + qy*qy + qz*qz)
+    n = np.sqrt(qw * qw + qx * qx + qy * qy + qz * qz)
     if n < 1e-12:
         return np.eye(3)
-    qw, qx, qy, qz = qw/n, qx/n, qy/n, qz/n
+    qw, qx, qy, qz = qw / n, qx / n, qy / n, qz / n
 
-    return np.array([
-        [1 - 2*(qy*qy + qz*qz),     2*(qx*qy - qz*qw),     2*(qx*qz + qy*qw)],
-        [    2*(qx*qy + qz*qw), 1 - 2*(qx*qx + qz*qz),     2*(qy*qz - qx*qw)],
-        [    2*(qx*qz - qy*qw),     2*(qy*qz + qx*qw), 1 - 2*(qx*qx + qy*qy)]
-    ], dtype=float)
+    return np.array(
+        [
+            [1 - 2 * (qy * qy + qz * qz), 2 * (qx * qy - qz * qw), 2 * (qx * qz + qy * qw)],
+            [2 * (qx * qy + qz * qw), 1 - 2 * (qx * qx + qz * qz), 2 * (qy * qz - qx * qw)],
+            [2 * (qx * qz - qy * qw), 2 * (qy * qz + qx * qw), 1 - 2 * (qx * qx + qy * qy)],
+        ],
+        dtype=float,
+    )
 
 
 def rotmat_to_quat_wxyz(R: np.ndarray):
@@ -75,11 +83,12 @@ def rotmat_to_quat_wxyz(R: np.ndarray):
             qz = 0.25 * S
 
     # normalize output
-    n = np.sqrt(qw*qw + qx*qx + qy*qy + qz*qz)
-    return qw/n, qx/n, qy/n, qz/n
+    n = np.sqrt(qw * qw + qx * qx + qy * qy + qz * qz)
+    return qw / n, qx / n, qy / n, qz / n
 
 
 class PX4OdomTF(Node):
+
     def __init__(self):
         super().__init__('px4_odom_tf')
 
@@ -87,31 +96,24 @@ class PX4OdomTF(Node):
             reliability=QoSReliabilityPolicy.BEST_EFFORT,
             durability=QoSDurabilityPolicy.VOLATILE,
             history=QoSHistoryPolicy.KEEP_LAST,
-            depth=5
+            depth=5,
         )
 
         self.br = TransformBroadcaster(self)
 
         self.sub = self.create_subscription(
-            VehicleOdometry,
-            '/fmu/out/vehicle_odometry',
-            self.cb,
-            qos
+            VehicleOdometry, '/fmu/out/vehicle_odometry', self.cb, qos
         )
 
         # Fixed rotation matrix that maps vectors NED -> ENU:
         # [x_enu, y_enu, z_enu]^T = R_ENU_NED * [x_ned, y_ned, z_ned]^T
-        self.R_ENU_NED = np.array([
-            [0, 1, 0],
-            [1, 0, 0],
-            [0, 0,-1]
-        ], dtype=float)
+        self.R_ENU_NED = np.array([[0, 1, 0], [1, 0, 0], [0, 0, -1]], dtype=float)
 
     def cb(self, msg: VehicleOdometry):
         t = TransformStamped()
         t.header.stamp = self.get_clock().now().to_msg()
-        t.header.frame_id = "odom"
-        t.child_frame_id = "base_link"
+        t.header.frame_id = 'odom'
+        t.child_frame_id = 'base_link'
 
         # Position: NED -> ENU
         x_ned, y_ned, z_ned = msg.position
@@ -124,18 +126,10 @@ class PX4OdomTF(Node):
 
         R_ned_frd = quat_wxyz_to_rotmat(qw, qx, qy, qz)
 
-        R_enu_ned = np.array([
-            [0, 1, 0],
-            [1, 0, 0],
-            [0, 0,-1]
-        ], dtype=float)
+        R_enu_ned = np.array([[0, 1, 0], [1, 0, 0], [0, 0, -1]], dtype=float)
 
         # Convert body convention FRD -> FLU (right-multiply)
-        R_frd_flu = np.array([
-            [1,  0,  0],
-            [0, -1,  0],
-            [0,  0, -1]
-        ], dtype=float)
+        R_frd_flu = np.array([[1, 0, 0], [0, -1, 0], [0, 0, -1]], dtype=float)
 
         # Correct transform: ENU<-NED applied on left, FRD<-FLU applied on right
         R_enu_flu = R_enu_ned @ R_ned_frd @ R_frd_flu

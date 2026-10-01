@@ -19,29 +19,35 @@
 # THE SOFTWARE.
 
 
-import torch
+from flow_landing_policy.config import ACTION_DIM, CHUNK_LEN, HISTORY_LEN, POSE_DIM
 from flow_landing_policy.transformer import FlowMatchingTransformer
-from flow_landing_policy.config import *
+import torch
+
 
 def load_policy(checkpoint_path, device):
     model = FlowMatchingTransformer(
-        pose_dim=POSE_DIM, action_dim=ACTION_DIM,
-        history_len=HISTORY_LEN, chunk_len=CHUNK_LEN,
+        pose_dim=POSE_DIM,
+        action_dim=ACTION_DIM,
+        history_len=HISTORY_LEN,
+        chunk_len=CHUNK_LEN,
     ).to(device)
     model.load_state_dict(torch.load(checkpoint_path, map_location=device))
     model.eval()
     return model
 
+
 @torch.no_grad()
-def generate_action_chunk(model, history, device, n_steps = 10):
+def generate_action_chunk(model, history, device, n_steps=10):
     """
-        history: real pose history, not batched (H, pose_dim)
-        returns: (C, action_dim) numpy array - generated action chunk
+    Generate one action chunk by integrating the flow-matching ODE.
+
+    history: real pose history, not batched (H, pose_dim)
+    returns: (C, action_dim) numpy array - generated action chunk
     """
     # (1, H, pose_dim)
-    history = torch.as_tensor(history, dtype = torch.float32, device = device).unsqueeze(0)
+    history = torch.as_tensor(history, dtype=torch.float32, device=device).unsqueeze(0)
 
-    x = torch.randn(1, CHUNK_LEN, ACTION_DIM, device=device)   # start from pure noise
+    x = torch.randn(1, CHUNK_LEN, ACTION_DIM, device=device)  # start from pure noise
 
     dt = 1.0 / n_steps
     for step in range(n_steps):

@@ -22,19 +22,20 @@
 
 
 import math
-import rclpy
-from rclpy.node import Node
 
 from geometry_msgs.msg import Twist
-from sensor_msgs.msg import LaserScan
-
-from rclpy.qos import (
-    QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy, QoSDurabilityPolicy,
-    qos_profile_sensor_data
-)
-
+import rclpy
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
+from rclpy.node import Node
+from rclpy.qos import (
+    qos_profile_sensor_data,
+    QoSDurabilityPolicy,
+    QoSHistoryPolicy,
+    QoSProfile,
+    QoSReliabilityPolicy,
+)
+from sensor_msgs.msg import LaserScan
 
 
 def clamp(v, lo, hi):
@@ -42,8 +43,9 @@ def clamp(v, lo, hi):
 
 
 class SafetyVelFilter(Node):
+
     def __init__(self):
-        super().__init__("safety_vel_filter")
+        super().__init__('safety_vel_filter')
 
         # Put timer + subs in a reentrant group so they can run freely
         self.cb_group = ReentrantCallbackGroup()
@@ -53,35 +55,35 @@ class SafetyVelFilter(Node):
             reliability=QoSReliabilityPolicy.RELIABLE,
             durability=QoSDurabilityPolicy.VOLATILE,
             history=QoSHistoryPolicy.KEEP_LAST,
-            depth=10
+            depth=10,
         )
 
         # Params
-        self.declare_parameter("cmd_in", "/cmd_vel_raw")
-        self.declare_parameter("cmd_out", "/cmd_vel_safe")
-        self.declare_parameter("scan_topic", "/scan_fixed")
+        self.declare_parameter('cmd_in', '/cmd_vel_raw')
+        self.declare_parameter('cmd_out', '/cmd_vel_safe')
+        self.declare_parameter('scan_topic', '/scan_fixed')
 
-        self.declare_parameter("stop_dist", 0.1)
-        self.declare_parameter("slow_dist", 2.5)
-        self.declare_parameter("fov_deg", 60.0)
+        self.declare_parameter('stop_dist', 0.1)
+        self.declare_parameter('slow_dist', 2.5)
+        self.declare_parameter('fov_deg', 60.0)
 
-        self.declare_parameter("scan_timeout_s", 1.0)
-        self.declare_parameter("stop_gain", 0.5)
-        self.declare_parameter("slow_gain", 0.8)
-        self.declare_parameter("max_yaw_rate", 1.2)
+        self.declare_parameter('scan_timeout_s', 1.0)
+        self.declare_parameter('stop_gain', 0.5)
+        self.declare_parameter('slow_gain', 0.8)
+        self.declare_parameter('max_yaw_rate', 1.2)
 
-        self.cmd_in = self.get_parameter("cmd_in").value
-        self.cmd_out = self.get_parameter("cmd_out").value
-        self.scan_topic = self.get_parameter("scan_topic").value
+        self.cmd_in = self.get_parameter('cmd_in').value
+        self.cmd_out = self.get_parameter('cmd_out').value
+        self.scan_topic = self.get_parameter('scan_topic').value
 
-        self.stop_dist = float(self.get_parameter("stop_dist").value)
-        self.slow_dist = float(self.get_parameter("slow_dist").value)
-        self.fov = math.radians(float(self.get_parameter("fov_deg").value))
-        self.scan_timeout = float(self.get_parameter("scan_timeout_s").value)
+        self.stop_dist = float(self.get_parameter('stop_dist').value)
+        self.slow_dist = float(self.get_parameter('slow_dist').value)
+        self.fov = math.radians(float(self.get_parameter('fov_deg').value))
+        self.scan_timeout = float(self.get_parameter('scan_timeout_s').value)
 
-        self.stop_gain = float(self.get_parameter("stop_gain").value)
-        self.slow_gain = float(self.get_parameter("slow_gain").value)
-        self.max_yaw_rate = float(self.get_parameter("max_yaw_rate").value)
+        self.stop_gain = float(self.get_parameter('stop_gain').value)
+        self.slow_gain = float(self.get_parameter('slow_gain').value)
+        self.max_yaw_rate = float(self.get_parameter('max_yaw_rate').value)
 
         self.last_scan = None
         self.last_scan_time = None
@@ -93,30 +95,18 @@ class SafetyVelFilter(Node):
             self.scan_topic,
             self.on_scan,
             qos_profile_sensor_data,
-            callback_group=self.cb_group
+            callback_group=self.cb_group,
         )
 
         self.sub_cmd = self.create_subscription(
-            Twist,
-            self.cmd_in,
-            self.on_cmd,
-            self.qos_cmd,
-            callback_group=self.cb_group
+            Twist, self.cmd_in, self.on_cmd, self.qos_cmd, callback_group=self.cb_group
         )
 
         # Publisher
-        self.pub_cmd = self.create_publisher(
-            Twist,
-            self.cmd_out,
-            self.qos_cmd
-        )
+        self.pub_cmd = self.create_publisher(Twist, self.cmd_out, self.qos_cmd)
 
         # Timer at 50 Hz
-        self.timer = self.create_timer(
-            1.0 / 50.0,
-            self.tick,
-            callback_group=self.cb_group
-        )
+        self.timer = self.create_timer(1.0 / 50.0, self.tick, callback_group=self.cb_group)
 
         # Heartbeat timer at 1 Hz (to prove timers are executing)
         # self.heartbeat = self.create_timer(
@@ -125,7 +115,9 @@ class SafetyVelFilter(Node):
         #     callback_group=self.cb_group
         # )
 
-        self.get_logger().info(f"SafetyVelFilter up: {self.cmd_in} + {self.scan_topic} -> {self.cmd_out}")
+        self.get_logger().info(
+            f'SafetyVelFilter up: {self.cmd_in} + {self.scan_topic} -> {self.cmd_out}'
+        )
 
     def heartbeat_cb(self):
         scan_age = None
@@ -133,8 +125,10 @@ class SafetyVelFilter(Node):
             now = self.get_clock().now()
             scan_age = (now - self.last_scan_time).nanoseconds * 1e-9
         self.get_logger().warn(
-            f"HEARTBEAT: timer alive. scan_age={scan_age}, last_cmd=({self.last_cmd.linear.x:.2f}, {self.last_cmd.linear.y:.2f}, {self.last_cmd.linear.z:.2f})",
-            throttle_duration_sec=0.0
+            f'HEARTBEAT: timer alive. scan_age={scan_age}, '
+            f'last_cmd=({self.last_cmd.linear.x:.2f}, {self.last_cmd.linear.y:.2f}, '
+            f'{self.last_cmd.linear.z:.2f})',
+            throttle_duration_sec=0.0,
         )
 
     def on_scan(self, msg: LaserScan):
@@ -151,7 +145,7 @@ class SafetyVelFilter(Node):
 
     def sector_min_dist(self, scan: LaserScan, center_angle: float) -> float:
         if scan is None or not scan.ranges:
-            return float("inf")
+            return float('inf')
 
         a0 = scan.angle_min
         da = scan.angle_increment
@@ -169,7 +163,7 @@ class SafetyVelFilter(Node):
         if i_min > i_max:
             i_min, i_max = i_max, i_min
 
-        dmin = float("inf")
+        dmin = float('inf')
         rmin_valid = scan.range_min
         rmax_valid = scan.range_max
 
@@ -193,7 +187,10 @@ class SafetyVelFilter(Node):
 
         # If scan stale -> stop XY+yaw
         now = self.get_clock().now()
-        if self.last_scan_time is None or (now - self.last_scan_time).nanoseconds * 1e-9 > self.scan_timeout:
+        if (
+            self.last_scan_time is None
+            or (now - self.last_scan_time).nanoseconds * 1e-9 > self.scan_timeout
+        ):
             out.linear.x = 0.0
             out.linear.y = 0.0
             out.angular.z = 0.0
@@ -239,5 +236,5 @@ def main():
         rclpy.shutdown()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

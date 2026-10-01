@@ -21,18 +21,24 @@
 # THE SOFTWARE.
 
 
-import math, rclpy
-from rclpy.node import Node
-from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy, QoSDurabilityPolicy
+import math
 
+from geometry_msgs.msg import Twist
 from px4_msgs.msg import (
     OffboardControlMode,
     TrajectorySetpoint,
+    VehicleAttitude,
     VehicleCommand,
     VehicleStatus,
-    VehicleAttitude
 )
-from geometry_msgs.msg import Twist
+import rclpy
+from rclpy.node import Node
+from rclpy.qos import (
+    QoSDurabilityPolicy,
+    QoSHistoryPolicy,
+    QoSProfile,
+    QoSReliabilityPolicy,
+)
 from std_msgs.msg import Bool
 
 SETPOINT_RATE_HZ = 50.0
@@ -50,6 +56,7 @@ OFFBOARD_REQUEST_DELAY_S = 0.2  # gap between requesting OFFBOARD and sending AR
 
 
 class PX4Offboard(Node):
+
     def __init__(self):
         super().__init__('px4_offboard_teleop')
 
@@ -57,12 +64,16 @@ class PX4Offboard(Node):
             reliability=QoSReliabilityPolicy.BEST_EFFORT,
             durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
             history=QoSHistoryPolicy.KEEP_LAST,
-            depth=5
+            depth=5,
         )
 
         # Publishers
-        self.ctrl_mode_pub = self.create_publisher(OffboardControlMode, '/fmu/in/offboard_control_mode', qos)
-        self.setpoint_pub = self.create_publisher(TrajectorySetpoint, '/fmu/in/trajectory_setpoint', qos)
+        self.ctrl_mode_pub = self.create_publisher(
+            OffboardControlMode, '/fmu/in/offboard_control_mode', qos
+        )
+        self.setpoint_pub = self.create_publisher(
+            TrajectorySetpoint, '/fmu/in/trajectory_setpoint', qos
+        )
         self.cmd_pub = self.create_publisher(VehicleCommand, '/fmu/in/vehicle_command', qos)
 
         # Subscribers
@@ -78,8 +89,8 @@ class PX4Offboard(Node):
         self.use_yaw_position = False  # Flag to switch between rate and position control
         self.status = VehicleStatus()
         self.offboard_active = False
-        self.armed = False           # authoritative: set from VehicleStatus, never assigned elsewhere
-        self.arm_requested = False   # intention flag driven by /arm_message
+        self.armed = False  # authoritative: set from VehicleStatus, never assigned elsewhere
+        self.arm_requested = False  # intention flag driven by /arm_message
         self.warmed_up = False
         self.startup_state = ST_IDLE
         self.warmup_count = 0
@@ -89,7 +100,7 @@ class PX4Offboard(Node):
 
         # Timer
         self.create_timer(1.0 / SETPOINT_RATE_HZ, self.loop)
-        self.get_logger().info("PX4 Offboard Teleop Node initialized.")
+        self.get_logger().info('PX4 Offboard Teleop Node initialized.')
 
     def _now(self) -> float:
         return self.get_clock().now().nanoseconds * 1e-9
@@ -98,7 +109,7 @@ class PX4Offboard(Node):
     # stores the PX4 status msg.
     def status_cb(self, msg):
         self.status = msg
-        self.armed = (msg.arming_state == VehicleStatus.ARMING_STATE_ARMED)
+        self.armed = msg.arming_state == VehicleStatus.ARMING_STATE_ARMED
 
     # extracts yaw from attitude quarternion
     def att_cb(self, msg):
@@ -113,7 +124,9 @@ class PX4Offboard(Node):
 
         vals = (msg.linear.x, msg.linear.y, msg.linear.z, msg.angular.z)
         if not all(math.isfinite(v) for v in vals):
-            self.get_logger().error("Non-finite teleop command, ignoring", throttle_duration_sec=1.0)
+            self.get_logger().error(
+                'Non-finite teleop command, ignoring', throttle_duration_sec=1.0
+            )
             return
 
         self.vx = max(-VEL_LIMIT_XY, min(VEL_LIMIT_XY, msg.linear.x))
@@ -122,23 +135,23 @@ class PX4Offboard(Node):
         self.yawspeed = max(-YAW_RATE_LIMIT, min(YAW_RATE_LIMIT, msg.angular.z))
 
     def arm_cb(self, msg: Bool):
-        """Handle external arm/disarm command"""
+        """Handle external arm/disarm command."""
         if msg.data and not self.arm_requested:
-            self.get_logger().info("ARM command received")
+            self.get_logger().info('ARM command received')
             self.arm_requested = True
             if self.startup_state == ST_IDLE:
                 self.startup_state = ST_WARMUP
                 self.warmup_count = 0
 
         elif not msg.data and self.arm_requested:
-            self.get_logger().info("DISARM command received")
+            self.get_logger().info('DISARM command received')
             self.publish_cmd(VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM, param1=0.0)
             self.arm_requested = False
             self.startup_state = ST_IDLE
             self.warmed_up = False
             self.offboard_active = False
             self.vx = self.vy = self.vz = self.yawspeed = 0.0
-            self.get_logger().info("DISARM command sent")
+            self.get_logger().info('DISARM command sent')
 
     # -------------------- Helpers --------------------
     def micros(self):
@@ -177,7 +190,7 @@ class PX4Offboard(Node):
         m.source_system = 1
         m.source_component = 1
         m.from_external = True
-        for k in ["param1","param2","param3","param4","param5","param6","param7"]:
+        for k in ['param1', 'param2', 'param3', 'param4', 'param5', 'param6', 'param7']:
             setattr(m, k, params.get(k, 0.0))
         self.cmd_pub.publish(m)
 
@@ -187,9 +200,9 @@ class PX4Offboard(Node):
         if self.startup_state == ST_WARMUP:
             self.warmup_count += 1
             if self.warmup_count == 1:
-                self.get_logger().info("Warming up Offboard mode...")
+                self.get_logger().info('Warming up Offboard mode...')
             if self.warmup_count >= SETPOINT_WARMUP_COUNT:
-                self.get_logger().info("Requesting OFFBOARD mode...")
+                self.get_logger().info('Requesting OFFBOARD mode...')
                 self.publish_cmd(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, param1=1.0, param2=6.0)
                 self.startup_state = ST_OFFBOARD_REQUESTED
                 self.state_enter_time = self._now()
@@ -199,7 +212,7 @@ class PX4Offboard(Node):
                 self.publish_cmd(VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM, param1=1.0)
                 self.warmed_up = True
                 self.startup_state = ST_READY
-                self.get_logger().info("ARM command sent - offboard warmup complete.")
+                self.get_logger().info('ARM command sent - offboard warmup complete.')
 
     # -------------------- Main Loop --------------------
     def loop(self):
@@ -218,7 +231,9 @@ class PX4Offboard(Node):
 
         # Inactivity safety timeout - hover if no commands
         if (now - self.last_cmd_time) > INACTIVITY_TIMEOUT:
-            self.get_logger().warn("No teleop input - entering hover failsafe...", throttle_duration_sec=2.0)
+            self.get_logger().warn(
+                'No teleop input - entering hover failsafe...', throttle_duration_sec=2.0
+            )
             self.vx = self.vy = self.vz = self.yawspeed = 0.0
 
         # Rotate body frame (FLU) → world frame (NED coordinate system)
@@ -226,18 +241,19 @@ class PX4Offboard(Node):
         wx = self.vx * cy - self.vy * sy
         wy = self.vx * sy + self.vy * cy
         wz = self.vz
-        
+
         self.publish_setpoint(wx, wy, wz, self.yawspeed)
 
         # Debug logging
         if abs(self.yawspeed) > 0.01:
             self.get_logger().info(
-                f"ROTATING: yaw_rate={self.yawspeed:.3f} rad/s | current_yaw={math.degrees(self.yaw):.1f}°",
+                f'ROTATING: yaw_rate={self.yawspeed:.3f} rad/s | '
+                f'current_yaw={math.degrees(self.yaw):.1f}°',
                 throttle_duration_sec=0.3,
             )
         else:
             self.get_logger().info(
-                f"Setpoint: vx={wx:.2f}, vy={wy:.2f}, vz={wz:.2f}",
+                f'Setpoint: vx={wx:.2f}, vy={wy:.2f}, vz={wz:.2f}',
                 throttle_duration_sec=0.5,
             )
 
@@ -248,7 +264,7 @@ def main(args=None):
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
-        node.get_logger().info("PX4 Offboard Teleop node shutting down...")
+        node.get_logger().info('PX4 Offboard Teleop node shutting down...')
     finally:
         node.destroy_node()
         rclpy.shutdown()

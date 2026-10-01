@@ -24,22 +24,23 @@
 import math
 from typing import List, Tuple
 
-import rclpy
-from rclpy.node import Node
-from rclpy.duration import Duration
-
-from sensor_msgs.msg import LaserScan
-from nav_msgs.msg import OccupancyGrid
 from geometry_msgs.msg import TransformStamped
-
-from tf2_ros import Buffer, TransformListener
-from tf2_ros import LookupException, ConnectivityException, ExtrapolationException
+from nav_msgs.msg import OccupancyGrid
+import rclpy
+from rclpy.duration import Duration
+from rclpy.node import Node
+from sensor_msgs.msg import LaserScan
+from tf2_ros import (
+    Buffer,
+    ConnectivityException,
+    ExtrapolationException,
+    LookupException,
+    TransformListener,
+)
 
 
 def bresenham(x0: int, y0: int, x1: int, y1: int) -> List[Tuple[int, int]]:
-    """
-    Bresenham line algorithm: returns grid cells from (x0,y0) to (x1,y1).
-    """
+    """Bresenham line algorithm: returns grid cells from (x0,y0) to (x1,y1)."""
     cells = []
 
     dx = abs(x1 - x0)
@@ -73,57 +74,56 @@ def bresenham(x0: int, y0: int, x1: int, y1: int) -> List[Tuple[int, int]]:
 
 
 def quat_to_yaw(x: float, y: float, z: float, w: float) -> float:
-    """
-    Convert quaternion to yaw.
-    """
+    """Convert quaternion to yaw."""
     siny_cosp = 2.0 * (w * z + x * y)
     cosy_cosp = 1.0 - 2.0 * (y * y + z * z)
     return math.atan2(siny_cosp, cosy_cosp)
 
 
 class SimpleLidarMapper(Node):
+
     def __init__(self):
-        super().__init__("simple_lidar_mapper")
+        super().__init__('simple_lidar_mapper')
 
         # ---------------- Parameters ----------------
-        self.declare_parameter("scan_topic", "/scan_fixed")
-        self.declare_parameter("map_topic", "/simple_map")
+        self.declare_parameter('scan_topic', '/scan_fixed')
+        self.declare_parameter('map_topic', '/simple_map')
 
-        self.declare_parameter("map_frame", "odom")
-        self.declare_parameter("robot_frame", "base_link")
+        self.declare_parameter('map_frame', 'odom')
+        self.declare_parameter('robot_frame', 'base_link')
 
-        self.declare_parameter("resolution", 0.05)   # m/cell
-        self.declare_parameter("width", 400)         # cells
-        self.declare_parameter("height", 400)        # cells
-        self.declare_parameter("origin_x", -10.0)    # meters
-        self.declare_parameter("origin_y", -10.0)    # meters
+        self.declare_parameter('resolution', 0.05)  # m/cell
+        self.declare_parameter('width', 400)  # cells
+        self.declare_parameter('height', 400)  # cells
+        self.declare_parameter('origin_x', -10.0)  # meters
+        self.declare_parameter('origin_y', -10.0)  # meters
 
-        self.declare_parameter("log_odds_occ", 0.85)
-        self.declare_parameter("log_odds_free", -0.4)
-        self.declare_parameter("log_odds_min", -5.0)
-        self.declare_parameter("log_odds_max", 5.0)
+        self.declare_parameter('log_odds_occ', 0.85)
+        self.declare_parameter('log_odds_free', -0.4)
+        self.declare_parameter('log_odds_min', -5.0)
+        self.declare_parameter('log_odds_max', 5.0)
 
-        self.declare_parameter("publish_rate", 2.0)  # Hz
-        self.declare_parameter("max_range_clip", 8.0)
+        self.declare_parameter('publish_rate', 2.0)  # Hz
+        self.declare_parameter('max_range_clip', 8.0)
 
-        self.scan_topic = self.get_parameter("scan_topic").value
-        self.map_topic = self.get_parameter("map_topic").value
-        self.map_frame = self.get_parameter("map_frame").value
-        self.robot_frame = self.get_parameter("robot_frame").value
+        self.scan_topic = self.get_parameter('scan_topic').value
+        self.map_topic = self.get_parameter('map_topic').value
+        self.map_frame = self.get_parameter('map_frame').value
+        self.robot_frame = self.get_parameter('robot_frame').value
 
-        self.resolution = float(self.get_parameter("resolution").value)
-        self.width = int(self.get_parameter("width").value)
-        self.height = int(self.get_parameter("height").value)
-        self.origin_x = float(self.get_parameter("origin_x").value)
-        self.origin_y = float(self.get_parameter("origin_y").value)
+        self.resolution = float(self.get_parameter('resolution').value)
+        self.width = int(self.get_parameter('width').value)
+        self.height = int(self.get_parameter('height').value)
+        self.origin_x = float(self.get_parameter('origin_x').value)
+        self.origin_y = float(self.get_parameter('origin_y').value)
 
-        self.log_odds_occ = float(self.get_parameter("log_odds_occ").value)
-        self.log_odds_free = float(self.get_parameter("log_odds_free").value)
-        self.log_odds_min = float(self.get_parameter("log_odds_min").value)
-        self.log_odds_max = float(self.get_parameter("log_odds_max").value)
+        self.log_odds_occ = float(self.get_parameter('log_odds_occ').value)
+        self.log_odds_free = float(self.get_parameter('log_odds_free').value)
+        self.log_odds_min = float(self.get_parameter('log_odds_min').value)
+        self.log_odds_max = float(self.get_parameter('log_odds_max').value)
 
-        self.publish_rate = float(self.get_parameter("publish_rate").value)
-        self.max_range_clip = float(self.get_parameter("max_range_clip").value)
+        self.publish_rate = float(self.get_parameter('publish_rate').value)
+        self.max_range_clip = float(self.get_parameter('max_range_clip').value)
 
         # ---------------- Map storage ----------------
         # unknown = 0.0 log-odds initially
@@ -135,23 +135,17 @@ class SimpleLidarMapper(Node):
 
         # ---------------- ROS interfaces ----------------
         self.scan_sub = self.create_subscription(
-            LaserScan,
-            self.scan_topic,
-            self.scan_callback,
-            10
+            LaserScan, self.scan_topic, self.scan_callback, 10
         )
 
         self.map_pub = self.create_publisher(OccupancyGrid, self.map_topic, 10)
 
-        self.publish_timer = self.create_timer(
-            1.0 / self.publish_rate,
-            self.publish_map
-        )
+        self.publish_timer = self.create_timer(1.0 / self.publish_rate, self.publish_map)
 
-        self.get_logger().info("Simple LiDAR mapper started.")
+        self.get_logger().info('Simple LiDAR mapper started.')
         self.get_logger().info(
-            f"Map: {self.width}x{self.height}, res={self.resolution}, "
-            f"origin=({self.origin_x}, {self.origin_y})"
+            f'Map: {self.width}x{self.height}, res={self.resolution}, '
+            f'origin=({self.origin_x}, {self.origin_y})'
         )
 
     # ---------------------------------------------------
@@ -173,22 +167,17 @@ class SimpleLidarMapper(Node):
             return
         idx = self.grid_to_index(gx, gy)
         self.log_odds[idx] = max(
-            self.log_odds_min,
-            min(self.log_odds_max, self.log_odds[idx] + delta)
+            self.log_odds_min, min(self.log_odds_max, self.log_odds[idx] + delta)
         )
 
     # ---------------------------------------------------
     # TF
     # ---------------------------------------------------
     def lookup_robot_pose(self) -> Tuple[float, float, float]:
-        """
-        Returns robot pose in map frame: x, y, yaw
-        """
+        """Return robot pose in map frame: x, y, yaw."""
         try:
             tf: TransformStamped = self.tf_buffer.lookup_transform(
-                self.map_frame,
-                self.robot_frame,
-                rclpy.time.Time()
+                self.map_frame, self.robot_frame, rclpy.time.Time()
             )
         except (LookupException, ConnectivityException, ExtrapolationException) as e:
             raise RuntimeError(str(e))
@@ -210,12 +199,12 @@ class SimpleLidarMapper(Node):
         try:
             robot_x, robot_y, robot_yaw = self.lookup_robot_pose()
         except RuntimeError as e:
-            self.get_logger().warn(f"TF unavailable: {e}", throttle_duration_sec=2.0)
+            self.get_logger().warn(f'TF unavailable: {e}', throttle_duration_sec=2.0)
             return
 
         robot_gx, robot_gy = self.world_to_grid(robot_x, robot_y)
         if not self.in_bounds(robot_gx, robot_gy):
-            self.get_logger().warn("Robot pose outside map bounds.", throttle_duration_sec=2.0)
+            self.get_logger().warn('Robot pose outside map bounds.', throttle_duration_sec=2.0)
             return
 
         angle = scan.angle_min
@@ -304,5 +293,5 @@ def main(args=None):
         rclpy.shutdown()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

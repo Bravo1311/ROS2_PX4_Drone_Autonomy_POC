@@ -19,13 +19,13 @@
 # THE SOFTWARE.
 
 
-import os
+from px4_drone_intelligence.api_client import API_MAP, ask, DEFAULT_MODELS, resolve_key
 import rclpy
 from rclpy.node import Node
 
-from px4_drone_intelligence.api_client import ask, resolve_key, DEFAULT_MODELS, API_MAP
 
 class ApiNode(Node):
+
     def __init__(self):
         super().__init__('api_node')
 
@@ -44,14 +44,12 @@ class ApiNode(Node):
         timeout = self.get_parameter('timeout').value
 
         if provider not in API_MAP:
-            self.get_logger().fatal(
-                f"Unknown provider '{provider}'. Expected {sorted(API_MAP)}"
-            )
+            self.get_logger().fatal(f"Unknown provider '{provider}'. Expected {sorted(API_MAP)}")
             raise SystemExit(2)
 
         if not prompt:
             self.get_logger().fatal(
-                f"No prompt. Pass one with --ros-args -p prompt:='your question'"
+                "No prompt. Pass one with --ros-args -p prompt:='your question'"
             )
             raise SystemExit(2)
 
@@ -62,43 +60,51 @@ class ApiNode(Node):
             raise SystemExit(2)
 
         self.get_logger().info(
-            f"provider={provider} model={model or DEFAULT_MODELS[provider]} "
-            f"key=...{key[-4:]}"
+            f'provider={provider} model={model or DEFAULT_MODELS[provider]} key=...{key[-4:]}'
         )
 
         if image_path:
-            self.get_logger().info(f"image={image_path}")
-        self.get_logger().info(f"prompt={prompt!r}")
+            self.get_logger().info(f'image={image_path}')
+        self.get_logger().info(f'prompt={prompt!r}')
 
-        try: 
+        try:
             text, meta = ask(
-                provider, prompt, image_path=image_path or None,
-                key=key, model=model, max_tokens=max_tokens, timeout=timeout
+                provider,
+                prompt,
+                image_path=image_path or None,
+                key=key,
+                model=model,
+                max_tokens=max_tokens,
+                timeout=timeout,
             )
-        except ValueError as e:          # bad image path / type / size
+        except ValueError as e:  # bad image path / type / size
             self.get_logger().fatal(str(e))
             raise SystemExit(2)
-        except RuntimeError as e:        # HTTP, network, refusal
+        except RuntimeError as e:  # HTTP, network, refusal
             self.get_logger().error(str(e))
             raise SystemExit(1)
 
         if meta['finish_reason'] != 'stop':
             self.get_logger().warn(
-                f"Response truncated (finish_reason={meta['finish_reason']});"
-                f"raise max_tokens if the answer looks cut off.")
-        
-        self.get_logger().info(f"--- response ---\n{text.strip()}")
+                f'Response truncated (finish_reason={meta["finish_reason"]});'
+                f'raise max_tokens if the answer looks cut off.'
+            )
+
+        self.get_logger().info(f'--- response ---\n{text.strip()}')
         self.get_logger().info(
-            f"tokens={meta['total_tokens']} cost=${meta['cost']}"
-            if meta['cost'] is not None else f"tokens={meta['total_tokens']}")
+            f'tokens={meta["total_tokens"]} cost=${meta["cost"]}'
+            if meta['cost'] is not None
+            else f'tokens={meta["total_tokens"]}'
+        )
 
         raise SystemExit(0)
+
 
 def main():
     rclpy.init()
     node = None
     try:
-        node = ApiNode()        
+        node = ApiNode()
         rclpy.spin(node)
     except (KeyboardInterrupt, SystemExit):
         pass
@@ -109,5 +115,5 @@ def main():
             rclpy.shutdown()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

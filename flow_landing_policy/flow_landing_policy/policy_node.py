@@ -20,84 +20,93 @@
 
 
 import math
-import numpy as np
-import torch
 
+from flow_landing_policy.config import HISTORY_LEN
+from flow_landing_policy.inference import generate_action_chunk, load_policy
+from geometry_msgs.msg import PoseStamped, Twist
+import numpy as np
 import rclpy
 from rclpy.node import Node
-from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy, QoSDurabilityPolicy
-from geometry_msgs.msg import PoseStamped, Twist
+from rclpy.qos import (
+    QoSDurabilityPolicy,
+    QoSHistoryPolicy,
+    QoSProfile,
+    QoSReliabilityPolicy,
+)
+import torch
 
-from flow_landing_policy.inference import load_policy, generate_action_chunk
-from flow_landing_policy.config import *
 
 def marker_pose_to_relative_pos_quat(msg: PoseStamped):
     """
-        Converts an incoming ArUco PoseStamped (camera_optical_frame: +X right, +Y down, +Z forward) into the (relative_pos, relative_quat) convention the flow-matching policy was trained on in MuJoCo.
+    Convert an incoming ArUco PoseStamped into the policy's training convention.
 
-        Note: Policy convention: 
-            pos_err = marker_pos - drone_pos
-            drone yaw conventional
-            for flow matching, z needs to be negative
+    camera_optical_frame (+X right, +Y down, +Z forward) is converted into the
+    (relative_pos, relative_quat) convention the flow-matching policy was
+    trained on in MuJoCo.
+
+    Note: Policy convention:
+        pos_err = marker_pos - drone_pos
+        drone yaw conventional
+        for flow matching, z needs to be negative
     """
     # w.r.t drone's body frame
     x = -msg.pose.position.y
     y = msg.pose.position.x
     z = -msg.pose.position.z
 
-    relative_pos = np.array([x, y, z], dtype = np.float32)
+    relative_pos = np.array([x, y, z], dtype=np.float32)
     q = msg.pose.orientation
-    relative_quat = np.array([q.w, q.x, q.y, q.z], dtype = np.float32)
+    relative_quat = np.array([q.w, q.x, q.y, q.z], dtype=np.float32)
 
     return relative_pos, relative_quat
+
 
 def clamp(v, lo, hi):
     return max(lo, min(hi, v))
 
+
 class FlowLandingPolicyNode(Node):
-    """
-        Similar to Aruco-detector landing implementation, implements 
-    """
+    """Similar to Aruco-detector landing implementation, implements."""
 
     def __init__(self):
-        super().__init__("flow_landing_policy")
+        super().__init__('flow_landing_policy')
 
         qos = QoSProfile(
             reliability=QoSReliabilityPolicy.BEST_EFFORT,
             durability=QoSDurabilityPolicy.VOLATILE,
             history=QoSHistoryPolicy.KEEP_LAST,
-            depth=5
+            depth=5,
         )
 
         # ---------------- Params ----------------
-        self.declare_parameter("marker_pose_topic", "marker_pose")
-        self.declare_parameter("weights_path", "")
-        self.declare_parameter("steps_per_chunk", 3)
-        self.declare_parameter("lost_timeout_s", 0.6)
-        self.declare_parameter("vmax_xy", 1.0)
-        self.declare_parameter("vmax_z", 1.0)
-        self.declare_parameter("max_yaw_rate", 0.8)
+        self.declare_parameter('marker_pose_topic', 'marker_pose')
+        self.declare_parameter('weights_path', '')
+        self.declare_parameter('steps_per_chunk', 3)
+        self.declare_parameter('lost_timeout_s', 0.6)
+        self.declare_parameter('vmax_xy', 1.0)
+        self.declare_parameter('vmax_z', 1.0)
+        self.declare_parameter('max_yaw_rate', 0.8)
 
-        self.marker_topic = self.get_parameter("marker_pose_topic").value
-        weights_path = self.get_parameter("weights_path").value
-        self.steps_per_chunk = int(self.get_parameter("steps_per_chunk").value)
-        self.lost_timeout = float(self.get_parameter("lost_timeout_s").value)
-        self.vmax_xy = float(self.get_parameter("vmax_xy").value)
-        self.vmax_z = float(self.get_parameter("vmax_z").value)
-        self.max_yaw_rate = float(self.get_parameter("max_yaw_rate").value)
+        self.marker_topic = self.get_parameter('marker_pose_topic').value
+        weights_path = self.get_parameter('weights_path').value
+        self.steps_per_chunk = int(self.get_parameter('steps_per_chunk').value)
+        self.lost_timeout = float(self.get_parameter('lost_timeout_s').value)
+        self.vmax_xy = float(self.get_parameter('vmax_xy').value)
+        self.vmax_z = float(self.get_parameter('vmax_z').value)
+        self.max_yaw_rate = float(self.get_parameter('max_yaw_rate').value)
 
         if not weights_path:
-            raise ValueError("weights_path parameter is required")
+            raise ValueError('weights_path parameter is required')
 
         # ---------------- Model ----------------
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.get_logger().info(f"Loading policy on device: {self.device}")
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.get_logger().info(f'Loading policy on device: {self.device}')
         self.policy = load_policy(weights_path, self.device)
-        self.get_logger().info("Policy loaded.")
+        self.get_logger().info('Policy loaded.')
 
         # ---------------- State ----------------
-        self.history_buffer = []       # rolling list of (7,) pose vectors
-        self.current_chunk = None       # (CHUNK_LEN, 4) generated actions
+        self.history_buffer = []  # rolling list of (7,) pose vectors
+        self.current_chunk = None  # (CHUNK_LEN, 4) generated actions
         self.chunk_idx = 0
         self.steps_since_replan = self.steps_per_chunk  # force replan on first call
 
@@ -106,13 +115,13 @@ class FlowLandingPolicyNode(Node):
 
         # ---------------- Pub/Sub ----------------
         # self.cmd_pub = self.create_publisher(Twist, "/autoland_velocity_cmd", qos)
-        self.cmd_pub = self.create_publisher(Twist, "/autoland_velocity_cmd", qos)
+        self.cmd_pub = self.create_publisher(Twist, '/autoland_velocity_cmd', qos)
         self.create_subscription(PoseStamped, self.marker_topic, self.on_marker_pose, 10)
         self.create_timer(0.05, self.loop)  # 20 Hz, matches AutoLandTwist cadence
 
         self.get_logger().info(
-            f"FlowLandingPolicyNode listening: {self.marker_topic} | "
-            f"steps_per_chunk={self.steps_per_chunk}"
+            f'FlowLandingPolicyNode listening: {self.marker_topic} | '
+            f'steps_per_chunk={self.steps_per_chunk}'
         )
 
     def _now(self) -> float:
@@ -140,7 +149,7 @@ class FlowLandingPolicyNode(Node):
 
         if self.last_marker_time is None or (now - self.last_marker_time) > self.lost_timeout:
             if self.marker_seen:
-                self.get_logger().warn("Marker lost -> outputs zero + reset policy state")
+                self.get_logger().warn('Marker lost -> outputs zero + reset policy state')
             self.marker_seen = False
 
         out = Twist()
@@ -171,8 +180,9 @@ class FlowLandingPolicyNode(Node):
 
         if not all(math.isfinite(v) for v in (vx, vy, vz, yaw_rate)):
             self.get_logger().error(
-                "Policy produced non-finite output. Therefore publishing zero + resetting policy state",
-                throttle_duration_sec=1.0
+                'Policy produced non-finite output. Therefore publishing zero + resetting policy '
+                'state',
+                throttle_duration_sec=1.0,
             )
             self.cmd_pub.publish(Twist())
             self.reset_state()
@@ -194,9 +204,9 @@ class FlowLandingPolicyNode(Node):
         self.cmd_pub.publish(out)
 
         self.get_logger().info(
-            f"POLICY: vx={vx:.2f} vy={vy:.2f} vz={vz:.2f} yaw={yaw_rate:.2f} "
-            f"chunk_idx={self.chunk_idx-1}",
-            throttle_duration_sec=0.5
+            f'POLICY: vx={vx:.2f} vy={vy:.2f} vz={vz:.2f} yaw={yaw_rate:.2f} '
+            f'chunk_idx={self.chunk_idx - 1}',
+            throttle_duration_sec=0.5,
         )
 
 
@@ -212,5 +222,5 @@ def main(args=None):
         rclpy.shutdown()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

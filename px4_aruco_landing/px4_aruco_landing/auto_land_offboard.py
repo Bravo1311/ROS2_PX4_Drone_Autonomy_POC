@@ -24,14 +24,22 @@
 import math
 import time
 
+from geometry_msgs.msg import PoseStamped
+from px4_msgs.msg import (
+    OffboardControlMode,
+    TrajectorySetpoint,
+    VehicleCommand,
+    VehicleLocalPosition,
+    VehicleStatus,
+)
 import rclpy
 from rclpy.node import Node
-from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy, QoSDurabilityPolicy
-
-from geometry_msgs.msg import PoseStamped
-
-from px4_msgs.msg import OffboardControlMode, TrajectorySetpoint, VehicleCommand
-from px4_msgs.msg import VehicleLocalPosition, VehicleStatus
+from rclpy.qos import (
+    QoSDurabilityPolicy,
+    QoSHistoryPolicy,
+    QoSProfile,
+    QoSReliabilityPolicy,
+)
 
 
 def clamp(v, lo, hi):
@@ -40,6 +48,8 @@ def clamp(v, lo, hi):
 
 class AutoLandOffboard(Node):
     """
+    Velocity-based PD controller for ArUco-guided autonomous landing.
+
     Subscribes:
       - marker_pose (PoseStamped) from ArUco node (tvec in camera optical frame, meters)
       - /fmu/out/vehicle_local_position
@@ -52,37 +62,41 @@ class AutoLandOffboard(Node):
     """
 
     def __init__(self):
-        super().__init__("auto_land_offboard")
+        super().__init__('auto_land_offboard')
 
         qos_px4 = QoSProfile(
-             reliability=QoSReliabilityPolicy.BEST_EFFORT,
-             durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
-             history=QoSHistoryPolicy.KEEP_LAST,
-             depth=5
-         )
+            reliability=QoSReliabilityPolicy.BEST_EFFORT,
+            durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+            history=QoSHistoryPolicy.KEEP_LAST,
+            depth=5,
+        )
 
         # --- Params ---
-        self.declare_parameter("marker_pose_topic", "marker_pose")
+        self.declare_parameter('marker_pose_topic', 'marker_pose')
 
         # Controller gains and limits
-        self.declare_parameter("k_xy", 0.6)             # proportional gain
-        self.declare_parameter("vmax_xy", 1.0)          # m/s
-        self.declare_parameter("descend_rate", 0.4)     # m/s downward in NED (positive down)
-        self.declare_parameter("center_radius", 0.25)   # m; start descending when within this radius
-        self.declare_parameter("lost_timeout_s", 0.6)
+        self.declare_parameter('k_xy', 0.6)  # proportional gain
+        self.declare_parameter('vmax_xy', 1.0)  # m/s
+        self.declare_parameter('descend_rate', 0.4)  # m/s downward in NED (positive down)
+        self.declare_parameter(
+            'center_radius', 0.25
+        )  # m; start descending when within this radius
+        self.declare_parameter('lost_timeout_s', 0.6)
 
         # Behavior
-        self.declare_parameter("auto_arm_offboard", True)
-        self.declare_parameter("send_land_below_m", 0.25)  # send LAND when below this altitude and centered
+        self.declare_parameter('auto_arm_offboard', True)
+        self.declare_parameter(
+            'send_land_below_m', 0.25
+        )  # send LAND when below this altitude and centered
 
-        self.marker_topic = self.get_parameter("marker_pose_topic").value
-        self.k_xy = float(self.get_parameter("k_xy").value)
-        self.vmax_xy = float(self.get_parameter("vmax_xy").value)
-        self.descend_rate = float(self.get_parameter("descend_rate").value)
-        self.center_radius = float(self.get_parameter("center_radius").value)
-        self.lost_timeout = float(self.get_parameter("lost_timeout_s").value)
-        self.auto_arm_offboard = bool(self.get_parameter("auto_arm_offboard").value)
-        self.land_below = float(self.get_parameter("send_land_below_m").value)
+        self.marker_topic = self.get_parameter('marker_pose_topic').value
+        self.k_xy = float(self.get_parameter('k_xy').value)
+        self.vmax_xy = float(self.get_parameter('vmax_xy').value)
+        self.descend_rate = float(self.get_parameter('descend_rate').value)
+        self.center_radius = float(self.get_parameter('center_radius').value)
+        self.lost_timeout = float(self.get_parameter('lost_timeout_s').value)
+        self.auto_arm_offboard = bool(self.get_parameter('auto_arm_offboard').value)
+        self.land_below = float(self.get_parameter('send_land_below_m').value)
 
         # State
         self.last_marker_time = None
@@ -94,14 +108,22 @@ class AutoLandOffboard(Node):
         self.status = None
 
         # Publishers
-        self.offboard_pub = self.create_publisher(OffboardControlMode, "/fmu/in/offboard_control_mode", qos_px4)
-        self.setpoint_pub = self.create_publisher(TrajectorySetpoint, "/fmu/in/trajectory_setpoint", qos_px4)
-        self.cmd_pub = self.create_publisher(VehicleCommand, "/fmu/in/vehicle_command", qos_px4)
+        self.offboard_pub = self.create_publisher(
+            OffboardControlMode, '/fmu/in/offboard_control_mode', qos_px4
+        )
+        self.setpoint_pub = self.create_publisher(
+            TrajectorySetpoint, '/fmu/in/trajectory_setpoint', qos_px4
+        )
+        self.cmd_pub = self.create_publisher(VehicleCommand, '/fmu/in/vehicle_command', qos_px4)
 
         # Subscribers
         self.create_subscription(PoseStamped, self.marker_topic, self.on_marker_pose, 10)
-        self.create_subscription(VehicleLocalPosition, "/fmu/out/vehicle_local_position", self.on_local_pos, qos_px4)
-        self.create_subscription(VehicleStatus, "/fmu/out/vehicle_status_v1", self.on_status, qos_px4)
+        self.create_subscription(
+            VehicleLocalPosition, '/fmu/out/vehicle_local_position', self.on_local_pos, qos_px4
+        )
+        self.create_subscription(
+            VehicleStatus, '/fmu/out/vehicle_status_v1', self.on_status, qos_px4
+        )
 
         # Timer (setpoint stream)
         self.timer = self.create_timer(0.05, self.on_timer)  # 20 Hz
@@ -111,7 +133,7 @@ class AutoLandOffboard(Node):
         self.sent_arm = False
         self.sent_land = False
 
-        self.get_logger().info(f"Auto-landing listening marker pose: {self.marker_topic}")
+        self.get_logger().info(f'Auto-landing listening marker pose: {self.marker_topic}')
 
     def on_marker_pose(self, msg: PoseStamped):
         # tvec in OpenCV optical frame:
@@ -139,7 +161,7 @@ class AutoLandOffboard(Node):
 
     def on_local_pos(self, msg: VehicleLocalPosition):
         self.local_pos = msg
-        self.get_logger().info(f"The local position is:  {self.local_pos}")
+        self.get_logger().info(f'The local position is:  {self.local_pos}')
 
     def on_status(self, msg: VehicleStatus):
         self.status = msg
@@ -172,28 +194,27 @@ class AutoLandOffboard(Node):
         sp.timestamp = int(self.get_clock().now().nanoseconds / 1000)
 
         # --- Velocity fields differ between px4_msgs versions ---
-        if hasattr(sp, "vx") and hasattr(sp, "vy") and hasattr(sp, "vz"):
+        if hasattr(sp, 'vx') and hasattr(sp, 'vy') and hasattr(sp, 'vz'):
             # older layout
             sp.vx = float(vx)
             sp.vy = float(vy)
             sp.vz = float(vz)
-        elif hasattr(sp, "velocity"):
+        elif hasattr(sp, 'velocity'):
             # newer layout: float32[3] velocity
             sp.velocity = [float(vx), float(vy), float(vz)]
         else:
             raise AttributeError(
-                "TrajectorySetpoint has neither (vx,vy,vz) nor velocity[3]. "
-                "Run: ros2 interface show px4_msgs/msg/TrajectorySetpoint"
+                'TrajectorySetpoint has neither (vx,vy,vz) nor velocity[3]. '
+                'Run: ros2 interface show px4_msgs/msg/TrajectorySetpoint'
             )
 
         # yaw/yawspeed fields also differ
-        if hasattr(sp, "yawspeed"):
+        if hasattr(sp, 'yawspeed'):
             sp.yawspeed = float(yawspeed)
-        elif hasattr(sp, "yaw_rate"):
+        elif hasattr(sp, 'yaw_rate'):
             sp.yaw_rate = float(yawspeed)
 
         self.setpoint_pub.publish(sp)
-
 
     def on_timer(self):
         now = time.time()
@@ -208,10 +229,17 @@ class AutoLandOffboard(Node):
         # Optionally arm + go offboard (only do after streaming setpoints for a moment)
         if self.auto_arm_offboard and not self.sent_offboard and (now - self.start_time) > 1.0:
             # Set mode to Offboard
-            self.send_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1, 6)  # 6 = offboard in PX4 convention
+            self.send_vehicle_command(
+                VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1, 6
+            )  # 6 = offboard in PX4 convention
             self.sent_offboard = True
 
-        if self.auto_arm_offboard and self.sent_offboard and not self.sent_arm and (now - self.start_time) > 1.5:
+        if (
+            self.auto_arm_offboard
+            and self.sent_offboard
+            and not self.sent_arm
+            and (now - self.start_time) > 1.5
+        ):
             self.send_vehicle_command(VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.0)
             self.sent_arm = True
 
@@ -219,7 +247,7 @@ class AutoLandOffboard(Node):
         if not self.marker_seen:
             # If marker not seen: stop (safe default)
             self.publish_velocity_setpoint(0.0, 0.0, 0.0)
-            self.get_logger().info("Marker not received. Exiting")
+            self.get_logger().info('Marker not received. Exiting')
             return
 
         e = math.sqrt(self.ex * self.ex + self.ey * self.ey)
@@ -236,9 +264,11 @@ class AutoLandOffboard(Node):
         self.publish_velocity_setpoint(vx, vy, vz)
 
         # Optional: send LAND when very close to ground and centered
-        if self.local_pos is not None and not self.sent_land and e < (0.6 * self.center_radius):
+        if (self.local_pos is not None and not self.sent_land
+                and e < (0.6 * self.center_radius)):
             # In PX4 local position, z is usually Down (NED). Altitude above origin is -z.
-            # If origin is at takeoff and you took off, local_pos.z is positive down when below origin.
+            # If origin is at takeoff and you took off, local_pos.z is positive down when
+            # below origin.
             # For landing decision, easiest: use dist-to-ground from marker tvec z if you trust it.
             # Here we use camera distance proxy: msg.pose.position.z isn't stored, so skip.
             #
@@ -246,7 +276,7 @@ class AutoLandOffboard(Node):
             if abs(float(self.local_pos.z)) < self.land_below:
                 self.send_vehicle_command(VehicleCommand.VEHICLE_CMD_NAV_LAND)
                 self.sent_land = True
-                self.get_logger().info("Sent LAND command.")
+                self.get_logger().info('Sent LAND command.')
 
 
 def main():
@@ -257,5 +287,5 @@ def main():
     rclpy.shutdown()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

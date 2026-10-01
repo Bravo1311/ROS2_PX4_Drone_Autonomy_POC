@@ -22,15 +22,15 @@
 
 
 from launch import LaunchDescription
-from launch_ros.actions import Node
 from launch.actions import ExecuteProcess
-import os
+from launch_ros.actions import Node
+
 
 def generate_launch_description():
-    
+
     # --- Configuration ---
     package_name = 'px4_offboard'  # Change this to your package name
-    ros_distro = 'humble'         # Change this to your ROS 2 distro
+    ros_distro = 'humble'  # Change this to your ROS 2 distro
     # ---------------------
 
     # Path to your ROS 2 setup file
@@ -44,24 +44,22 @@ def generate_launch_description():
         output='screen',
         emulate_tty=True,  # This ensures Python's print() statements are shown
     )
-    
+
     # Launch the custom teleop keyboard node in a new gnome-terminal
     teleop_node_process = ExecuteProcess(
         cmd=[
             'gnome-terminal',
             '--',
-            'bash', '-c',
+            'bash',
+            '-c',
             # Command to run in the new terminal:
             f'source {ros_setup_path} && '
             f'echo "Terminal for Keyboard Teleop (Press Space to Arm)" && '
             f'ros2 run {package_name} teleop_keyboard.py; '
-            'exec bash' # Keeps the terminal open after the script exits
+            'exec bash',  # Keeps the terminal open after the script exits
         ],
         output='screen',
-        shell=False
+        shell=False,
     )
 
-    return LaunchDescription([
-        controller_node,
-        teleop_node_process
-    ])
+    return LaunchDescription([controller_node, teleop_node_process])

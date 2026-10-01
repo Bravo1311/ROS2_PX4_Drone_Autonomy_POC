@@ -21,11 +21,17 @@
 # THE SOFTWARE.
 
 
-import time, math
+import math
+
+from geometry_msgs.msg import PoseStamped, Twist
 import rclpy
 from rclpy.node import Node
-from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy, QoSDurabilityPolicy
-from geometry_msgs.msg import PoseStamped, Twist
+from rclpy.qos import (
+    QoSDurabilityPolicy,
+    QoSHistoryPolicy,
+    QoSProfile,
+    QoSReliabilityPolicy,
+)
 
 
 def clamp(v, lo, hi):
@@ -34,7 +40,8 @@ def clamp(v, lo, hi):
 
 def yaw_from_quat(qx: float, qy: float, qz: float, qw: float) -> float:
     """
-    Returns yaw (rotation about +Z) in radians from quaternion (x,y,z,w).
+    Return yaw (rotation about +Z) in radians from quaternion (x,y,z,w).
+
     ROS uses x,y,z,w ordering in messages.
     """
     siny_cosp = 2.0 * (qw * qz + qx * qy)
@@ -49,6 +56,8 @@ def wrap_to_pi(a: float) -> float:
 
 class AutoLandTwist(Node):
     """
+    Read marker pose and produce a body-frame Twist for the PX4OffboardMux.
+
     Reads marker pose in camera_optical_frame and produces a BODY-FRAME Twist
     (forward x, left y, up z) for the PX4OffboardMux to forward to PX4.
 
@@ -57,67 +66,71 @@ class AutoLandTwist(Node):
     """
 
     def __init__(self):
-        super().__init__("autoland_twist")
+        super().__init__('autoland_twist')
 
         qos = QoSProfile(
             reliability=QoSReliabilityPolicy.BEST_EFFORT,
             durability=QoSDurabilityPolicy.VOLATILE,
             history=QoSHistoryPolicy.KEEP_LAST,
-            depth=5
+            depth=5,
         )
 
         # ---------------- Params ----------------
-        self.declare_parameter("marker_pose_topic", "marker_pose")
+        self.declare_parameter('marker_pose_topic', 'marker_pose')
 
         # P
-        self.declare_parameter("k_xy", 0.5)
-        self.declare_parameter("vmax_xy", 1.0)
+        self.declare_parameter('k_xy', 0.5)
+        self.declare_parameter('vmax_xy', 1.0)
 
         # I
-        self.declare_parameter("ki_xy", 0.00)
-        self.declare_parameter("i_limit", 0.5)
-        self.declare_parameter("i_leak", 0.0)
+        self.declare_parameter('ki_xy', 0.00)
+        self.declare_parameter('i_limit', 0.5)
+        self.declare_parameter('i_leak', 0.0)
 
         # D
-        self.declare_parameter("kd_xy", 0.1)
-        self.declare_parameter("d_filter_alpha", 0.7)
+        self.declare_parameter('kd_xy', 0.1)
+        self.declare_parameter('d_filter_alpha', 0.7)
 
         # Landing logic
-        self.declare_parameter("descend_rate", 1.0)   # m/s magnitude (down). We output NEGATIVE z (body +z up).
-        self.declare_parameter("center_radius", 0.5)
-        self.declare_parameter("lost_timeout_s", 0.6)
+        self.declare_parameter(
+            'descend_rate', 1.0
+        )  # m/s magnitude (down). We output NEGATIVE z (body +z up).
+        self.declare_parameter('center_radius', 0.5)
+        self.declare_parameter('lost_timeout_s', 0.6)
 
         # Yaw alignment (align only above threshold, then lock)
-        self.declare_parameter("yaw_align_enable", True)
-        self.declare_parameter("yaw_lock_height_m", 2.0)    # align only ABOVE this height; BELOW => lock yaw
-        self.declare_parameter("k_yaw", 1.2)                # yaw-rate gain (rad/s per rad)
-        self.declare_parameter("max_yaw_rate", 0.8)         # rad/s clamp
-        self.declare_parameter("yaw_deadband_rad", 0.05)    # ~3 deg deadband
-        self.declare_parameter("yaw_invert", False)         # flip sign if yaw goes the wrong way
+        self.declare_parameter('yaw_align_enable', True)
+        self.declare_parameter(
+            'yaw_lock_height_m', 2.0
+        )  # align only ABOVE this height; BELOW => lock yaw
+        self.declare_parameter('k_yaw', 1.2)  # yaw-rate gain (rad/s per rad)
+        self.declare_parameter('max_yaw_rate', 0.8)  # rad/s clamp
+        self.declare_parameter('yaw_deadband_rad', 0.05)  # ~3 deg deadband
+        self.declare_parameter('yaw_invert', False)  # flip sign if yaw goes the wrong way
 
         # ---------------- Load params ----------------
-        self.marker_topic = self.get_parameter("marker_pose_topic").value
+        self.marker_topic = self.get_parameter('marker_pose_topic').value
 
-        self.k_xy = float(self.get_parameter("k_xy").value)
-        self.vmax_xy = float(self.get_parameter("vmax_xy").value)
+        self.k_xy = float(self.get_parameter('k_xy').value)
+        self.vmax_xy = float(self.get_parameter('vmax_xy').value)
 
-        self.ki_xy = float(self.get_parameter("ki_xy").value)
-        self.i_limit = float(self.get_parameter("i_limit").value)
-        self.i_leak = float(self.get_parameter("i_leak").value)
+        self.ki_xy = float(self.get_parameter('ki_xy').value)
+        self.i_limit = float(self.get_parameter('i_limit').value)
+        self.i_leak = float(self.get_parameter('i_leak').value)
 
-        self.kd_xy = float(self.get_parameter("kd_xy").value)
-        self.alpha = float(self.get_parameter("d_filter_alpha").value)
+        self.kd_xy = float(self.get_parameter('kd_xy').value)
+        self.alpha = float(self.get_parameter('d_filter_alpha').value)
 
-        self.descend_rate = float(self.get_parameter("descend_rate").value)
-        self.center_radius = float(self.get_parameter("center_radius").value)
-        self.lost_timeout = float(self.get_parameter("lost_timeout_s").value)
+        self.descend_rate = float(self.get_parameter('descend_rate').value)
+        self.center_radius = float(self.get_parameter('center_radius').value)
+        self.lost_timeout = float(self.get_parameter('lost_timeout_s').value)
 
-        self.yaw_align_enable = bool(self.get_parameter("yaw_align_enable").value)
-        self.yaw_lock_h = float(self.get_parameter("yaw_lock_height_m").value)
-        self.k_yaw = float(self.get_parameter("k_yaw").value)
-        self.max_yaw_rate = float(self.get_parameter("max_yaw_rate").value)
-        self.yaw_deadband = float(self.get_parameter("yaw_deadband_rad").value)
-        self.yaw_invert = bool(self.get_parameter("yaw_invert").value)
+        self.yaw_align_enable = bool(self.get_parameter('yaw_align_enable').value)
+        self.yaw_lock_h = float(self.get_parameter('yaw_lock_height_m').value)
+        self.k_yaw = float(self.get_parameter('k_yaw').value)
+        self.max_yaw_rate = float(self.get_parameter('max_yaw_rate').value)
+        self.yaw_deadband = float(self.get_parameter('yaw_deadband_rad').value)
+        self.yaw_invert = bool(self.get_parameter('yaw_invert').value)
 
         # ---------------- State ----------------
         self.last_marker_time = None
@@ -143,13 +156,13 @@ class AutoLandTwist(Node):
         self.iy = 0.0
 
         # ---------------- Pub/Sub ----------------
-        self.cmd_pub = self.create_publisher(Twist, "/autoland_velocity_cmd", qos)
+        self.cmd_pub = self.create_publisher(Twist, '/autoland_velocity_cmd', qos)
         self.create_subscription(PoseStamped, self.marker_topic, self.on_marker_pose, 10)
         self.create_timer(0.05, self.loop)  # 20 Hz
 
         self.get_logger().info(
-            f"AutoLandTwist(PID + yaw-lock) listening: {self.marker_topic} | "
-            f"yaw_align={self.yaw_align_enable} lock_h={self.yaw_lock_h}m"
+            f'AutoLandTwist(PID + yaw-lock) listening: {self.marker_topic} | '
+            f'yaw_align={self.yaw_align_enable} lock_h={self.yaw_lock_h}m'
         )
 
     def _now(self) -> float:
@@ -200,7 +213,7 @@ class AutoLandTwist(Node):
         # marker freshness check
         if self.last_marker_time is None or (now - self.last_marker_time) > self.lost_timeout:
             if self.marker_seen:
-                self.get_logger().warn("Marker lost -> outputs zero + reset PID/yaw latch")
+                self.get_logger().warn('Marker lost -> outputs zero + reset PID/yaw latch')
             self.marker_seen = False
 
         out = Twist()
@@ -241,8 +254,8 @@ class AutoLandTwist(Node):
         vx = clamp(ux_unsat, -self.vmax_xy, self.vmax_xy)
         vy = clamp(uy_unsat, -self.vmax_xy, self.vmax_xy)
 
-        sat_x = (vx != ux_unsat)
-        sat_y = (vy != uy_unsat)
+        sat_x = vx != ux_unsat
+        sat_y = vy != uy_unsat
 
         # Conditional integration:
         # integrate if not saturated OR if error drives back toward unsaturation
@@ -255,8 +268,8 @@ class AutoLandTwist(Node):
         # Optional leak
         if self.i_leak > 0.0:
             leak = clamp(self.i_leak * dt, 0.0, 1.0)
-            self.ix *= (1.0 - leak)
-            self.iy *= (1.0 - leak)
+            self.ix *= 1.0 - leak
+            self.iy *= 1.0 - leak
 
         # Clamp integrator states
         self.ix = clamp(self.ix, -self.i_limit, self.i_limit)
@@ -266,10 +279,16 @@ class AutoLandTwist(Node):
         self.prev_ex, self.prev_ey, self.prev_t = self.ex, self.ey, t
 
         # Recompute after updated integrator (cleaner)
-        vx = clamp(self.k_xy * self.ex + self.ki_xy * self.ix + self.kd_xy * self.dex_f,
-                   -self.vmax_xy, self.vmax_xy)
-        vy = clamp(self.k_xy * self.ey + self.ki_xy * self.iy + self.kd_xy * self.dey_f,
-                   -self.vmax_xy, self.vmax_xy)
+        vx = clamp(
+            self.k_xy * self.ex + self.ki_xy * self.ix + self.kd_xy * self.dex_f,
+            -self.vmax_xy,
+            self.vmax_xy,
+        )
+        vy = clamp(
+            self.k_xy * self.ey + self.ki_xy * self.iy + self.kd_xy * self.dey_f,
+            -self.vmax_xy,
+            self.vmax_xy,
+        )
 
         # ---------------- Landing logic (descend only when centered) ----------------
         e = math.sqrt(self.ex * self.ex + self.ey * self.ey)
@@ -308,10 +327,10 @@ class AutoLandTwist(Node):
         self.cmd_pub.publish(out)
 
         self.get_logger().info(
-            f"AUTO PID(body): vx={vx:.2f} vy={vy:.2f} vz={vz:.2f} "
-            f"yawspeed={yawspeed:.2f} locked={self.yaw_locked} z={self.marker_z:.2f} "
-            f"err={e:.2f} ix={self.ix:.2f} iy={self.iy:.2f}",
-            throttle_duration_sec=0.5
+            f'AUTO PID(body): vx={vx:.2f} vy={vy:.2f} vz={vz:.2f} '
+            f'yawspeed={yawspeed:.2f} locked={self.yaw_locked} z={self.marker_z:.2f} '
+            f'err={e:.2f} ix={self.ix:.2f} iy={self.iy:.2f}',
+            throttle_duration_sec=0.5,
         )
 
 
@@ -327,5 +346,5 @@ def main(args=None):
         rclpy.shutdown()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

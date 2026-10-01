@@ -1,6 +1,7 @@
-from setuptools import setup
-import os
 from glob import glob
+import os
+
+from setuptools import setup
 
 package_name = 'px4_offboard'
 
@@ -9,15 +10,12 @@ setup(
     version='0.0.1',
     packages=[package_name],
     data_files=[
-        ('share/ament_index/resource_index/packages',
-            ['resource/' + package_name]),
+        ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
         # Include launch files
-        (os.path.join('share', package_name, 'launch'), 
-            glob('launch/*.launch.py')),
+        (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
         # Include config files
-        (os.path.join('share', package_name, 'config'), 
-            glob('config/*.yaml')),
+        (os.path.join('share', package_name, 'config'), glob('config/*.yaml')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -28,9 +26,9 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'position_offboard_control.py = px4_offboard.position_offboard_control:main', 
+            'position_offboard_control.py = px4_offboard.position_offboard_control:main',
             'teleop_keyboard.py = px4_offboard.teleop_keyboard:main',
-            'velocity_offboard_control.py = px4_offboard.velocity_offboard_control:main', 
+            'velocity_offboard_control.py = px4_offboard.velocity_offboard_control:main',
             'teleop_joystick.py = px4_offboard.teleop_joystick:main',
             'px4_offboard_mux.py = px4_offboard.px4_offboard_mux:main',
             'nav2_cmd_relay.py = px4_offboard.nav2_cmd_relay:main',

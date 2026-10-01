@@ -22,6 +22,7 @@
 
 
 import os
+
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, TimerAction
@@ -32,44 +33,40 @@ from launch_ros.actions import Node
 def generate_launch_description():
 
     nav2_params_file = os.path.join(
-        get_package_share_directory('px4_bringup'),
-        'config',
-        'nav2_params.yaml'
+        get_package_share_directory('px4_bringup'), 'config', 'nav2_params.yaml'
     )
 
     use_sim_time = LaunchConfiguration('use_sim_time')
 
     declare_use_sim_time = DeclareLaunchArgument(
-        'use_sim_time',
-        default_value='true',
-        description='Use simulation time'
+        'use_sim_time', default_value='true', description='Use simulation time'
     )
 
     # ── Global costmap ───────────────────────────────────────────
     # Full map-sized grid. Used by planner to find obstacle-free
     # paths. Has static layer (SLAM map) + obstacle layer (lidar).
-    global_costmap = Node(
+    global_costmap = Node(  # noqa: F841 - intentionally disabled below, kept for re-enabling
         package='nav2_costmap_2d',
         executable='nav2_costmap_2d',
         name='global_costmap',
         namespace='global_costmap',
         output='screen',
         parameters=[nav2_params_file, {'use_sim_time': use_sim_time}],
-        remappings=[('scan', '/scan_fixed')]
+        remappings=[('scan', '/scan_fixed')],
     )
 
     # ── Local costmap ────────────────────────────────────────────
     # Small rolling window around the drone.
     # Used by DWB to score trajectories in real time.
     # Only live lidar — no static layer.
-    local_costmap = Node(
+    local_costmap = Node(  # noqa: F841 - intentionally disabled below, kept for re-enabling
         package='nav2_costmap_2d',
         executable='nav2_costmap_2d',
         name='local_costmap',
         namespace='local_costmap',
         output='screen',
         parameters=[nav2_params_file, {'use_sim_time': use_sim_time}],
-        remappings=[('scan', '/scan_fixed')]
+        remappings=[('scan', '/scan_fixed')],
     )
 
     # ── Controller server ────────────────────────────────────────
@@ -81,7 +78,7 @@ def generate_launch_description():
         name='controller_server',
         output='screen',
         parameters=[nav2_params_file, {'use_sim_time': use_sim_time}],
-        remappings=[('cmd_vel', '/cmd_vel_nav_raw')]
+        remappings=[('cmd_vel', '/cmd_vel_nav_raw')],
     )
 
     # ── Smoother server ──────────────────────────────────────────
@@ -91,7 +88,7 @@ def generate_launch_description():
         executable='smoother_server',
         name='smoother_server',
         output='screen',
-        parameters=[nav2_params_file, {'use_sim_time': use_sim_time}]
+        parameters=[nav2_params_file, {'use_sim_time': use_sim_time}],
     )
 
     # ── Planner server ───────────────────────────────────────────
@@ -102,7 +99,7 @@ def generate_launch_description():
         executable='planner_server',
         name='planner_server',
         output='screen',
-        parameters=[nav2_params_file, {'use_sim_time': use_sim_time}]
+        parameters=[nav2_params_file, {'use_sim_time': use_sim_time}],
     )
 
     # ── Behavior server ──────────────────────────────────────────
@@ -113,7 +110,7 @@ def generate_launch_description():
         executable='behavior_server',
         name='behavior_server',
         output='screen',
-        parameters=[nav2_params_file, {'use_sim_time': use_sim_time}]
+        parameters=[nav2_params_file, {'use_sim_time': use_sim_time}],
     )
 
     # ── BT Navigator ─────────────────────────────────────────────
@@ -126,7 +123,7 @@ def generate_launch_description():
         executable='bt_navigator',
         name='bt_navigator',
         output='screen',
-        parameters=[nav2_params_file, {'use_sim_time': use_sim_time}]
+        parameters=[nav2_params_file, {'use_sim_time': use_sim_time}],
     )
 
     # ── Waypoint follower ────────────────────────────────────────
@@ -136,7 +133,7 @@ def generate_launch_description():
         executable='waypoint_follower',
         name='waypoint_follower',
         output='screen',
-        parameters=[nav2_params_file, {'use_sim_time': use_sim_time}]
+        parameters=[nav2_params_file, {'use_sim_time': use_sim_time}],
     )
 
     # ── Velocity smoother ────────────────────────────────────────
@@ -150,9 +147,9 @@ def generate_launch_description():
         output='screen',
         parameters=[nav2_params_file, {'use_sim_time': use_sim_time}],
         remappings=[
-            ('cmd_vel',          '/cmd_vel_nav_raw'),  # input from DWB
-            ('cmd_vel_smoothed', '/cmd_vel_nav'),       # output to nav2_cmd_relay
-        ]
+            ('cmd_vel', '/cmd_vel_nav_raw'),  # input from DWB
+            ('cmd_vel_smoothed', '/cmd_vel_nav'),  # output to nav2_cmd_relay
+        ],
     )
 
     # ── Lifecycle manager ────────────────────────────────────────
@@ -167,42 +164,48 @@ def generate_launch_description():
         executable='lifecycle_manager',
         name='lifecycle_manager_navigation',
         output='screen',
-        parameters=[{
-            'use_sim_time':                   use_sim_time,
-            'autostart':                      True,
-            'bond_timeout':                   10.0,
-            'attempt_respawn_reconnection':   True,
-            'node_names': [
-                'controller_server',
-                'smoother_server',
-                'planner_server',
-                'behavior_server',
-                'bt_navigator',
-                'waypoint_follower',
-                'velocity_smoother',
-            ]
-        }]
+        parameters=[
+            {
+                'use_sim_time': use_sim_time,
+                'autostart': True,
+                'bond_timeout': 10.0,
+                'attempt_respawn_reconnection': True,
+                'node_names': [
+                    'controller_server',
+                    'smoother_server',
+                    'planner_server',
+                    'behavior_server',
+                    'bt_navigator',
+                    'waypoint_follower',
+                    'velocity_smoother',
+                ],
+            }
+        ],
     )
 
-    return LaunchDescription([
-        declare_use_sim_time,
-
-        # Wait 5 seconds before starting anything.
-        # This gives SLAM Toolbox time to publish /map with
-        # TRANSIENT_LOCAL durability so the global costmap's
-        # static layer receives it before trying to configure.
-        # Without this delay the planner_server times out
-        # during lifecycle configure and bt_navigator never activates.
-        TimerAction(period=5.0, actions=[
-            # global_costmap,
-            # local_costmap,
-            controller_server,
-            smoother_server,
-            planner_server,
-            behavior_server,
-            bt_navigator,
-            waypoint_follower,
-            velocity_smoother,
-            lifecycle_manager,
-        ])
-    ])
+    return LaunchDescription(
+        [
+            declare_use_sim_time,
+            # Wait 5 seconds before starting anything.
+            # This gives SLAM Toolbox time to publish /map with
+            # TRANSIENT_LOCAL durability so the global costmap's
+            # static layer receives it before trying to configure.
+            # Without this delay the planner_server times out
+            # during lifecycle configure and bt_navigator never activates.
+            TimerAction(
+                period=5.0,
+                actions=[
+                    # global_costmap,
+                    # local_costmap,
+                    controller_server,
+                    smoother_server,
+                    planner_server,
+                    behavior_server,
+                    bt_navigator,
+                    waypoint_follower,
+                    velocity_smoother,
+                    lifecycle_manager,
+                ],
+            ),
+        ]
+    )

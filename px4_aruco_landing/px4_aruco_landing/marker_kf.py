@@ -21,22 +21,23 @@
 # THE SOFTWARE.
 
 
+from geometry_msgs.msg import PoseStamped
 import numpy as np
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import PoseStamped
 
 
 class MarkerKalmanFilter:
     """
     Constant-velocity Kalman filter for 3D position.
+
     State: [x, y, z, vx, vy, vz]^T
     Measurement: [x, y, z]^T
     """
 
     def __init__(self, q_pos=0.02, q_vel=0.2, r_pos=0.05, p0_pos=1.0, p0_vel=1.0):
-        self.x = np.zeros((6, 1), dtype=np.float64)   # state
-        self.P = np.zeros((6, 6), dtype=np.float64)   # covariance
+        self.x = np.zeros((6, 1), dtype=np.float64)  # state
+        self.P = np.zeros((6, 6), dtype=np.float64)  # covariance
 
         # Initial uncertainty
         self.P[0:3, 0:3] = np.eye(3) * float(p0_pos)
@@ -80,13 +81,13 @@ class MarkerKalmanFilter:
     def update(self, z_xyz: np.ndarray):
         z = z_xyz.reshape(3, 1).astype(np.float64)
 
-        y = z - (self.H @ self.x)                       # innovation
-        S = self.H @ self.P @ self.H.T + self.R         # innovation covariance
-        K = self.P @ self.H.T @ np.linalg.inv(S)        # Kalman gain
+        y = z - (self.H @ self.x)  # innovation
+        S = self.H @ self.P @ self.H.T + self.R  # innovation covariance
+        K = self.P @ self.H.T @ np.linalg.inv(S)  # Kalman gain
 
         self.x = self.x + K @ y
-        I = np.eye(6, dtype=np.float64)
-        self.P = (I - K @ self.H) @ self.P
+        identity = np.eye(6, dtype=np.float64)
+        self.P = (identity - K @ self.H) @ self.P
 
     def step(self, z_xyz: np.ndarray, dt: float):
         # On first measurement, initialize position directly (avoid startup transient)
@@ -108,24 +109,25 @@ class MarkerKalmanFilter:
 
 
 class MarkerPoseKFNode(Node):
+
     def __init__(self):
-        super().__init__("marker_pose_kf")
+        super().__init__('marker_pose_kf')
 
         # Params
-        self.declare_parameter("in_topic", "/marker_pose")
-        self.declare_parameter("out_topic", "/marker_pose_filtered")
+        self.declare_parameter('in_topic', '/marker_pose')
+        self.declare_parameter('out_topic', '/marker_pose_filtered')
 
         # Tune knobs (start here; adjust later)
-        self.declare_parameter("r_pos", 0.05)   # measurement noise (ArUco jitter)
-        self.declare_parameter("q_pos", 0.02)   # process noise for position
-        self.declare_parameter("q_vel", 0.2)    # process noise for velocity
+        self.declare_parameter('r_pos', 0.05)  # measurement noise (ArUco jitter)
+        self.declare_parameter('q_pos', 0.02)  # process noise for position
+        self.declare_parameter('q_vel', 0.2)  # process noise for velocity
 
-        in_topic = self.get_parameter("in_topic").get_parameter_value().string_value
-        out_topic = self.get_parameter("out_topic").get_parameter_value().string_value
+        in_topic = self.get_parameter('in_topic').get_parameter_value().string_value
+        out_topic = self.get_parameter('out_topic').get_parameter_value().string_value
 
-        r_pos = self.get_parameter("r_pos").value
-        q_pos = self.get_parameter("q_pos").value
-        q_vel = self.get_parameter("q_vel").value
+        r_pos = self.get_parameter('r_pos').value
+        q_pos = self.get_parameter('q_pos').value
+        q_vel = self.get_parameter('q_vel').value
 
         self.kf = MarkerKalmanFilter(q_pos=q_pos, q_vel=q_vel, r_pos=r_pos)
 
@@ -134,8 +136,8 @@ class MarkerPoseKFNode(Node):
 
         self._last_stamp = None
 
-        self.get_logger().info(f"Sub: {in_topic}  → Pub: {out_topic}")
-        self.get_logger().info(f"Tuning: r_pos={r_pos}, q_pos={q_pos}, q_vel={q_vel}")
+        self.get_logger().info(f'Sub: {in_topic}  → Pub: {out_topic}')
+        self.get_logger().info(f'Tuning: r_pos={r_pos}, q_pos={q_pos}, q_vel={q_vel}')
 
     def cb(self, msg: PoseStamped):
         # Compute dt from header stamps
@@ -148,14 +150,16 @@ class MarkerPoseKFNode(Node):
             dt = t - self._last_stamp
         self._last_stamp = t
 
-        z = np.array([msg.pose.position.x, msg.pose.position.y, msg.pose.position.z], dtype=np.float64)
+        z = np.array(
+            [msg.pose.position.x, msg.pose.position.y, msg.pose.position.z], dtype=np.float64
+        )
 
         self.kf.step(z, dt)
         p = self.kf.pos()
 
         out = PoseStamped()
         out.header = msg.header  # keep frame_id + timestamp
-        out.pose = msg.pose      # copy orientation as-is (we're filtering position only)
+        out.pose = msg.pose  # copy orientation as-is (we're filtering position only)
         out.pose.position.x = float(p[0])
         out.pose.position.y = float(p[1])
         out.pose.position.z = float(p[2])
@@ -174,5 +178,5 @@ def main():
     rclpy.shutdown()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

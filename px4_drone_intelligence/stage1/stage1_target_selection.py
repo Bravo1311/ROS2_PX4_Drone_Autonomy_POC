@@ -23,16 +23,13 @@
 
 import argparse
 import base64
+import io
 import json
-import os
 import re
 import sys
 
 from PIL import Image
-import io
-
 import requests
-
 
 SYSTEM_PROMPT = """
 You are a robotics map reasoning assistant.
@@ -66,7 +63,7 @@ def encode_image_base64(image_path: str) -> str:
     img.thumbnail((512, 512), Image.LANCZOS)
     buffer = io.BytesIO()
     img.save(buffer, format='PNG')
-    return base64.b64encode(buffer.getvalue()).decode("utf-8")
+    return base64.b64encode(buffer.getvalue()).decode('utf-8')
 
 
 def extract_json(text: str):
@@ -77,30 +74,30 @@ def extract_json(text: str):
     except json.JSONDecodeError:
         pass
 
-    match = re.search(r"\{.*\}", text, re.DOTALL)
+    match = re.search(r'\{.*\}', text, re.DOTALL)
     if match:
         return json.loads(match.group(0))
 
-    raise ValueError(f"Could not parse JSON from model output:\n{text}")
+    raise ValueError(f'Could not parse JSON from model output:\n{text}')
 
 
 def validate_output(data):
-    allowed = {"M0", "M1", "M2", "M3"}
+    allowed = {'M0', 'M1', 'M2', 'M3'}
 
-    if "target_marker" not in data:
-        raise ValueError("Missing target_marker")
+    if 'target_marker' not in data:
+        raise ValueError('Missing target_marker')
 
-    if data["target_marker"] not in allowed:
-        raise ValueError(f"Invalid target_marker: {data['target_marker']}")
+    if data['target_marker'] not in allowed:
+        raise ValueError(f'Invalid target_marker: {data["target_marker"]}')
 
-    if "reason_short" not in data:
-        data["reason_short"] = ""
+    if 'reason_short' not in data:
+        data['reason_short'] = ''
 
     return data
 
 
 # def query_ollama(image_path: str, instruction: str, model: str = "minicpm-v"):
-def query_ollama(image_path: str, instruction: str, model: str = "qwen2.5vl:3b"):
+def query_ollama(image_path: str, instruction: str, model: str = 'qwen2.5vl:3b'):
     image_b64 = encode_image_base64(image_path)
 
     prompt = f"""{SYSTEM_PROMPT}
@@ -110,51 +107,50 @@ Instruction: {instruction}
 Return only JSON."""
 
     payload = {
-        "model": model,
-        "messages": [
-            {
-                "role": "user",
-                "content": prompt,
-                "images": [image_b64]
-            }
-        ],
-        "stream": False,
-        "options": {
-            "num_ctx": 8192,
-            "temperature": 0.1   # low temperature = more deterministic JSON output
-        }
+        'model': model,
+        'messages': [{'role': 'user', 'content': prompt, 'images': [image_b64]}],
+        'stream': False,
+        'options': {
+            'num_ctx': 8192,
+            'temperature': 0.1,  # low temperature = more deterministic JSON output
+        },
     }
 
-    r = requests.post("http://localhost:11434/api/chat", json=payload, timeout=300)
+    r = requests.post('http://localhost:11434/api/chat', json=payload, timeout=300)
     r.raise_for_status()
 
-    response_text = r.json()["message"]["content"]
-    print(f"DEBUG RAW:\n{response_text}", file=sys.stderr)
+    response_text = r.json()['message']['content']
+    print(f'DEBUG RAW:\n{response_text}', file=sys.stderr)
     data = extract_json(response_text)
     return validate_output(data)
 
-def query_ollama_text_only(instruction: str, model: str = "qwen2.5vl:3b"):
+
+def query_ollama_text_only(instruction: str, model: str = 'qwen2.5vl:3b'):
     payload = {
-        "model": model,
-        "messages": [
+        'model': model,
+        'messages': [
             {
-                "role": "user",
-                "content": f'Reply with only this exact JSON, no other text: {{"target_marker": "M1", "reason_short": "test"}}'
+                'role': 'user',
+                'content': (
+                    'Reply with only this exact JSON, no other text: '
+                    '{"target_marker": "M1", "reason_short": "test"}'
+                ),
             }
         ],
-        "stream": False,
-        "options": {"temperature": 0.1}
+        'stream': False,
+        'options': {'temperature': 0.1},
     }
-    r = requests.post("http://localhost:11434/api/chat", json=payload, timeout=300)
+    r = requests.post('http://localhost:11434/api/chat', json=payload, timeout=300)
     r.raise_for_status()
-    response_text = r.json()["message"]["content"]
-    print(f"TEXT ONLY RESPONSE:\n{response_text}")
+    response_text = r.json()['message']['content']
+    print(f'TEXT ONLY RESPONSE:\n{response_text}')
+
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--image", required=True)
-    parser.add_argument("--instruction", required=True)
-    parser.add_argument("--model", default="llava")
+    parser.add_argument('--image', required=True)
+    parser.add_argument('--instruction', required=True)
+    parser.add_argument('--model', default='llava')
     args = parser.parse_args()
 
     try:
@@ -162,9 +158,9 @@ def main():
         # result = query_ollama(args.image, args.instruction, args.model)
         print(json.dumps(result, indent=2))
     except Exception as e:
-        print(f"ERROR: {e}", file=sys.stderr)
+        print(f'ERROR: {e}', file=sys.stderr)
         sys.exit(1)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
