@@ -30,7 +30,8 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    px4_dir = os.path.expanduser('/mnt/ubuntu-data/PX4-Autopilot')
+    # PX4_DIR is set in the Docker image; the fallback keeps the original host path.
+    px4_dir = os.path.expanduser(os.environ.get('PX4_DIR', '/mnt/ubuntu-data/PX4-Autopilot'))
 
     # ---- Launch args ----
     world = LaunchConfiguration('world')

@@ -1,0 +1,44 @@
+services:
+  sim:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:                                  # versions passed into the Dockerfile
+        BUILD_JOBS: ${BUILD_JOBS:-8}
+        PX4_REF: ${PX4_REF:-32c94bd3b1bd16cc4897f61fb0135fb75bdb3c6e}
+        PX4_MSGS_REF: ${PX4_MSGS_REF:-98517583c52b9c9b811606f75b28f31dfd7d67db}
+        PX4_ROS_COM_REF: ${PX4_ROS_COM_REF:-86e9aeb20e55a4673fa8a9f1c29ea06a6c5ad1af}
+    image: px4-ros2-autonomy:latest
+    container_name: px4-ros2-autonomy
+
+    network_mode: host      # share the PC's network: ROS discovery and XRCE port 8888 just work
+    ipc: host               # shared memory with the host (Gazebo/ROS efficiency)
+    stdin_open: true        # keep input open so you can type...
+    tty: true               # ...needed by the keyboard teleop node
+
+    environment:
+      - DISPLAY=${DISPLAY}              # which screen the GUI windows open on
+      - QT_X11_NO_MITSHM=1              # avoids Qt/RViz display glitches in Docker
+      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-0}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}        # from your .env file, not baked into the image
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+
+    volumes:                            # host_path:container_path
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw    # display socket, so Gazebo/RViz windows appear
+      # SLAM maps/posegraphs: read from and saved back to the host folder (not baked into the image)
+      - ./maps:/ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/maps
+
+    devices:
+      - /dev/input:/dev/input           # joystick
+    group_add:
+      # Numeric GID of the HOST's "input" group (the image has no group named "input").
+      # Check yours with: getent group input   (override with INPUT_GID in .env)
+      - "${INPUT_GID:-107}"
+
+    deploy:                             # NVIDIA GPU (needs nvidia-container-toolkit on the host)
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

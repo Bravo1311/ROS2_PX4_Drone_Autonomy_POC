@@ -1,0 +1,4 @@
+services:
+  sim:
+    volumes:
+      - .:/ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick   # your repo over the baked-in copy
