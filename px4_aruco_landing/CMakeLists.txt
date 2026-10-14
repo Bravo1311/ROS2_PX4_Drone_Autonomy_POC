@@ -47,4 +47,14 @@ install(PROGRAMS
   DESTINATION lib/${PROJECT_NAME}
 )
 
+# `ros2 run` / launch files look for extensionless executables (aruco_detector, ...). Without
+# these, a clean build only has the *.py names; older installs worked from stale wrappers
+# left by a previous ament_python build.
+install(PROGRAMS px4_aruco_landing/aruco_detector.py
+  DESTINATION lib/${PROJECT_NAME} RENAME aruco_detector)
+install(PROGRAMS px4_aruco_landing/autoland_twist_publisher.py
+  DESTINATION lib/${PROJECT_NAME} RENAME autoland_twist_publisher)
+install(PROGRAMS px4_aruco_landing/marker_kf.py
+  DESTINATION lib/${PROJECT_NAME} RENAME marker_kf)
+
 ament_package()

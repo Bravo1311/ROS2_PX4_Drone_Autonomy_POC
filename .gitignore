@@ -5,3 +5,6 @@ maps/
 build/
 install/
 log/
+
+# local secrets for docker compose
+.env

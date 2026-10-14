@@ -21,8 +21,8 @@
 # THE SOFTWARE.
 
 
-from geometry_msgs.msg import Twist
 import rclpy
+from geometry_msgs.msg import Twist
 from rclpy.node import Node
 
 

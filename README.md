@@ -327,3 +327,5 @@ This project builds upon:
 
 Please refer to the original repository for base setup instructions.  
 This repository assumes a working PX4 SITL + ROS2 integration.
+
+Docker: see [docker/README.md](docker/README.md).

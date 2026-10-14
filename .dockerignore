@@ -1,0 +1,42 @@
+# VCS / editor
+.git
+.gitignore
+.vscode
+.idea
+**/.ruff_cache
+**/__pycache__
+**/*.pyc
+
+# Python env: the image builds its own venv from requirements.txt
+venv
+.venv
+
+# Colcon artifacts: rebuilt inside the image
+build
+install
+log
+
+# Heavy or non-runtime data (** so subfolders match too)
+**/*.zip
+**/*.pdf
+**/*.gv
+**/*.db
+**/*.bag
+**/*.mcap
+**/*.db3
+maps/*
+!maps/markers*.yaml
+
+# Duplicates and scratch files ("x copy.sdf", "x (Copy).sdf").
+# Deliberately NOT *copy*, which would also drop test_copyright.py.
+**/* copy.*
+**/*(Copy).*
+
+# Secrets / local config
+.env
+
+# Docker files don't need to be inside the image
+Dockerfile
+docker-compose*.yaml
+.dockerignore
+.devcontainer

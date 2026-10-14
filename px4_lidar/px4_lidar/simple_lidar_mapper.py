@@ -22,11 +22,10 @@
 
 
 import math
-from typing import List, Tuple
 
+import rclpy
 from geometry_msgs.msg import TransformStamped
 from nav_msgs.msg import OccupancyGrid
-import rclpy
 from rclpy.duration import Duration
 from rclpy.node import Node
 from sensor_msgs.msg import LaserScan
@@ -39,7 +38,7 @@ from tf2_ros import (
 )
 
 
-def bresenham(x0: int, y0: int, x1: int, y1: int) -> List[Tuple[int, int]]:
+def bresenham(x0: int, y0: int, x1: int, y1: int) -> list[tuple[int, int]]:
     """Bresenham line algorithm: returns grid cells from (x0,y0) to (x1,y1)."""
     cells = []
 
@@ -151,7 +150,7 @@ class SimpleLidarMapper(Node):
     # ---------------------------------------------------
     # Grid helpers
     # ---------------------------------------------------
-    def world_to_grid(self, wx: float, wy: float) -> Tuple[int, int]:
+    def world_to_grid(self, wx: float, wy: float) -> tuple[int, int]:
         gx = int((wx - self.origin_x) / self.resolution)
         gy = int((wy - self.origin_y) / self.resolution)
         return gx, gy
@@ -173,7 +172,7 @@ class SimpleLidarMapper(Node):
     # ---------------------------------------------------
     # TF
     # ---------------------------------------------------
-    def lookup_robot_pose(self) -> Tuple[float, float, float]:
+    def lookup_robot_pose(self) -> tuple[float, float, float]:
         """Return robot pose in map frame: x, y, yaw."""
         try:
             tf: TransformStamped = self.tf_buffer.lookup_transform(

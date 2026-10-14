@@ -1,0 +1,18 @@
+# Dev mode: edit on the host, build and run inside the container.
+#   docker compose -f docker-compose.yaml -f docker-compose.dev.yaml up -d
+services:
+  sim:
+    volumes:
+      # your live repo over the copy baked into the image
+      - .:/ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick
+      # colcon output lives in named volumes: builds are incremental across restarts and no
+      # root-owned build/ install/ log/ folders land in your repo. A new volume is filled from
+      # the image's /ws/build, /ws/install, /ws/log the first time it is used.
+      - ws_build:/ws/build
+      - ws_install:/ws/install
+      - ws_log:/ws/log
+
+volumes:
+  ws_build:
+  ws_install:
+  ws_log:

@@ -21,8 +21,8 @@
 # THE SOFTWARE.
 
 
-from geometry_msgs.msg import PoseWithCovarianceStamped
 import rclpy
+from geometry_msgs.msg import PoseWithCovarianceStamped
 from rclpy.node import Node
 from tf2_ros import (
     Buffer,
