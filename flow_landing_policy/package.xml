@@ -3,7 +3,7 @@
 <package format="3">
   <name>flow_landing_policy</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>Flow-matching precision landing policy for vision-guided PX4 descent</description>
   <maintainer email="agrawalkartik1999@gmail.com">bravo1311</maintainer>
   <license>MIT</license>
 

@@ -3,8 +3,8 @@
 <package format="3">
   <name>px4_offboard</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="kutkarsh706@gmail.com">utk</maintainer>
+  <description>PX4 Offboard Control with Teleop</description>
+  <maintainer email="agrawalkartik1999@gmail.com">bravo1311</maintainer>
   <license>MIT</license>
 
   <depend>rclpy</depend>

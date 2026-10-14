@@ -18,7 +18,7 @@ setup(
     zip_safe=True,
     maintainer='bravo1311',
     maintainer_email='agrawalkartik1999@gmail.com',
-    description='TODO: Package description',
+    description='2D LiDAR safety filtering and SLAM odometry bridging for the PX4 drone',
     license='MIT',
     extras_require={
         'test': [

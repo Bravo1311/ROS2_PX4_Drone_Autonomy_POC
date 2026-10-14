@@ -3,7 +3,7 @@
 <package format="3">
   <name>px4_drone_intelligence</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>VLM-based natural language mission intelligence via OpenRouter</description>
   <maintainer email="agrawalkartik1999@gmail.com">bravo1311</maintainer>
   <license>MIT</license>
 
