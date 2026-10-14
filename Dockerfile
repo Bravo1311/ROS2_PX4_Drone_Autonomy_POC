@@ -158,6 +158,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends ninja-build \
 ENV PX4_DIR=/opt/PX4-Autopilot \
     NVIDIA_DRIVER_CAPABILITIES=all \
     NVIDIA_VISIBLE_DEVICES=all
+# Interactive shells (docker exec ... bash, VS Code terminals) load ROS and the shortcuts from
+# docker/ros_aliases.sh via root's ~/.bashrc, so no /entrypoint.sh prefix is needed for them.
+COPY docker/ros_aliases.sh /etc/ros_aliases.sh
+RUN echo 'source /etc/ros_aliases.sh' >> /root/.bashrc
+
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]

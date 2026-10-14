@@ -39,3 +39,4 @@ maps/*
 Dockerfile
 docker-compose*.yaml
 .dockerignore
+.devcontainer

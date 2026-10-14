@@ -1,0 +1,32 @@
+{
+  // VS Code "Dev Containers": opens this repo inside the dev-mode compose service.
+  // Host prerequisites are the same as for docker/README.md (NVIDIA toolkit, `xhost +local:docker`).
+  "name": "px4-ros2-autonomy",
+
+  "dockerComposeFile": ["../docker-compose.yaml", "../docker-compose.dev.yaml"],
+  "service": "sim",
+  "workspaceFolder": "/ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick",
+  "remoteUser": "root",
+  "shutdownAction": "stopCompose",
+
+  // ROS and the shortcuts (cb, cbp, sim, ... see `rhelp`) are loaded by /root/.bashrc in the image.
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-vscode.cpptools",
+        "ms-iot.vscode-ros",
+        "charliermarsh.ruff"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/opt/venv/bin/python",
+        "python.analysis.extraPaths": [
+          "/opt/ros/jazzy/lib/python3.12/site-packages",
+          "/ws/install/px4_msgs/lib/python3.12/site-packages"
+        ],
+        "ros.distro": "jazzy"
+      }
+    }
+  }
+}
