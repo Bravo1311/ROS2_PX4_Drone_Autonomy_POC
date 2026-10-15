@@ -2,7 +2,7 @@ from dataclasses import dataclass, fields
 import yaml
 
 class ProfileError(Exception):
-    """Raised when a profile in invalid"""
+    """Raised when a profile is invalid"""
 
 AUTONOMY_MODES = ("observe", "supervised")
 
@@ -11,6 +11,9 @@ class Policy:
     start_armed: bool = False
     autonomy: str = "supervised"
     approval_ttl_s: float = 60
+    max_calls_per_turn: int = 10
+    repeat_limit: int = 3
+    max_invalid_per_turn: int = 3
 
     def __post_init__(self):
         if not isinstance(self.start_armed, bool):
@@ -23,6 +26,21 @@ class Policy:
         if isinstance(ttl, bool) or not isinstance(ttl, (int, float)) or ttl <= 0:
             raise ProfileError(
                 f"approval_ttl_s must be a number above 0, got {ttl!r}"
+            )
+        max_calls_per_turn = self.max_calls_per_turn
+        if isinstance(max_calls_per_turn, bool) or not isinstance(max_calls_per_turn, (int)) or max_calls_per_turn < 1:
+            raise ProfileError(
+                f"max_calls_per_turn must be a number greater than 0, got {max_calls_per_turn!r}"
+            )
+        repeat_limit = self.repeat_limit
+        if isinstance(repeat_limit, bool) or not isinstance(repeat_limit, (int)) or repeat_limit < 1:
+            raise ProfileError(
+                f"Repeat limit must be a number greater than 0, got {repeat_limit!r}"
+            )
+        invalid_limit = self.max_invalid_per_turn
+        if isinstance(invalid_limit, bool) or not isinstance(invalid_limit, (int)) or invalid_limit < 1:
+            raise ProfileError(
+                f"Repeat limit must be a number greater than 0, got {invalid_limit!r}"
             )
 
 def load_policy(data: dict) -> Policy:

@@ -12,6 +12,18 @@ from drone_agent_core.profile import *
         {"approval_ttl_s": -5},
         {"approval_ttl_s": "60"},
         {"approval_ttl_s": True},
+        {"max_calls_per_turn": True},
+        {"max_calls_per_turn": -1},
+        {"max_calls_per_turn": 0},
+        {"max_calls_per_turn": "yes"},
+        {"repeat_limit": True},
+        {"repeat_limit": -1},
+        {"repeat_limit": 0},
+        {"repeat_limit": "yes"}, 
+        {"max_invalid_per_turn": True},
+        {"max_invalid_per_turn": -1},
+        {"max_invalid_per_turn": 0},
+        {"max_invalid_per_turn": "yes"},
     ],
 )
 def test_invalid_values_are_rejected(data):

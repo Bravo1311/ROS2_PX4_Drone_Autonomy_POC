@@ -30,10 +30,14 @@ you -> session -> model -> run_mission call -> guard -> compiler -> plan card + 
 ## 3. Guard
 
 - Risk levels: Observe, Annotate, Motion.
-- Software arm switch: starts disarmed; `/arm` and `/disarm`.
+- Software arm switch: starts disarmed; `/arm` and `/disarm`. It is the operator's "the agent may request motion" permission, separate from PX4's own armed state, and is not copied from it (otherwise arming for manual flight would also grant the agent permission). It persists across turns. A later tightening rule may auto-disarm it when PX4 disarms.
 - Modes: observe (no motion at all) and supervised (motion needs approval, 60 s timeout counts as no). No autonomous mode is planned.
-- Check order: budget, repeat-loop breaker, observe-only mode, disarmed, supervised approval, allow.
-- A resource lock allows one motion mission at a time. It is taken when execution starts, not while approval is pending.
+- Check order: hard deny, budget, repeat-loop breaker, observe-only mode, disarmed, supervised approval, allow. Hard deny is first so a forbidden call always reports `hard_deny`, even past the budget.
+- Budget: `max_calls_per_turn` (default 10). Every call counts, including denied ones. A turn is one user message; only the session loop calls `Guard.begin_turn()`, never the model or a tool result.
+- Repeat breaker: `repeat_limit` (default 3) is how many identical calls in a row are allowed; the next one is denied with rule `repeat`. Identical means same tool name and same arguments (`None` equals `{}`). Any different call restarts the run. Slower patterns such as A, B, A, B are not caught on purpose (legitimate set-then-fetch looks the same); the budget is the backstop. The guard stores a copy of the arguments.
+- `begin_turn()` resets the call counter and the repeat memory. It does not change the armed state.
+- Invalid calls: the session (or tool layer) validates arguments against the tool schema before calling `decide`; the guard has no schema knowledge. A bad call goes to `Guard.record_invalid()`, which counts it against both the budget and a separate cap, `max_invalid_per_turn` (default 3, all invalid calls in the turn, not only consecutive ones), and returns a readable error. Past the cap the turn should end. `begin_turn()` resets it. Order: malformed (session), hard deny, budget, repeat, observe-only, disarmed, supervised, allow.
+- A resource lock allows one motion mission at a time. It is taken when execution starts, not while approval is pending. Deferred to Milestone 3: nothing in Milestone 1 can start a mission.
 - Hard-deny lists name topics and message types the agent can never touch (`/fmu/in/*`, velocity topics). Rules can only tighten.
 
 ## 4. Plans, behavior trees, executor
@@ -91,13 +95,14 @@ One file describes the drone and every limit. Unknown keys fail at startup. Defa
 
 1. Observe-only: profile loader, guard with rate limits, robot port, three observe tools, Ollama client, terminal chat, unit and scenario tests.
 2. Dry-run plans: catalog, compiler, validator, plan card with hash. Nothing executes.
-3. Guarded execution: executor with skills through the mux, arm and approval, heartbeat deadman, triggers, StopAll, clamps.
+3. Guarded execution: executor with skills through the mux, busy lock, arm and approval, heartbeat deadman, triggers, StopAll, clamps.
 
 Later: camera tool, dashboard, cloud models, Rust port.
 
 ## 11. Open items
 
 - Which small model (check `ollama list` once the server is running).
+- Auto-disarm the guard when PX4 reports disarmed (needs the ROS wiring).
 - `/fmu/out/vehicle_status` versus `_v1` for the installed px4_msgs.
 - Interplay of our triggers with PX4's own failsafes; PX4 RTL bypasses the LIDAR filter.
 
