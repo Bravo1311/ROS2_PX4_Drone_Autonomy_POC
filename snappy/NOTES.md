@@ -1,0 +1,117 @@
+# Snappy: design notes
+
+Snappy is a natural-language agent for the PX4 drone, built in Python on ROS 2 Jazzy, simulation only for now. This file records what we learned and decided. It has no implementation steps. It is updated as decisions change.
+
+## 1. Core idea
+
+The language model is an untrusted advisor. It can propose, but only plain code decides and acts.
+
+```
+you -> session -> model -> run_mission call -> guard -> compiler -> plan card + hash
+                                                                        |
+                                                                 you /yes N
+                                                                        v
+        PX4 <- mux <- skills <- executor (re-checks hash and limits, ticks the tree)
+```
+
+- Prompt wording is a request. Code is an enforcement. Only code counts as a defense (disarmed refusal, approval, executor limits).
+- Approval and arming come only from the command channel (what you type), never from model output or tool results.
+- The executor is a separate ROS node, so safety survives a crash or hang of the agent.
+
+## 2. Tools
+
+- A tool is a name, a description, a JSON Schema for arguments, and a Python function.
+- The model only asks ("please call X with these arguments"). Our code decides, runs it, and returns the result.
+- Schemas also validate calls. Invalid calls are bounced with a readable error and count against the budget (with a separate, moderate cap).
+- Tool results are data, not instructions. Text from sensors or detections is wrapped and labeled as data.
+- Observe tools in Milestone 1: telemetry, YOLO detections, ROS graph inspection. Camera description is deferred to v2/v3.
+- Rate limits per tool: a minimum interval or a replenishing budget. Prefer returning the cached value with its age over refusing. Conditions (such as low battery) may relax limits for observe tools only. Motion limits never relax.
+
+## 3. Guard
+
+- Risk levels: Observe, Annotate, Motion.
+- Software arm switch: starts disarmed; `/arm` and `/disarm`.
+- Modes: observe (no motion at all) and supervised (motion needs approval, 60 s timeout counts as no). No autonomous mode is planned.
+- Check order: budget, repeat-loop breaker, observe-only mode, disarmed, supervised approval, allow.
+- A resource lock allows one motion mission at a time. It is taken when execution starts, not while approval is pending.
+- Hard-deny lists name topics and message types the agent can never touch (`/fmu/in/*`, velocity topics). Rules can only tighten.
+
+## 4. Plans, behavior trees, executor
+
+- The model submits a whole plan once: ordered steps of skill, arguments, retries, timeout. Skills must exist in the executor's catalog.
+- The compiler validates arguments, limits, size and order. It rejects plans that violate preconditions (for example GoTo while landed). The model must add the Takeoff itself. Nothing is auto-inserted.
+- The plan becomes a py_trees behavior tree: Sequence with Retry and Timeout decorators, leaf skills with initialise / update / terminate, ticked about 10 Hz.
+- The tree is stored and hashed as canonical JSON (sorted keys, fixed formatting), SHA-256. The plan card shows one plain-language line per step, generated from the same tree.
+- The hash proves the executed tree equals the approved tree. It does not prove the plan is sensible; you still read the card.
+- The executor allows only known node types, enforces size and time limits, runs one mission at a time, clamps altitude, speed and geofence, reports step feedback, and holds position on cancel.
+- Running missions are immutable. A new request becomes a separate plan with its own approval. Replans are limited to 2, each re-approved.
+- Altitude check lesson: compiler rejection is a convenience; the executor clamp is the essential safety. Approval expresses intent; executor limits provide safety.
+
+## 5. Priorities and emergencies
+
+- Tier 0 (reflex): stop and deterministic triggers. Tier 1 (express): land/RTL proposals, jump the queue, need confirmation. Tier 2 (normal): everything else, paused while a Tier 1 is pending.
+- The model never declares urgency. Triggers are plain code in the executor, each with a fixed action in the profile:
+  - battery critical: 10 s cancelable countdown, then land.
+  - geofence or altitude breach: 10 s cancelable countdown, then the configured action.
+  - agent heartbeat lost: short grace (about 3 s, tune in sim), then land, no countdown (nobody is left to veto).
+  - `/emergency` typed by you: configured action (land) immediately, reported afterwards.
+- `stop` means stop and hold position, never land. Landing is a separate deliberate command.
+- Joystick override: the mux ignores the agent while teleop is active and publishes a status topic. The executor aborts the mission (hold, report) and never silently resumes.
+- Mux priority: AUTO > NAV2 > TELEOP > AGENT > IDLE.
+
+## 6. Session
+
+- A command queue in (say, arm, disarm, stop, approve/deny N, emergency) and an event stream out (thinking, tool called, approval needed, step progress, refused, finished).
+- The command handler never blocks. Each model turn runs as a separate task (turn worker), so commands are handled while the model thinks.
+- `stop` is not queued. It calls StopAll on the executor, cancels the running turn worker, and clears pending plans and approvals.
+- Plain-word stop ("stop", "halt", "freeze") only as an exact match at the start of a message.
+- The turn worker runs the conversation. The executor runs the plan. They are independent.
+- Python: asyncio queues; rclpy spins in a background thread. A terminal and a later dashboard use the same commands and events.
+
+## 7. Language model
+
+- System prompt: rules, plan-writing rules, a skills index, robot identity. It shapes behavior and guarantees nothing.
+- Ollama serves an OpenAI-compatible API at `http://localhost:11434/v1`, so the same client works for cloud providers later.
+- Small models mis-pick tools, invent arguments, break JSON and forget preconditions. Mitigations: few tools, strict schema validation, short descriptions, a small evaluation suite per candidate model.
+- Hardware: RTX 4060 Laptop 8 GB VRAM shared with the simulator, 31 GB RAM. Start with a 3-4B model at 4-bit and a 4-8k context. Model names and sizes are estimates to verify by measurement.
+
+## 8. Profile (YAML)
+
+One file describes the drone and every limit. Unknown keys fail at startup. Defaults are safe (disarmed, supervised). Sections: robot, ros, policy (budgets, hard-deny lists), limits (altitude, speed, geofence), tools, triggers, places, models. The agent reads policy, tools, models and places. The executor loads and validates limits and triggers itself and is the source of truth; the agent asks it for the catalog and limits. The loader prints the active limits at startup.
+
+## 9. Testing, cheapest first
+
+1. Unit tests: guard, profile, compiler, rate limiter.
+2. Scenario tests: scripted model plus fake robot (disarmed refusal, user says no, injected text in a tool result, precondition violation, heartbeat lost, battery critical during approval).
+3. Model evaluations: fixed prompts, several runs each, on the real model.
+4. Simulation: failure paths first (kill the agent, cut the heartbeat, geofence). Verify with `ros2 topic info` that the agent has no publishers on `/fmu/in/*` or velocity topics.
+5. Hardware: out of scope.
+
+## 10. Milestones
+
+1. Observe-only: profile loader, guard with rate limits, robot port, three observe tools, Ollama client, terminal chat, unit and scenario tests.
+2. Dry-run plans: catalog, compiler, validator, plan card with hash. Nothing executes.
+3. Guarded execution: executor with skills through the mux, arm and approval, heartbeat deadman, triggers, StopAll, clamps.
+
+Later: camera tool, dashboard, cloud models, Rust port.
+
+## 11. Open items
+
+- Which small model (check `ollama list` once the server is running).
+- `/fmu/out/vehicle_status` versus `_v1` for the installed px4_msgs.
+- Interplay of our triggers with PX4's own failsafes; PX4 RTL bypasses the LIDAR filter.
+
+## 12. Glossary
+
+- **RTL**: Return To Launch. Climb, fly home, land. A PX4 mode.
+- **Mux**: `px4_offboard_mux.py`; picks the velocity source and clamps.
+- **OFFBOARD**: PX4 mode where ROS supplies setpoints.
+- **Setpoint**: a target position or velocity sent to PX4.
+- **NED**: north-east-down frame; altitude is negative z.
+- **Heartbeat**: periodic "I'm alive" message; silence triggers the deadman.
+- **Action server**: ROS interface for long-running goals with feedback and cancel.
+- **Behavior tree**: tree of nodes returning Success, Failure or Running, ticked repeatedly.
+
+## Credits
+
+The overall design (guarded tools, approved behavior-tree missions, separate executor) is inspired by the NervROS project by Adyansh Gupta, https://github.com/Adyansh04/nervros (BSD-3-Clause). This project is an independent implementation.
