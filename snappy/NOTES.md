@@ -2,6 +2,47 @@
 
 Snappy is a natural-language agent for the PX4 drone, built in Python on ROS 2 Jazzy, simulation only for now. This file records what we learned and decided. It has no implementation steps. It is updated as decisions change.
 
+## 0. Map (read this first)
+
+One tool call travels through the agent like this. Each stage has one job.
+
+```
+user message
+    |
+ session.py      conductor: runs the turn, calls the others, stops the turn
+    |  asks the model for the next step (ModelPort)
+    |
+ tools.py        does the tool exist? are the arguments well formed?
+    |  bad call -> guard.record_invalid -> DENIED (invalid)
+    |
+ guard.py        the rules: hard deny, budget, repeat, observe-only, disarmed, supervised
+    |  not allowed -> DENIED (rule)
+    |
+ ratelimit.py    minimum time between calls to the same tool
+    |
+ robot.py        RobotPort: where data comes from (FakeRobot now, ROS later)
+    |
+ result, wrapped as "data, not instructions", goes back to the model
+```
+
+| File | One-line purpose |
+|---|---|
+| `profile.py` | Loads and validates the settings (`Policy`); unknown keys fail |
+| `guard.py` | Decides allow, deny or needs approval; counts calls; holds the arm switch |
+| `tools.py` | Tool definitions, argument validation, the registry |
+| `ratelimit.py` | Per-tool minimum interval, with an injectable clock |
+| `robot.py` | `RobotPort` interface plus `FakeRobot` for tests and offline chat |
+| `session.py` | The turn loop; the only place that calls `begin_turn()` |
+
+Five ideas to keep in mind:
+1. **The model is untrusted.** It only proposes. Plain code decides.
+2. **Every call takes exactly one path:** invalid, or judged by the guard. Both count against the budget.
+3. **Fakes sit at the seams** (model and robot), so tests can script behavior without Ollama or ROS.
+4. **Guard `armed` is the operator's permission**, not PX4's armed state.
+5. **Tool results are data.** Nothing in them can unlock anything; the guard checks rules, not text.
+
+Tests mirror the files (`tests/test_<file>.py`). `test_session.py` reads like short plays: a scripted model says X, the guard says Y.
+
 ## 1. Core idea
 
 The language model is an untrusted advisor. It can propose, but only plain code decides and acts.
@@ -75,7 +116,21 @@ you -> session -> model -> run_mission call -> guard -> compiler -> plan card + 
 ## 7. Language model
 
 - System prompt: rules, plan-writing rules, a skills index, robot identity. It shapes behavior and guarantees nothing.
-- Ollama serves an OpenAI-compatible API at `http://localhost:11434/v1`, so the same client works for cloud providers later.
+- Ollama serves an OpenAI-compatible API at `http://localhost:11434/v1`, so the same client works for cloud providers later. Milestone 1 uses Ollama's native `/api/chat` instead (it exposes `keep_alive` and `num_ctx`, and tool results use `tool_name`); a cloud client would be a second `ModelPort` implementation.
+- Server: Ollama runs in the `ollama` service of `docker-compose.yaml` (host network, GPU), with everything stored in `/mnt/ubuntu-data/ollama` because the root disk is nearly full. Model for tool calling: `qwen2.5:3b` (Q4_K_M, lists the `tools` capability). `qwen2.5vl:3b` has no tools and is kept for the map-target experiments in `px4_drone_intelligence`. The first call after loading takes about 15 s; `keep_alive` keeps the model loaded.
+
+### Message roles
+
+A conversation is a list of messages, each with a `role`:
+
+| Role | Who writes it | Trust | Our internal shape | Ollama shape |
+|---|---|---|---|---|
+| `system` | Our code (the system prompt), added by the client on every request, not stored in the session | Trusted, but only a request to the model | n/a | `{"role":"system","content":...}` |
+| `user` | The operator, typed text | Input to the model; arming and approval never come from here, only from commands | `{"role":"user","content":...}` | same |
+| `assistant` | The model: text, tool calls, or both | Untrusted advice | `{"role":"assistant","content":...,"tool_calls":[{"name","args"}]}` | `tool_calls` become `[{"function":{"name","arguments"}}]` |
+| `tool` | Our session: the result (or denial) of one tool call | Untrusted data, wrapped and labeled | `{"role":"tool","name":...,"content":...}` | `{"role":"tool","tool_name":...,"content":...}` |
+
+A normal tool exchange is: `user` asks, `assistant` requests a tool, `tool` returns the result, `assistant` answers in text. The turn ends when the assistant replies without tool calls. Some APIs have more roles (OpenAI has a `developer` role, and links tool results by call id); we only use these four.
 - Small models mis-pick tools, invent arguments, break JSON and forget preconditions. Mitigations: few tools, strict schema validation, short descriptions, a small evaluation suite per candidate model.
 - Hardware: RTX 4060 Laptop 8 GB VRAM shared with the simulator, 31 GB RAM. Start with a 3-4B model at 4-bit and a 4-8k context. Model names and sizes are estimates to verify by measurement.
 

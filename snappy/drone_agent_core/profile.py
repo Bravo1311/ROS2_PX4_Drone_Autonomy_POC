@@ -40,7 +40,7 @@ class Policy:
         invalid_limit = self.max_invalid_per_turn
         if isinstance(invalid_limit, bool) or not isinstance(invalid_limit, (int)) or invalid_limit < 1:
             raise ProfileError(
-                f"Repeat limit must be a number greater than 0, got {invalid_limit!r}"
+                f"max_invalid_per_turn limit must be a number greater than 0, got {invalid_limit!r}"
             )
 
 def load_policy(data: dict) -> Policy:

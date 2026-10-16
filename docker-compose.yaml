@@ -42,3 +42,18 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
+
+  ollama:
+    image: ollama/ollama:latest         # pin a specific version once it works
+    container_name: snappy-ollama
+    network_mode: host                  # serves on localhost:11434
+    restart: unless-stopped
+    volumes:
+      - /mnt/ubuntu-data/ollama:/root/.ollama   # models, keys, history: everything
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
