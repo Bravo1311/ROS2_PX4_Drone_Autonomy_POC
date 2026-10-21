@@ -32,7 +32,9 @@ user message
 | `tools.py` | Tool definitions, argument validation, the registry |
 | `ratelimit.py` | Per-tool minimum interval, with an injectable clock |
 | `robot.py` | `RobotPort` interface plus `FakeRobot` for tests and offline chat |
-| `session.py` | The turn loop; the only place that calls `begin_turn()` |
+| `session.py` | The turn loop; the only place that calls `begin_turn()`; turns model failures into `Model error: ...` |
+| `ollama_model.py` | `OllamaModel`: our messages to Ollama's `/api/chat` and back (a `ModelPort`) |
+| `chat.py` | Terminal chat: reads a line, calls `Session`, prints the answer (`python3 -m drone_agent_core.chat`) |
 
 Five ideas to keep in mind:
 1. **The model is untrusted.** It only proposes. Plain code decides.
@@ -111,7 +113,8 @@ you -> session -> model -> run_mission call -> guard -> compiler -> plan card + 
 - `stop` is not queued. It calls StopAll on the executor, cancels the running turn worker, and clears pending plans and approvals.
 - Plain-word stop ("stop", "halt", "freeze") only as an exact match at the start of a message.
 - The turn worker runs the conversation. The executor runs the plan. They are independent.
-- Python: asyncio queues; rclpy spins in a background thread. A terminal and a later dashboard use the same commands and events.
+- Python: asyncio queues; rclpy spins in a background thread. A terminal and a later dashboard use the same commands and events. This is the Milestone 3 design. In Milestone 1 `Session` is synchronous: `handle_user_message` blocks until the turn is over, and the terminal chat (`chat.py`) calls it in a plain loop. The async version arrives when `stop` and approvals must work while the model is thinking.
+- Model failures: `Session` catches `ModelError` (defined next to `ModelPort`; `OllamaError` is a subclass, so `Session` never imports Ollama code). An empty reply (no text, no tool calls) is raised as a `ModelError` too. Either way the whole turn is rolled back with `del self.messages[turn_start:]`, so the history looks as if the turn never happened, and the user sees `Model error: ...`. `pop()` would not do, because the error can come after earlier passes of the same turn. Revisit at Milestone 3: once motion tools exist, rolling back would erase the record of what the drone already did.
 
 ## 7. Language model
 
@@ -131,6 +134,7 @@ A conversation is a list of messages, each with a `role`:
 | `tool` | Our session: the result (or denial) of one tool call | Untrusted data, wrapped and labeled | `{"role":"tool","name":...,"content":...}` | `{"role":"tool","tool_name":...,"content":...}` |
 
 A normal tool exchange is: `user` asks, `assistant` requests a tool, `tool` returns the result, `assistant` answers in text. The turn ends when the assistant replies without tool calls. Some APIs have more roles (OpenAI has a `developer` role, and links tool results by call id); we only use these four.
+- Live check, 2026-10-22 (`qwen2.5:3b`, `FakeRobot`): tool calls come back as structured `tool_calls`, and the battery value is read from the tool result. What went wrong: (1) the model guessed `kind='topic'` because the tool menu did not list the legal values, so `list_ros_graph` now names them (`GRAPH_KINDS` in `tools.py`) and `validate` rejects anything else as `invalid`; (2) it ignored the system prompt line saying it can only observe, mixed up PX4's armed state with the operator's arm switch, and once answered about telemetry without calling the tool; (3) it sometimes returns an empty reply (not reproducible on demand). Lesson: the prompt is a request. Precise refusals will come from the guard once motion tools exist.
 - Small models mis-pick tools, invent arguments, break JSON and forget preconditions. Mitigations: few tools, strict schema validation, short descriptions, a small evaluation suite per candidate model.
 - Hardware: RTX 4060 Laptop 8 GB VRAM shared with the simulator, 31 GB RAM. Start with a 3-4B model at 4-bit and a 4-8k context. Model names and sizes are estimates to verify by measurement.
 

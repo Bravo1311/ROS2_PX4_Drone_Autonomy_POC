@@ -50,6 +50,8 @@ class Session:
             try:
                 "ask the model"
                 reply = self.model.reply(self.messages)
+                if not reply.text.strip() and not reply.tool_calls:
+                    raise ModelError("the model returned an empty reply")
             except ModelError as e:
                 del self.messages[turn_start:]
                 return f"Model error: {e}"

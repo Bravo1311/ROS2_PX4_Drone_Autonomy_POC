@@ -21,6 +21,10 @@ class BrokenModel:
     def reply(self, messages):
         raise ModelError("malformed response : {}")
 
+class EmptyModel:
+    def reply(self, messages):
+        return ModelReply()
+
 
 def call(name, **args):
     return ModelReply(tool_calls=(ToolCall(name, args),))
@@ -35,6 +39,13 @@ def make_session(replies, robot=None, **policy):
 def tool_messages(session):
     """fetches what the model was told after each call"""
     return [m["content"] for m in session.messages if m["role"] == "tool"]
+
+def test_empty_model_reply_is_reported_as_an_error():
+    guard = Guard(Policy(), DENY_LIST)
+    session = Session(EmptyModel(), FakeRobot(), guard, REGISTRY)
+    answer = session.handle_user_message("hi")
+    assert answer == "Model error: the model returned an empty reply"
+    assert session.messages == []
 
 
 def test_observe_call_runs_and_the_answer_comes_back():
