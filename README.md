@@ -36,21 +36,37 @@ The system provides end-to-end autonomy from sensor fusion through mission plann
 - Annotated semantic map generation (ArUco landmark positions embedded in SLAM map) - in progress
 - Holonomic drone adaptation including ENU/NED frame conversion and velocity heading alignment
 
-The result is a modular autonomy stack that bridges perception and control in a PX4-based UAV system. \
- - The system was evaluated from initial altitudes up to ~ 14m to evaluate convergence stability and oscillatory behavior. 
- - Stable lateral convergence and controlled descent were observed across varying initial altitudes and marker poses in simulation.
+The result is a modular autonomy stack that bridges perception and control in a PX4-based UAV system.
+
+- The system was evaluated from initial altitudes up to ~ 14m to evaluate convergence stability and oscillatory behavior.
+- Stable lateral convergence and controlled descent were observed across varying initial altitudes and marker poses in simulation.
+
+---
+
+## Quickstart (Docker)
+
+Prerequisites (NVIDIA container toolkit, X11 access, `.env`) are in [docker/README.md](docker/README.md).
+
+```bash
+./run.sh                                                    # build and start the container
+docker exec -it px4-ros2-autonomy /entrypoint.sh bash       # open a shell in it
+ros2 launch px4_bringup minimal.launch.py                   # PX4 SITL + Gazebo + XRCE agent + RViz
+```
+
+The remaining launch steps (SLAM, Nav2, offboard control, landing) are under [Launch Sequence](#launch-sequence).
 
 ---
 
 ## System Architecture
 
 ```
-─────────────────────────────────────────────────────┐
-│                   VLM Layer (WIP)                   │
-│         Natural language mission planning           │
-│              Qwen 2.5 VL 3b (local)                │
+┌─────────────────────────────────────────────────────┐
+│             Natural-language layer (WIP)            │
+│    Snappy agent: session, guard, tools (sim only)   │
+│      VLM map reasoning: Qwen 2.5 VL 3b (local)      │
+│        Both served by Ollama (Docker, local)        │
 └──────────────────────┬──────────────────────────────┘
-                       │ Nav2 goals + actions
+                       │ Nav2 goals + actions (planned)
 ┌──────────────────────▼──────────────────────────────┐
 │              Autonomous GNC Stack                   │
 │                                                     │
@@ -210,13 +226,14 @@ ros2 launch px4_bringup nav2.launch.py
 # Terminal 4 — Offboard control + joystick
 ros2 launch px4_offboard auto_joystick_teleop.launch.py
 
-# Terminal 5 — Precision Landing Velocity Publisher
+# Terminal 5 — Precision landing: PD controller, started directly
 ros2 run px4_aruco_landing autoland_twist_publisher.py
 
-# Terminal 6 — Precision Landing Velocity Publisher using autoland_twist_publisher
-ros2 run flow_landing_policy policy_landing.launch.py
+# Terminal 6 — Precision landing via the launch file (use instead of Terminal 5)
+# Default (use_policy:=false) starts the same PD controller:
+ros2 launch flow_landing_policy policy_landing.launch.py
           --------- or -----------
-# Terminal 6 — Precision Landing Velocity Publisher using flow_matching policy
+# Flow-matching policy:
 ros2 launch flow_landing_policy policy_landing.launch.py use_policy:=true weights_path:=/path/to/model.pt
 
 ```
@@ -285,14 +302,91 @@ px4_offboard/
     px4_offboard_mux.py     — command arbitration + frame conversion
     teleop_joystick.py      — gamepad → velocity commands
     nav2_cmd_relay.py       — Nav2 cmd_vel relay with watchdog
+
+flow_landing_policy/
+  launch/policy_landing.launch.py — PD landing controller (default) or flow-matching policy
+  weights/                        — policy checkpoints
+
+px4_custom/
+  models/                   — x500_mono_cam_down, walls, arucotag
+  worlds/                   — aruco.sdf, walls.sdf, walls_arucotag.sdf
+
+px4_drone_intelligence/
+  px4_drone_intelligence/   — api_client.py (OpenRouter/OpenAI chat), api_node.py
+  stage1/                   — map-target selection with a local VLM + evaluation script
+
+snappy/
+  drone_agent_core/         — guarded agent: profile, guard, tools, rate limits, session, Ollama client
+  tests/                    — unit and scenario tests
+  NOTES.md                  — design notes (start with section 0, the map)
+
+docker/                     — entrypoint, aliases, SITL start script, Docker README
+Dockerfile, docker-compose*.yaml, run.sh   — container build and start
 ```
  
+---
+
+## Natural-language layer (in progress)
+
+Two packages explore natural-language control. Both are simulation-only, neither can move the drone yet, and
+neither is wired into the launch sequence above.
+
+### `px4_drone_intelligence`: VLM map reasoning
+
+A vision-language model reads an annotated map image and an instruction and picks a target marker.
+
+- `api_client.py` / `api_node.py`: one-shot chat client for OpenRouter and OpenAI (needs `OPENROUTER_API_KEY`
+  in `.env`), also usable as a ROS node.
+- `stage1/stage1_target_selection.py`: local `qwen2.5vl:3b` through Ollama, JSON output validated against the
+  known markers. `stage1/stage1_eval.py` runs five instruction/answer checks and prints a score.
+
+```bash
+cd px4_drone_intelligence
+python3 stage1/stage1_target_selection.py --image maps/map.jpg \
+  --instruction "Go to the lowest marker" --model qwen2.5vl:3b
+```
+
+### `snappy`: guarded agent
+
+The language model is an untrusted advisor: it proposes tool calls, and plain code (a guard) decides whether
+each one runs. The agent starts disarmed, refuses motion in observe-only mode, and limits calls per turn,
+repeated calls and malformed calls. Tool results are treated as data, never as instructions.
+
+Status: Milestone 1 (observe-only) is partly built: profile, guard, tools, rate limits, session, a fake robot
+for tests and an Ollama client. The terminal chat and the ROS wiring for real telemetry are still to do.
+Design notes, with a map of the files, are in [snappy/NOTES.md](snappy/NOTES.md). Run the tests inside the
+container:
+
+```bash
+cd /ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/snappy
+python3 -m pytest -q          # all pass (82 at the time of writing)
+```
+
+### Ollama in Docker
+
+Both packages use a local Ollama server, defined as the `ollama` service in `docker-compose.yaml` (host
+network, NVIDIA GPU). Models, keys and history live in one folder on the host, set with `OLLAMA_DATA_DIR` in
+`.env` (default `./.ollama-data`).
+
+```bash
+docker compose up -d ollama
+docker exec snappy-ollama ollama pull qwen2.5:3b    # text model with tool calling, used by snappy
+docker exec snappy-ollama ollama pull qwen2.5vl:3b  # vision model, used by px4_drone_intelligence
+curl localhost:11434/api/tags                        # lists the installed models
+```
+
+Notes: only models that list the `tools` capability can drive snappy (`qwen2.5:3b` does, `qwen2.5vl:3b` does
+not; check with `ollama show <model>`). The first request after start loads the model into the GPU and takes
+about 15 s. The GPU is shared with the simulator, so on an 8 GB card use 3 to 4B models at 4-bit quantization.
+
 ---
 
 ## Ongoing Work
  
 - Semantic map annotation pipeline for VLM visual grounding
-- VLM mission planning layer (Qwen 2.5 VL 3b, local inference via Ollama)
+- Snappy agent: observe-only chat and ROS wiring (Milestone 1), then dry-run plans and guarded execution
+  through the existing mux (Milestones 2 and 3)
+- VLM map reasoning (Qwen 2.5 VL 3b, local inference via Ollama) as a possible tool for the agent
 - Multi-drone swarm coordination controlled by VLM high-level commands
 - OAK-D depth camera integration for 3D obstacle avoidance and altitude control
 
@@ -325,7 +419,12 @@ This project builds upon:
 
 ## Setup
 
-Please refer to the original repository for base setup instructions.  
-This repository assumes a working PX4 SITL + ROS2 integration.
+The easiest route is the [Docker quickstart](#quickstart-docker); prerequisites and `.env` are in
+[docker/README.md](docker/README.md). To run natively, refer to the original repository for base setup
+instructions; this repository assumes a working PX4 SITL + ROS2 integration.
 
-Docker: see [docker/README.md](docker/README.md).
+---
+
+## License
+
+MIT, see [LICENSE](LICENSE).

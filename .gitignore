@@ -8,3 +8,6 @@ log/
 
 # local secrets for docker compose
 .env
+
+# default Ollama data folder (models are large; see OLLAMA_DATA_DIR in docker/README.md)
+.ollama-data/

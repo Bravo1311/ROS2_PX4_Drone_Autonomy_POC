@@ -27,7 +27,10 @@ GEMINI_API_KEY=...
 OPENROUTER_API_KEY=...
 ROS_DOMAIN_ID=0
 INPUT_GID=107          # output of: getent group input
+OLLAMA_DATA_DIR=/path/with/space   # where the ollama service keeps models, keys and history
 ```
+
+`OLLAMA_DATA_DIR` is optional; the default is `./.ollama-data` inside the repo (git-ignored). Models are several GB each, so point it at a disk with room. If you change it after models are installed, move the old folder's contents there, or the server will start empty.
 
 ## Build
 

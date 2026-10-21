@@ -49,7 +49,7 @@ services:
     network_mode: host                  # serves on localhost:11434
     restart: unless-stopped
     volumes:
-      - /mnt/ubuntu-data/ollama:/root/.ollama   # models, keys, history: everything
+      - ${OLLAMA_DATA_DIR:-./.ollama-data}:/root/.ollama   # models, keys, history: everything (set OLLAMA_DATA_DIR in .env)
     deploy:
       resources:
         reservations:

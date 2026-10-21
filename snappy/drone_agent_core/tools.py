@@ -2,6 +2,9 @@ from dataclasses import dataclass, field
 
 from drone_agent_core.guard import Risk, ToolSpec
 
+
+GRAPH_KINDS = ("topics", "nodes", "services")
+
 @dataclass(frozen=True)
 class ToolDef:
     name: str
@@ -29,6 +32,8 @@ def validate(tool: ToolDef | None, args: dict) -> str | None:
             return f"argument {name} must be {expected.__name__}"
         if not isinstance(value, expected):
             return f"argument {name} must be {expected.__name__}"
+    if tool.name == "list_ros_graph" and args["kind"] not in GRAPH_KINDS:
+        return f"kind must be one of: {','.join(GRAPH_KINDS)}"
     return None
 
 
@@ -37,7 +42,7 @@ OBSERVE_TOOLS = (
             Risk.OBSERVE, "/fmu/out/vehicle_local_position"),
     ToolDef("get_detections", "Latest YOLO detections from the camera.",
             Risk.OBSERVE, "/drone_agent/detections"),
-    ToolDef("list_ros_graph", "List ROS topics of a given kind.",
+    ToolDef("list_ros_graph", f"List ROS names. kind is one of: {', '.join(GRAPH_KINDS)}.",
             Risk.OBSERVE, None, {"kind": str}),
 )
 

@@ -34,3 +34,8 @@ def test_spec_carries_name_risk_and_ros_name():
     spec = build_registry()["get_telemetry"].spec()
     assert (spec.name, spec.risk) == ("get_telemetry", Risk.OBSERVE)
     assert spec.ros_name == "/fmu/out/vehicle_local_position"
+
+def test_list_ros_graph_rejects_unknown_kind():
+    tool = build_registry()["list_ros_graph"]
+    assert validate(tool, {"kind": "topic"}) is not None
+    assert validate(tool, {"kind": "topics"}) is None
