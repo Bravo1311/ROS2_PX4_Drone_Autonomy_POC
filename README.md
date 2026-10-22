@@ -289,7 +289,7 @@ px4_drone_intelligence/
   stage1/                   — map-target selection with a local VLM + evaluation script
 
 snappy/
-  drone_agent_core/         — guarded agent: profile, guard, tools, rate limits, session, Ollama client,
+  drone_agent_core/         — guarded agent: profile, guard, tools, rate limits, session, plans, Ollama client,
                               terminal chat, PX4 message mapping, ROS-backed robot (subscribe-only)
   tests/                    — unit and scenario tests
   NOTES.md                  — design notes (start with section 0, the map)
@@ -330,12 +330,12 @@ repeated calls and malformed calls. Tool results are treated as data, never as i
 Status: Milestone 1 (observe-only) is done: profile, guard, tools, rate limits, session, an Ollama client, a
 terminal chat, and a ROS-backed robot that reads live telemetry, the ROS graph and detections from the
 simulation. The robot adapter only subscribes: it has no publishers, so the agent cannot send a command to PX4.
-Dry-run plans (Milestone 2) and guarded execution through the mux (Milestone 3) come next. Design notes, with
+Milestone 2 is done: the model drafts a plan with submit_plan, code checks and hashes it, and the user approves it with `/approve <hash>`. Nothing executes yet. Guarded execution through mux is Milestone 3. Design notes, with
 a map of the files, are in [snappy/NOTES.md](snappy/NOTES.md). Run the tests inside the container:
 
 ```bash
 cd /ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/snappy
-python3 -m pytest -q          # all pass (89 at the time of writing)
+python3 -m pytest -q          # all pass
 ```
 
 Run the chat. Offline, with a fake robot (no ROS needed):
@@ -375,7 +375,7 @@ about 15 s. The GPU is shared with the simulator, so on an 8 GB card use 3 to 4B
 ## Ongoing Work
  
 - Semantic map annotation pipeline for VLM visual grounding
-- Snappy agent: dry-run plans (Milestone 2), then guarded execution through the existing mux (Milestone 3)
+- Snappy agent: guarded execution of approved plans through the existing mux (Milestone 3)
 - VLM map reasoning (Qwen 2.5 VL 3b, local inference via Ollama) as a possible tool for the agent
 - Multi-drone swarm coordination controlled by VLM high-level commands
 - OAK-D depth camera integration for 3D obstacle avoidance and altitude control

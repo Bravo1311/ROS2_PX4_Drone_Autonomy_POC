@@ -30,13 +30,14 @@ user message
 | `profile.py` | Loads and validates the settings (`Policy`); unknown keys fail |
 | `guard.py` | Decides allow, deny or needs approval; counts calls; holds the arm switch |
 | `tools.py` | Tool definitions, argument validation, the registry |
+| `plans.py` | Dry-run plans: `Step`, `Plan`, the mission skill catalog, `compile_plan`, canonical JSON and hash, `render_card`, and the `submit_plan` tool (section 4b) |
 | `ratelimit.py` | Per-tool minimum interval, with an injectable clock |
 | `robot.py` | `RobotPort` interface plus `FakeRobot` for tests and offline chat |
 | `session.py` | The turn loop; the only place that calls `begin_turn()`; turns model failures into `Model error: ...` |
 | `ollama_model.py` | `OllamaModel`: our messages to Ollama's `/api/chat` and back (a `ModelPort`) |
 | `px4_mapping.py` | `to_telemetry`: PX4 messages to our `Telemetry` (pure function, no ROS; NED to ENU, battery fraction to percent, enums to names) |
 | `ros_robot.py` | `RosRobot`: the real `RobotPort`. Subscribes only (no publishers), keeps the newest message per topic, raises `RobotUnavailable` when nothing arrived or the last message is older than 5 s |
-| `chat.py` | Terminal chat (`--robot fake\|ros`): reads a line, calls `Session`, prints the answer and a tool log (`python3 -m drone_agent_core.chat`) |
+| `chat.py` | Terminal chat (`--robot fake\|ros`): reads a line, calls `Session`, prints the answer and a tool log, then the plan card when a new plan is pending; handles `/approve <hash>` and `/reject` itself (`python3 -m drone_agent_core.chat`) |
 
 Five ideas to keep in mind:
 1. **The model is untrusted.** It only proposes. Plain code decides.
@@ -95,6 +96,29 @@ you -> session -> model -> run_mission call -> guard -> compiler -> plan card + 
 - The executor allows only known node types, enforces size and time limits, runs one mission at a time, clamps altitude, speed and geofence, reports step feedback, and holds position on cancel.
 - Running missions are immutable. A new request becomes a separate plan with its own approval. Replans are limited to 2, each re-approved.
 - Altitude check lesson: compiler rejection is a convenience; the executor clamp is the essential safety. Approval expresses intent; executor limits provide safety.
+
+## 4b. Dry-run plans (Milestone 2, done 2026-10-23)
+
+What exists. Nothing in it moves the drone; approval is a dry run.
+
+- **Catalog.** `MISSION_SKILLS` (takeoff, goto, hold, land) are `ToolDef`s with `Risk.MOTION`, reusing `validate()`. They live in their own registry (`SKILLS`) and are not in the live tool registry, so the model cannot call them directly. Its only way in is the `submit_plan` tool.
+- **Shape check.** `parse_plan` accepts a list of `{skill, args}` (`args` optional, unknown keys rejected) and copies the args dicts. It checks shape only; meaning is the compiler's job.
+- **Compiler.** `compile_plan(plan, limits, airborne=False)` returns a list of error strings, all of them, not just the first. Checks: not empty, at most `max_steps`, each step through `check_step`, then `check_limits`, then order (no goto/hold before takeoff, no second takeoff, no land on the ground, must end with land). State (`airborne`) is tracked from the step's intent even when its arguments are bad, so one mistake does not cascade into more errors.
+- **Limits.** `PlanLimits`: 12 steps, 30 m altitude, 50 m geofence radius around the start point, 120 s hold. They live in `plans.py`, not in `Policy`; moving them into the YAML profile is open.
+- **Hash.** `canonical_json` (sorted keys, no whitespace, `allow_nan=False`, float parameters normalised to float so `5` and `5.0` hash alike) then SHA-256. A pinned test string is the first portable test vector for the Rust port.
+- **Card.** `render_card` is built by code from the compiled plan and refuses a plan that does not compile. It shows the first 12 hash characters, one line per step, and a summary line (highest altitude, farthest point, hold time, each next to its limit). The model's own description is never what the operator approves.
+- **`submit_plan`.** `Risk.ANNOTATE` (allowed when supervised, denied when observe-only). `review_plan` returns the plan or `None` plus the text, so the session can keep the plan; `submit_plan` returns just the text (the card, or `PLAN REJECTED` with the errors). The result goes through `wrap_result` like any tool result.
+- **Pending plan.** `Session.pending` is a `PendingPlan` (plan, hash, submitted time). A new accepted plan replaces it; a rejected submission leaves it alone.
+- **Approve and reject.** `Session.approve(hash_prefix)` and `Session.reject()` are methods, not tools: there is no approve tool in the registry, so the model cannot approve its own plan (a test pins this). Approval needs at least 8 hash characters that match the pending plan, and expires after `approval_ttl_s` from the profile (checked before the hash; an expired plan is cleared). A wrong hash leaves the plan pending. Approval returns `APPROVED <hash>. Dry run: nothing was executed.`
+- **Chat.** `/approve` and `/reject` never reach the model. After each turn, if a new plan is pending, the chat prints the card and the exact `/approve` line from `session.pending`, not from the model's answer. `tool_status` labels rejected plans `plan rejected` (the wrapped result no longer starts with the problem word, which hid rejections as `ok`).
+
+Pitfalls found while building it:
+- `validate` rejected `5` for a float parameter; models write `5` for `5.0`. Ints are now accepted for float parameters (bool still rejected, check order matters).
+- A comparison like `distance > radius` lets `NaN` through (`json.loads` accepts `NaN`). Write checks as "must be inside the range": `not distance <= radius`.
+- `tool_schema` had no entry for `list`; a list parameter would have crashed at startup. It now emits `array` with object items.
+- Live finding: the 3B model produced plans the compiler refused, misread the errors ("land only when on the ground") and stopped without resubmitting. The compiler held; a clean request ("take off to 5 m, hold 3 seconds, then land") works end to end.
+
+Limits of this milestone: the hash covers the steps, not the limits in force; the executor's own clamps (Milestone 3) are the real safety. The compiler cannot know if the drone is armed or whether a takeoff will succeed.
 
 ## 5. Priorities and emergencies
 
@@ -155,7 +179,7 @@ One file describes the drone and every limit. Unknown keys fail at startup. Defa
 ## 10. Milestones
 
 1. Observe-only: profile loader, guard with rate limits, robot port, three observe tools, Ollama client, terminal chat, unit and scenario tests.
-2. Dry-run plans: catalog, compiler, validator, plan card with hash. Nothing executes.
+2. Dry-run plans: catalog, compiler, validator, plan card with hash. Nothing executes. **Done 2026-10-23** (section 4b).
 3. Guarded execution: executor with skills through the mux, busy lock, arm and approval, heartbeat deadman, triggers, StopAll, clamps.
 
 Later: camera tool, dashboard, cloud models, Rust port.
@@ -180,6 +204,10 @@ Later: camera tool, dashboard, cloud models, Rust port.
 - Detector status: an empty detections list cannot tell "nothing seen" from "detector not running".
 - Housekeeping: pin the `ollama/ollama` image version, `.gitignore` and root-owned `__pycache__` / `.pytest_cache`, delete the old 14 GB `/usr/share/ollama/.ollama/models` copy (root disk 93% full).
 - Interplay of our triggers with PX4's own failsafes; PX4 RTL bypasses the LIDAR filter.
+- Move `PlanLimits` into the YAML profile; pass `airborne` to `compile_plan` from live telemetry (Milestone 3).
+- Rust port: Python and Rust must print floats the same way in canonical JSON (for example `1e-07` versus `1e-7`); the shared test vectors will show it.
+- The model does not self-correct after `PLAN REJECTED`; consider returning a shorter, clearer error text or a retry hint.
+- The tests run on the host (`pytest pyyaml requests`, no ROS). The `sim` container only sees `snappy/` in dev mode (`docker-compose.dev.yaml`); `RosRobot` is the only part that needs the container.
 
 ## 12. Glossary
 
