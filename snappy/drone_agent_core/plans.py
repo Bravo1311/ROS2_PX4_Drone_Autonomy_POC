@@ -1,3 +1,5 @@
+import math
+
 from dataclasses import dataclass, field
 
 from drone_agent_core.guard import Risk
@@ -9,9 +11,19 @@ class Step:
     skill: str
     args: dict = field(default_factory=dict)
 
+
 @dataclass
 class Plan:
     steps: tuple[Step, ...]
+
+
+@dataclass
+class PlanLimits:
+    max_steps: int = 12
+    max_altitude_m: float = 30.0
+    geofence_radius_m: float = 50.0
+    max_hold_s: float = 120.0
+
 
 MISSION_SKILLS = (
     ToolDef("takeoff", "Climb to a height above the ground", Risk.MOTION, None, {"altitude_m": float}),
@@ -24,3 +36,38 @@ SKILLS = build_registry(MISSION_SKILLS)
 
 def check_step(step: Step):
     return validate(SKILLS.get(step.skill), step.args)
+
+def check_limits(step: Step, limits: PlanLimits) -> str | None:
+    a = step.args
+    if step.skill in ("takeoff", "goto") and not 0 < a["altitude_m"] <= limits.max_altitude_m:
+        return f"altitude must be between 0 and at most {limits.max_altitude_m}"
+    if step.skill == "goto" and not math.hypot(a["x"], a["y"]) <= limits.geofence_radius_m:
+        return f"target is outside the {limits.geofence_radius_m} m geofence"
+    if step.skill == "hold" and not 0 < a["seconds"] <= limits.max_hold_s:
+        return f"seconds must be above 0 and at most {limits.max_hold_s}"
+    return None
+
+def compile_plan(plan: Plan, limits: PlanLimits = PlanLimits(), airborne: bool = False) -> list[str]:
+    """Returns a list of errors that the model can use to improve the plan"""
+    if not plan.steps:
+        return ["plan has no steps"]
+    errors = []
+    if len(plan.steps) > limits.max_steps:
+        errors.append(f"plan has {len(plan.steps)} steps, at most {limits.max_steps} allowed")
+    for i, step in enumerate(plan.steps, 1):
+        problem = check_step(step) or check_limits(step, limits)
+        if problem:
+            errors.append(f"step {i} ({step.skill}): {problem}")
+        if step.skill == "takeoff":
+            if airborne:
+                errors.append(f"step {i} (takeoff): already airborne")
+            airborne = True
+        elif step.skill == "land":
+            if not airborne:
+                errors.append(f"step {i} (land): not airborne")
+            airborne = False
+        elif step.skill in SKILLS and not airborne:
+            errors.append(f"step {i} ({step.skill}): takeoff first")
+    if airborne:
+        errors.append("plan must end with land")
+    return errors
