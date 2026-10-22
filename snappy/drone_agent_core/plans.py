@@ -1,4 +1,6 @@
 import math
+import hashlib
+import json
 
 from dataclasses import dataclass, field
 
@@ -65,9 +67,21 @@ def compile_plan(plan: Plan, limits: PlanLimits = PlanLimits(), airborne: bool =
         elif step.skill == "land":
             if not airborne:
                 errors.append(f"step {i} (land): not airborne")
-            airborne = False
+            airborne=False
         elif step.skill in SKILLS and not airborne:
             errors.append(f"step {i} ({step.skill}): takeoff first")
     if airborne:
         errors.append("plan must end with land")
     return errors
+
+def _normalized_args(step: Step) -> dict:
+    params = SKILLS[step.skill].params
+    return {k: float(v) if params[k] is float else v for k, v in step.args.items()}
+
+def canonical_json(plan: Plan) -> str:
+    """Stable text form of a plan that compile_plan accepted: same plan, same bytes"""
+    data = {"steps": [{"skill":s.skill, "args": _normalized_args(s)} for s in plan.steps]}
+    return json.dumps(data, sort_keys=True, separators=(",", ":"), allow_nan=False)
+
+def plan_hash(plan: Plan) -> str:
+    return hashlib.sha256(canonical_json(plan).encode("utf-8")).hexdigest()
