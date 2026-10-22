@@ -23,8 +23,9 @@ def make_robot(kind: str):
 def build_session(robot) -> Session:
     registry = build_registry(OBSERVE_TOOLS + (SUBMIT_PLAN, ))
     model = OllamaModel(model=MODEL_NAME, tools=registry.values())
-    guard = Guard(Policy(), HARD_DENY)
-    return Session(model, robot, guard, registry)
+    policy = Policy()
+    guard = Guard(policy, HARD_DENY)
+    return Session(model, robot, guard, registry, approval_ttl_s=policy.approval_ttl_s)
 
 def tool_status(content: str) -> str:
     """'ok' for data; the start of the message for denials, unavailable data, rate limits"""

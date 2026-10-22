@@ -13,6 +13,13 @@ PLAN_REGISTRY = build_registry(OBSERVE_TOOLS + (SUBMIT_PLAN,))
 STEPS = [{"skill": "takeoff", "args": {"altitude_m": 5}}, {"skill": "land"}]
 
 
+class Clock:
+    def __init__(self):
+        self.now = 0.0
+
+    def __call__(self):
+        return self.now
+
 class ScriptedModel:
     def __init__(self, replies):
         self._replies = list(replies)
@@ -176,3 +183,13 @@ def test_reject_clears_the_pending_plan_and_nothing_pending_is_safe():
     assert s.pending is None
     assert s.reject() == "Nothing to reject."
     assert s.approve("abcdefgh") == "Nothing to approve."
+
+def test_approval_expires():
+    clock = Clock()
+    replies = [call("submit_plan", steps=STEPS), ModelReply("Drafted.")]
+    session = Session(ScriptedModel(replies), FakeRobot(), Guard(Policy(), DENY_LIST),
+                      PLAN_REGISTRY, clock=clock, approval_ttl_s=60)
+    session.handle_user_message("take off to 5 m and land")
+    clock.now = 61.0
+    assert "expired" in session.approve(session.pending.hash[:12])
+    assert session.pending is None

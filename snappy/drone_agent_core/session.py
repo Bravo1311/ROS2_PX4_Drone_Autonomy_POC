@@ -128,6 +128,9 @@ class Session:
         p = self.pending
         if p is None:
             return "Nothing to approve."
+        if self._clock() - p.submitted_at > self._approval_ttl_s:
+            self.pending = None
+            return "The plan has expired. Ask for it again."
         if len(hash_prefix) < 8 or not p.hash.startswith(hash_prefix.lower()):
             return f"That hash does not match the pending plan {p.hash[:12]}."
         self.pending = None
