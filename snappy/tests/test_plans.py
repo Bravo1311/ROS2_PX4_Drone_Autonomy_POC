@@ -1,4 +1,6 @@
-from drone_agent_core.plans import Step, check_step, Plan, PlanLimits, compile_plan, plan_hash, canonical_json
+from drone_agent_core.plans import Step, check_step, Plan, PlanLimits, compile_plan, plan_hash, canonical_json, render_card
+
+import pytest
 
 
 def plan(*steps):
@@ -92,3 +94,21 @@ def test_different_plans_have_different_hashes():
 def test_hash_is_64_hex_characters():
     h = plan_hash(GOOD)
     assert len(h) == 64 and all(c in "0123456789abcdef" for c in h)
+
+def test_card_lists_every_step_and_the_short_hash():
+    card = render_card(GOOD)
+    assert plan_hash(GOOD)[:12] in card
+    assert "1. takeoff to 5 m" in card
+    assert "4. land" in card
+
+
+def test_card_summary_comes_from_the_steps():
+    card = render_card(GOOD)
+    assert "highest 5 m (limit 30)" in card
+    assert "farthest 10 m from start (limit 50)" in card
+    assert "holding 3 s" in card
+
+
+def test_card_refuses_a_plan_that_does_not_compile():
+    with pytest.raises(ValueError):
+        render_card(plan(Step("goto", {"x": 1.0, "y": 1.0, "altitude_m": 5.0})))

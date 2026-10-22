@@ -85,3 +85,32 @@ def canonical_json(plan: Plan) -> str:
 
 def plan_hash(plan: Plan) -> str:
     return hashlib.sha256(canonical_json(plan).encode("utf-8")).hexdigest()
+
+def describe_step(step: Step) -> str:
+    a = _normalized_args(step)
+    if step.skill == "takeoff":
+        return f"takeoff to {a['altitude_m']:g} m"
+    if step.skill == "goto":
+        return f"go to east {a['x']:g} m, north {a['y']:g} m at {a['altitude_m']:g} m"
+    if step.skill == "hold":
+        return f"hold for {a['seconds']:g} s"
+    if step.skill == "land":
+        return "land"
+    raise ValueError(f"no description for skill {step.skill}")
+
+def render_card(plan: Plan, limits: PlanLimits = PlanLimits()) -> str:
+    errors = compile_plan(plan, limits)
+    if errors:
+        raise ValueError("cannot render a plan that does not compile:" + "; ".join(errors))
+    args = [_normalized_args(s) for s in plan.steps]
+    highest = max((a["altitude_m"] for a in args if "altitude_m" in a), default=0.0)
+    farthest = max((math.hypot(a["x"], a["y"]) for a in args if "x" in a), default=0.0)
+    held = sum(a["seconds"] for a in args if "seconds" in a)
+    lines = [f"PLAN {plan_hash(plan)[:12]}  ({len(plan.steps)}  steps)"]
+    for i, step in enumerate(plan.steps, 1):
+        lines.append(f"  {i}. {describe_step(step)}")
+    lines.append(f"  highest {highest:g} m (limit {limits.max_altitude_m:g}), "
+                 f"farthest {farthest:g} m from start (limit {limits.geofence_radius_m:g}), "
+                 f"holding {held:g} s")
+    lines.append("  Nothing runs: dry run only.")
+    return "\n".join(lines)
