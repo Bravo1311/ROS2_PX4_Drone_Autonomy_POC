@@ -129,16 +129,20 @@ def parse_plan(raw) -> Plan:
         steps.append(Step(item["skill"], dict(args)))
     return Plan(tuple(steps))
 
-def submit_plan(raw_steps, limits: PlanLimits = PlanLimits()) -> str:
-    """What the model is told after proposing a plan: errors to fix, or the card"""
+def review_plan(raw_steps, limits: PlanLimits = PlanLimits()) -> tuple[Plan | None, str]:
+    """The plan if it compiled (else None), plus the text to show."""
     try:
         plan = parse_plan(raw_steps)
     except ValueError as e:
-        return f"PLAN REJECTED: {e}"
+        return None, f"PLAN REJECTED: {e}"
     errors = compile_plan(plan, limits)
     if errors:
-        return f"PLAN REJECTED:\n" + "\n".join(f"  {e}" for e in errors)
-    return render_card(plan, limits)
+        return None, f"PLAN REJECTED:\n" + "\n".join(f"  {e}" for e in errors)
+    return plan, render_card(plan, limits)
+
+def submit_plan(raw_steps, limits: PlanLimits = PlanLimits()) -> str:
+    """What the model is told after proposing a plan: errors to fix, or the card"""
+    return review_plan(raw_steps, limits)[1]
 
 def _signature(t: ToolDef) -> str:
     return f"{t.name}({', '.join(f'{k}: {v.__name__}' for k, v in t.params.items())})"
