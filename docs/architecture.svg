@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 776" width="960" height="776" font-family="Inter, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" role="img" aria-labelledby="t d">
+  <title id="t">System architecture</title>
+  <desc id="d">Five layers. Language: You, Model, Validate and Guard, RosRobot, plus an experimental VLM. Sources: precision landing (ArUco detector, PD controller or flow-matching policy), Nav2 navigation, and gamepad teleoperation, fed by Gazebo sensors through ros_gz_bridge. Arbitration: px4_offboard_mux with the LiDAR safety velocity filter. Flight: PX4 SITL. Simulation: Gazebo Harmonic. The agent reads PX4 topics read-only; commands through the guard to the mux are planned for Milestone 3.</desc>
+  <defs>
+    <marker id="head" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4.6" markerHeight="4.6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#ff6a3d"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="776" rx="16" fill="#0f1013" stroke="#2f333b"/>
+
+  <!-- ===== Language ===== -->
+  <rect x="60" y="24" width="876" height="124" rx="10" fill="none" stroke="#2f333b"/>
+  <text x="80" y="47" font-size="12" font-weight="600" letter-spacing="1.6" fill="#a1a6b0">LANGUAGE</text>
+
+  <rect x="80" y="60" width="164" height="68" rx="8" fill="none" stroke="#434852" stroke-dasharray="4 3"/>
+  <text x="162" y="90" font-size="13" font-weight="600" fill="#d3d6dc" text-anchor="middle">VLM map reasoning</text>
+  <text x="162" y="109" font-size="12" fill="#a1a6b0" text-anchor="middle">experimental</text>
+  <line x1="256" y1="60" x2="256" y2="128" stroke="#2f333b"/>
+
+  <g font-size="14" font-weight="600" fill="#ecebe6" text-anchor="middle">
+    <rect x="268" y="60" width="92" height="68" rx="8" fill="#1b1d22" stroke="#343840"/>
+    <text x="314" y="90">You</text>
+    <rect x="384" y="60" width="148" height="68" rx="8" fill="#1b1d22" stroke="#343840"/>
+    <text x="458" y="90">Model</text>
+    <rect x="556" y="60" width="152" height="68" rx="8" fill="#2a140d" stroke="#ff6a3d" stroke-width="1.5"/>
+    <text x="632" y="90" fill="#ffffff">Validate + Guard</text>
+    <rect x="744" y="60" width="152" height="68" rx="8" fill="#1b1d22" stroke="#343840"/>
+    <text x="820" y="90">RosRobot</text>
+  </g>
+  <g font-size="12" fill="#a1a6b0" text-anchor="middle">
+    <text x="314" y="109">terminal chat</text>
+    <text x="458" y="109">Ollama · qwen2.5:3b</text>
+    <text x="632" y="109" fill="#f4bfa9">plain code decides</text>
+    <text x="820" y="109">subscribe only</text>
+  </g>
+  <g stroke="#ff6a3d" stroke-width="2" marker-end="url(#head)">
+    <line x1="361" y1="94" x2="382" y2="94"/>
+    <line x1="533" y1="94" x2="554" y2="94"/>
+    <line x1="709" y1="94" x2="742" y2="94"/>
+  </g>
+
+  <!-- ===== Sources ===== -->
+  <rect x="60" y="196" width="740" height="174" rx="10" fill="none" stroke="#2f333b"/>
+  <text x="80" y="219" font-size="12" font-weight="600" letter-spacing="1.6" fill="#a1a6b0">SOURCES</text>
+  <text x="160" y="219" font-size="12" fill="#a1a6b0">fed by Gazebo sensors via ros_gz_bridge</text>
+  <g fill="#1b1d22" stroke="#343840">
+    <rect x="80" y="232" width="244" height="118" rx="8"/>
+    <rect x="340" y="232" width="274" height="118" rx="8"/>
+    <rect x="650" y="232" width="130" height="118" rx="8"/>
+  </g>
+  <g font-size="14" font-weight="600" fill="#ecebe6">
+    <text x="94" y="258">Precision landing</text>
+    <text x="354" y="258">Navigation (Nav2)</text>
+    <text x="664" y="258">Teleoperation</text>
+  </g>
+  <g font-size="12.5" fill="#a1a6b0">
+    <text x="94" y="282">aruco_detector · marker_kf</text>
+    <text x="94" y="300">PD controller (default)</text>
+    <text x="94" y="318">flow-matching policy (optional)</text>
+    <text x="354" y="282">SLAM Toolbox · gz_odom_tf</text>
+    <text x="354" y="300">bt_navigator · planner_server</text>
+    <text x="354" y="318">DWB · velocity_smoother</text>
+    <text x="354" y="336">nav2_cmd_relay</text>
+    <text x="664" y="282">teleop_joystick</text>
+    <text x="664" y="300">gamepad</text>
+  </g>
+
+  <!-- ===== Arbitration ===== -->
+  <rect x="60" y="414" width="740" height="84" rx="10" fill="none" stroke="#2f333b"/>
+  <text x="80" y="437" font-size="12" font-weight="600" letter-spacing="1.6" fill="#a1a6b0">ARBITRATION</text>
+  <text x="80" y="463" font-size="15" font-weight="600" fill="#ecebe6">px4_offboard_mux</text>
+  <text x="80" y="483" font-size="12.5" fill="#a1a6b0">mode arbitration · ENU → NED · yaw alignment</text>
+  <rect x="590" y="446" width="190" height="42" rx="8" fill="#1b1d22" stroke="#343840"/>
+  <text x="685" y="463" font-size="13" font-weight="600" fill="#ecebe6" text-anchor="middle">safety_vel_filter</text>
+  <text x="685" y="479" font-size="12" fill="#a1a6b0" text-anchor="middle">LiDAR gating</text>
+
+  <!-- ===== PX4 ===== -->
+  <rect x="60" y="546" width="876" height="64" rx="10" fill="none" stroke="#2f333b"/>
+  <text x="80" y="567" font-size="12" font-weight="600" letter-spacing="1.6" fill="#a1a6b0">FLIGHT</text>
+  <text x="80" y="595" font-size="15" font-weight="600" fill="#ecebe6">PX4 SITL</text>
+  <text x="170" y="595" font-size="12.5" fill="#a1a6b0">EKF2 · attitude · rate · motor</text>
+
+  <!-- ===== Gazebo ===== -->
+  <rect x="60" y="650" width="876" height="64" rx="10" fill="none" stroke="#2f333b"/>
+  <text x="80" y="671" font-size="12" font-weight="600" letter-spacing="1.6" fill="#a1a6b0">SIMULATION</text>
+  <text x="80" y="699" font-size="15" font-weight="600" fill="#ecebe6">Gazebo Harmonic</text>
+  <text x="228" y="699" font-size="12.5" fill="#a1a6b0">x500 · 2D LiDAR · downward camera · OAK-D</text>
+
+  <!-- ===== connections ===== -->
+  <!-- sources down to the mux -->
+  <g stroke="#ff6a3d" stroke-width="2.5" marker-end="url(#head)">
+    <line x1="202" y1="352" x2="202" y2="412"/>
+    <line x1="477" y1="352" x2="477" y2="412"/>
+    <line x1="715" y1="352" x2="715" y2="412"/>
+  </g>
+
+  <!-- planned: guard straight down through the gap between Nav2 and teleop -->
+  <line x1="632" y1="130" x2="632" y2="412" stroke="#ff6a3d" stroke-opacity="0.85" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#head)"/>
+  <text x="620" y="176" font-size="12.5" fill="#a1a6b0" text-anchor="end">planned: commands via guard and approval</text>
+
+  <!-- mux to PX4 -->
+  <line x1="300" y1="500" x2="300" y2="544" stroke="#ff6a3d" stroke-width="2.5" marker-end="url(#head)"/>
+  <text x="312" y="527" font-size="12.5" fill="#d3d6dc">TrajectorySetpoint (NED)</text>
+
+  <!-- PX4 to Gazebo -->
+  <line x1="300" y1="612" x2="300" y2="648" stroke="#ff6a3d" stroke-width="2.5" marker-start="url(#head)" marker-end="url(#head)"/>
+  <text x="312" y="635" font-size="12.5" fill="#d3d6dc">gz_bridge</text>
+
+  <!-- read-only path: PX4 straight up to RosRobot -->
+  <line x1="820" y1="544" x2="820" y2="130" stroke="#ff6a3d" stroke-width="2.5" marker-end="url(#head)"/>
+  <g font-size="12.5" fill="#d3d6dc">
+    <text x="836" y="316" font-weight="600">read only:</text>
+    <text x="836" y="334">PX4 topics,</text>
+    <text x="836" y="351">ROS graph,</text>
+    <text x="836" y="368">detections</text>
+  </g>
+
+  <!-- sensors: Gazebo up into the sources -->
+  <path d="M60,682 L34,682 L34,283 L58,283" fill="none" stroke="#ff6a3d" stroke-width="2.5" marker-end="url(#head)"/>
+
+  <!-- legend -->
+  <line x1="60" y1="746" x2="96" y2="746" stroke="#ff6a3d" stroke-width="2.5" marker-end="url(#head)"/>
+  <text x="106" y="750" font-size="12.5" fill="#a1a6b0">built</text>
+  <line x1="170" y1="746" x2="206" y2="746" stroke="#ff6a3d" stroke-opacity="0.85" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#head)"/>
+  <text x="216" y="750" font-size="12.5" fill="#a1a6b0">planned (Milestone 3)</text>
+</svg>

@@ -11,3 +11,9 @@ log/
 
 # default Ollama data folder (models are large; see OLLAMA_DATA_DIR in docker/README.md)
 .ollama-data/
+
+# Python caches
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/

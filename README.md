@@ -1,6 +1,6 @@
 # ROS2-PX4-X500 Autonomy Proof of Concept
 
-## Vision-Based Autonomous UAV Landing System  
+## SLAM, Nav2 navigation, precision landing, and a guarded natural-language agent
 
 [*(ROS2 + PX4 Offboard + Flow Matching-based Precision Landing)*](https://youtu.be/w6VsROLk_S0) 
 
@@ -24,7 +24,7 @@
 
 This repository implements a full autonomous UAV stack for the PX4 **x500-mono-cam-down** quadrotor in simulation, built on ROS2 Jazzy + PX4 SITL + Gazebo Harmonic.
  
-The system provides end-to-end autonomy from sensor fusion through mission planning:
+The system provides end-to-end autonomy from sensor fusion through navigation and landing, plus an experimental natural-language layer:
  
 - SLAM-based localisation (SLAM Toolbox) with a custom Gazebo ground-truth odometry bridge
 - Full 2D autonomous navigation via Nav2 (adapted for holonomic drone dynamics)
@@ -35,6 +35,7 @@ The system provides end-to-end autonomy from sensor fusion through mission plann
 - Command multiplexing between teleoperation, autonomous navigation, and landing modes
 - Annotated semantic map generation (ArUco landmark positions embedded in SLAM map) - in progress
 - Holonomic drone adaptation including ENU/NED frame conversion and velocity heading alignment
+- Guarded natural-language agent (`snappy`): a local language model can read telemetry, the ROS graph and detections in simulation, while plain code decides what is allowed to run; observe-only for now, with no way to send commands
 
 The result is a modular autonomy stack that bridges perception and control in a PX4-based UAV system.
 
@@ -59,35 +60,7 @@ The remaining launch steps (SLAM, Nav2, offboard control, landing) are under [La
 
 ## System Architecture
 
-```
-┌─────────────────────────────────────────────────────┐
-│             Natural-language layer (WIP)            │
-│    Snappy agent: session, guard, tools (sim only)   │
-│      VLM map reasoning: Qwen 2.5 VL 3b (local)      │
-│        Both served by Ollama (Docker, local)        │
-└──────────────────────┬──────────────────────────────┘
-                       │ Nav2 goals + actions (planned)
-┌──────────────────────▼──────────────────────────────┐
-│              Autonomous GNC Stack                   │
-│                                                     │
-│  Guidance          Navigation        Control        │
-│  ─────────         ──────────        ───────        │
-│  bt_navigator      SLAM Toolbox      DWB planner    │
-│  planner_server    gz_odom_tf        vel_smoother   │
-│  smoother_server   lidar_static_tf   safety_filter  │
-│                    scan_frame_fix    offboard_mux    │
-└──────────────────────┬──────────────────────────────┘
-                       │ TrajectorySetpoint (NED)
-┌──────────────────────▼──────────────────────────────┐
-│                  PX4 SITL                           │
-│         EKF2 · Attitude · Rate · Motor              │
-└──────────────────────┬──────────────────────────────┘
-                       │
-┌──────────────────────▼──────────────────────────────┐
-│              Gazebo Harmonic                        │
-│   x500 · 2D LiDAR · Downward camera · OAK-D        │
-└─────────────────────────────────────────────────────┘
-```
+![System architecture: natural-language layer, GNC stack, PX4 SITL and Gazebo](docs/architecture.svg)
 
 1. **Perception Layer**
    - ArUco marker detection
@@ -316,7 +289,8 @@ px4_drone_intelligence/
   stage1/                   — map-target selection with a local VLM + evaluation script
 
 snappy/
-  drone_agent_core/         — guarded agent: profile, guard, tools, rate limits, session, Ollama client
+  drone_agent_core/         — guarded agent: profile, guard, tools, rate limits, session, Ollama client,
+                              terminal chat, PX4 message mapping, ROS-backed robot (subscribe-only)
   tests/                    — unit and scenario tests
   NOTES.md                  — design notes (start with section 0, the map)
 
@@ -329,7 +303,8 @@ Dockerfile, docker-compose*.yaml, run.sh   — container build and start
 ## Natural-language layer (in progress)
 
 Two packages explore natural-language control. Both are simulation-only, neither can move the drone yet, and
-neither is wired into the launch sequence above.
+neither is wired into the launch sequence above. `snappy` can read live data from the simulation, but it has
+no publishers (check with `ros2 node info /snappy_observer`).
 
 ### `px4_drone_intelligence`: VLM map reasoning
 
@@ -352,15 +327,31 @@ The language model is an untrusted advisor: it proposes tool calls, and plain co
 each one runs. The agent starts disarmed, refuses motion in observe-only mode, and limits calls per turn,
 repeated calls and malformed calls. Tool results are treated as data, never as instructions.
 
-Status: Milestone 1 (observe-only) is partly built: profile, guard, tools, rate limits, session, a fake robot
-for tests and an Ollama client. The terminal chat and the ROS wiring for real telemetry are still to do.
-Design notes, with a map of the files, are in [snappy/NOTES.md](snappy/NOTES.md). Run the tests inside the
-container:
+Status: Milestone 1 (observe-only) is done: profile, guard, tools, rate limits, session, an Ollama client, a
+terminal chat, and a ROS-backed robot that reads live telemetry, the ROS graph and detections from the
+simulation. The robot adapter only subscribes: it has no publishers, so the agent cannot send a command to PX4.
+Dry-run plans (Milestone 2) and guarded execution through the mux (Milestone 3) come next. Design notes, with
+a map of the files, are in [snappy/NOTES.md](snappy/NOTES.md). Run the tests inside the container:
 
 ```bash
 cd /ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick/snappy
-python3 -m pytest -q          # all pass (82 at the time of writing)
+python3 -m pytest -q          # all pass (89 at the time of writing)
 ```
+
+Run the chat. Offline, with a fake robot (no ROS needed):
+
+```bash
+python3 -m drone_agent_core.chat
+```
+
+Against the simulation (inside the container with ROS sourced, the sim running and Ollama up):
+
+```bash
+python3 -m drone_agent_core.chat --robot ros
+```
+
+Each answer is followed by a tool log such as `[get_telemetry: ok]`, so you can see which tools really ran. If
+no data has arrived for 5 s, the tool returns `UNAVAILABLE` instead of old numbers.
 
 ### Ollama in Docker
 
@@ -384,8 +375,7 @@ about 15 s. The GPU is shared with the simulator, so on an 8 GB card use 3 to 4B
 ## Ongoing Work
  
 - Semantic map annotation pipeline for VLM visual grounding
-- Snappy agent: observe-only chat and ROS wiring (Milestone 1), then dry-run plans and guarded execution
-  through the existing mux (Milestones 2 and 3)
+- Snappy agent: dry-run plans (Milestone 2), then guarded execution through the existing mux (Milestone 3)
 - VLM map reasoning (Qwen 2.5 VL 3b, local inference via Ollama) as a possible tool for the agent
 - Multi-drone swarm coordination controlled by VLM high-level commands
 - OAK-D depth camera integration for 3D obstacle avoidance and altitude control
@@ -406,6 +396,7 @@ This project builds upon:
 - Integral action intentionally omitted due to limited external disturbances in simulation and risk of overshoot during vertical convergence.
 - Velocity control was chosen over position control to allow smoother interaction with PX4's internal cascaded controllers in Offboard mode.
 - Derivative filtering was introduced to mitigate noise amplification arising from pose-estimation jitter at higher altitudes.
+- **Language model as an untrusted advisor** — the agent's model only proposes tool calls; a guard written as plain code decides whether each one runs, and tool results are labelled as data, never instructions. Prompt wording is treated as a request, not a defense.
 
 ### Added Components
 
@@ -414,6 +405,7 @@ This project builds upon:
 - PD-based lateral stabilization controller
 - Offboard command multiplexing logic
 - Robust QoS configuration for real-time ROS2 communication
+- Guarded natural-language agent: guard, tool validation, Ollama client, and a subscribe-only ROS observer
 
 ---
 

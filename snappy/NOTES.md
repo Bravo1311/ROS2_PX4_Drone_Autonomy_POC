@@ -34,7 +34,9 @@ user message
 | `robot.py` | `RobotPort` interface plus `FakeRobot` for tests and offline chat |
 | `session.py` | The turn loop; the only place that calls `begin_turn()`; turns model failures into `Model error: ...` |
 | `ollama_model.py` | `OllamaModel`: our messages to Ollama's `/api/chat` and back (a `ModelPort`) |
-| `chat.py` | Terminal chat: reads a line, calls `Session`, prints the answer (`python3 -m drone_agent_core.chat`) |
+| `px4_mapping.py` | `to_telemetry`: PX4 messages to our `Telemetry` (pure function, no ROS; NED to ENU, battery fraction to percent, enums to names) |
+| `ros_robot.py` | `RosRobot`: the real `RobotPort`. Subscribes only (no publishers), keeps the newest message per topic, raises `RobotUnavailable` when nothing arrived or the last message is older than 5 s |
+| `chat.py` | Terminal chat (`--robot fake\|ros`): reads a line, calls `Session`, prints the answer and a tool log (`python3 -m drone_agent_core.chat`) |
 
 Five ideas to keep in mind:
 1. **The model is untrusted.** It only proposes. Plain code decides.
@@ -158,11 +160,25 @@ One file describes the drone and every limit. Unknown keys fail at startup. Defa
 
 Later: camera tool, dashboard, cloud models, Rust port.
 
+## 10b. ROS-backed robot (done 2026-10-22, observe-only)
+
+- Topics read: `/fmu/out/vehicle_local_position_v1`, `/fmu/out/vehicle_status_v1`, `/fmu/out/battery_status_v1` (the `_v1` suffix is real for the installed px4_msgs), and `/yolo/detections` (JSON in a `std_msgs/String`; empty list when no detector runs).
+- PX4 publishes BEST_EFFORT with TRANSIENT_LOCAL. A RELIABLE subscriber never connects and silently gets nothing, and `ros2 topic hz` (default RELIABLE, no QoS flags in this ROS version) shows nothing for the same reason. Use `ros2 topic echo` with `--qos-reliability best_effort --qos-durability transient_local`, or a small rclpy script.
+- Measured rates: position about 50 Hz, status about 2 Hz, battery about 1 Hz, largest gap 1 s. So the 5 s staleness limit is about five times the slowest topic.
+- Frames and units: PX4 local position is NED (x north, y east, z down). `Telemetry` reports ENU like the rest of ROS: `x` = east (PX4 y), `y` = north (PX4 x), `altitude_m` = -z. Battery `remaining` is a 0..1 fraction (-1 invalid, reported as `None`); `arming_state` 2 is armed; `nav_state` 4 is HOLD.
+- Staleness uses `time.monotonic()`, not `time.time()`: the wall clock can jump (NTP, suspend), a monotonic clock cannot, and only durations are needed.
+- No data is an error, never a zero: `RobotUnavailable` becomes an `UNAVAILABLE: ...` tool message (not a guard decision, and not a model error). A zero battery would look like a real reading.
+- `rclpy` installs its own Ctrl-C handler that already shuts the context down, so `close()` calls `rclpy.shutdown()` only if `rclpy.ok()`.
+- Verified live: answers match the sim (the user flew the drone: OFFBOARD, armed, altitude changing), `ros2 node info /snappy_observer` shows four subscribers and no publishers except `/parameter_events` and `/rosout`, and with the sim stopped the answer carries no numbers.
+- Tool log in `chat.py`: after each answer it prints which tools ran this turn (`ok`, or the start of a `DENIED` / `UNAVAILABLE` / `RATE LIMITED` message). It comes from `Session.messages`, so it shows what our code did, not what the model claims. `[no tools used]` on a telemetry question means the model answered from memory.
+- The 3B model still adds guesses and advice ("make sure the drone is charged", "arm the drone and command a take-off" although no such tool exists, "operating autonomously" for OFFBOARD). Expected; the guard is the defense.
+
 ## 11. Open items
 
-- Which small model (check `ollama list` once the server is running).
-- Auto-disarm the guard when PX4 reports disarmed (needs the ROS wiring).
-- `/fmu/out/vehicle_status` versus `_v1` for the installed px4_msgs.
+- Which small model: `qwen2.5:3b` works for tool calls; compare others only if the answers prove too unreliable.
+- Auto-disarm the guard when PX4 reports disarmed (the ROS wiring now exists; `RosRobot` could expose PX4's armed state to the guard).
+- Detector status: an empty detections list cannot tell "nothing seen" from "detector not running".
+- Housekeeping: pin the `ollama/ollama` image version, `.gitignore` and root-owned `__pycache__` / `.pytest_cache`, delete the old 14 GB `/usr/share/ollama/.ollama/models` copy (root disk 93% full).
 - Interplay of our triggers with PX4's own failsafes; PX4 RTL bypasses the LIDAR filter.
 
 ## 12. Glossary
