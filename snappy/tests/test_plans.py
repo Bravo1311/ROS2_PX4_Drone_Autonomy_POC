@@ -1,4 +1,4 @@
-from drone_agent_core.plans import Step, check_step, Plan, PlanLimits, compile_plan, plan_hash, canonical_json, render_card
+from drone_agent_core.plans import *
 
 import pytest
 
@@ -14,6 +14,7 @@ GOOD = plan(
     Step("land"),
 )
 
+RAW_GOOD = [{"skill": "takeoff", "args": {"altitude_m": 5}}, {"skill": "land"}]
 
 def test_valid_step_passes():
     assert check_step(Step("takeoff", {"altitude_m": 5.0})) is None
@@ -112,3 +113,26 @@ def test_card_summary_comes_from_the_steps():
 def test_card_refuses_a_plan_that_does_not_compile():
     with pytest.raises(ValueError):
         render_card(plan(Step("goto", {"x": 1.0, "y": 1.0, "altitude_m": 5.0})))
+
+def test_parse_plan_builds_steps_and_args_are_optional():
+    p = parse_plan(RAW_GOOD)
+    assert p.steps[1] == Step("land", {})
+
+
+def test_parse_plan_rejects_bad_shapes():
+    for raw in ("takeoff", [{"args": {}}], [{"skill": "land", "extra": 1}], [{"skill": 5}], ["land"]):
+        with pytest.raises(ValueError):
+            parse_plan(raw)
+
+
+def test_submit_plan_returns_the_card_for_a_good_plan():
+    assert submit_plan(RAW_GOOD).startswith("PLAN ")
+
+
+def test_submit_plan_lists_compiler_errors():
+    out = submit_plan([{"skill": "takeoff", "args": {"altitude_m": 500}}, {"skill": "land"}])
+    assert out.startswith("PLAN REJECTED:") and "altitude" in out
+
+
+def test_submit_plan_reports_a_bad_shape():
+    assert submit_plan("takeoff").startswith("PLAN REJECTED: steps must be a list")

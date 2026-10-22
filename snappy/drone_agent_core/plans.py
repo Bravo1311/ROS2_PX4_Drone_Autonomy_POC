@@ -114,3 +114,28 @@ def render_card(plan: Plan, limits: PlanLimits = PlanLimits()) -> str:
                  f"holding {held:g} s")
     lines.append("  Nothing runs: dry run only.")
     return "\n".join(lines)
+
+def parse_plan(raw) -> Plan:
+    """Shape check only: a list of {skill, args}. Meaning is compile_plan's job"""
+    if not isinstance(raw, list):
+        raise ValueError("steps must be a list")
+    steps = []
+    for i, item in enumerate(raw, 1):
+        if not isinstance(item, dict) or "skill" not in item or set(item) - {"skill", "args"}:
+            raise ValueError(f"step {i} must be an object with skill and optionally args")
+        args = item.get("args", {})
+        if not isinstance(item["skill"], str) or not isinstance(args, dict):
+            raise ValueError(f"step {i}: skill must be a string and args an object")
+        steps.append(Step(item["skill"], dict(args)))
+    return Plan(tuple(steps))
+
+def submit_plan(raw_steps, limits: PlanLimits = PlanLimits()) -> str:
+    """What the model is told after proposing a plan: errors to fix, or the card"""
+    try:
+        plan = parse_plan(raw_steps)
+    except ValueError as e:
+        return f"PLAN REJECTED: {e}"
+    errors = compile_plan(plan, limits)
+    if errors:
+        return f"PLAN REJECTED:\n" + "\n".join(f"  {e}" for e in errors)
+    return render_card(plan, limits)
