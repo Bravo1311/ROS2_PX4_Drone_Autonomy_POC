@@ -1,6 +1,6 @@
 from drone_agent_core.guard import Guard, Risk
 from drone_agent_core.profile import Policy
-from drone_agent_core.robot import Detection, FakeRobot
+from drone_agent_core.robot import Detection, FakeRobot, RobotUnavailable
 from drone_agent_core.session import ModelReply, Session, ToolCall, ModelError
 from drone_agent_core.tools import OBSERVE_TOOLS, ToolDef, build_registry
 
@@ -25,6 +25,10 @@ class EmptyModel:
     def reply(self, messages):
         return ModelReply()
 
+class DeadRobot(FakeRobot):
+    def get_telemetry(self):
+        raise RobotUnavailable("no message received yet on /fmu/out/x")
+
 
 def call(name, **args):
     return ModelReply(tool_calls=(ToolCall(name, args),))
@@ -46,6 +50,11 @@ def test_empty_model_reply_is_reported_as_an_error():
     answer = session.handle_user_message("hi")
     assert answer == "Model error: the model returned an empty reply"
     assert session.messages == []
+
+def test_unavailable_robot_is_reported_to_the_model_not_crashed():
+    session, _ = make_session([call("get_telemetry"), ModelReply("No data.")], robot=DeadRobot())
+    assert session.handle_user_message("battery?") == "No data."
+    assert tool_messages(session)[0].startswith("UNAVAILABLE:")
 
 
 def test_observe_call_runs_and_the_answer_comes_back():

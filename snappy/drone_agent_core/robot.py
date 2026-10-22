@@ -6,7 +6,7 @@ class Telemetry:
     x: float
     y: float
     altitude_m: float
-    battery_pct: float
+    battery_pct: float | None
     armed: bool        #PX4's armed state
     mode: str
 
@@ -19,6 +19,9 @@ class RobotPort(Protocol):
     def get_telemetry(self) -> Telemetry: ...
     def get_detections(self) -> list[Detection]: ...
     def list_ros_graph(self, kind: str) -> list[str]: ...
+
+class RobotUnavailable(Exception):
+    """The robot cannot provide data right now (nothing received yet, or too old)"""
 
 class FakeRobot:
     """Scripted robot for tests and the offline chat."""

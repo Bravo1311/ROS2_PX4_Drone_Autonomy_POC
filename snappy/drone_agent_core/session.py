@@ -5,7 +5,7 @@ from typing import Protocol
 from drone_agent_core.guard import Decision, Guard, Verdict
 from drone_agent_core.ratelimit import RateLimiter
 from drone_agent_core.tools import ToolDef, validate
-from drone_agent_core.robot import RobotPort
+from drone_agent_core.robot import RobotPort, RobotUnavailable
 
 # Rules after which the turn is over, whatever the model asks next.
 END_TURN_RULES = ("budget", "invalid_cap")
@@ -82,7 +82,10 @@ class Session:
         wait = self.limiter.check(call.name)
         if wait > 0:
             return f"RATE LIMITED: try again in {wait:.1f}s", None
-        return wrap_result(call.name, self._run(call)), None
+        try:
+            return wrap_result(call.name, self._run(call)), None
+        except RobotUnavailable as e:
+            return f"UNAVAILABLE: {e}", None
 
     def _denied(self, decision: Decision) -> tuple[str, str | None]:
         content = f"DENIED ({decision.rule}): {decision.message}"
