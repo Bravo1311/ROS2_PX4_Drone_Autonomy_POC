@@ -118,3 +118,8 @@ def test_session_runs_end_to_end_with_the_ollama_model():
     assert robot.calls == ["get_telemetry"]
     assert any(m["role"] == "tool" and m["tool_name"] == "get_telemetry"
                for m in seen[1]["messages"])
+
+def test_list_parameter_becomes_an_array():
+    tool = ToolDef("t", "d", Risk.ANNOTATE, None, {"steps": list})
+    prop = tool_schema(tool)["function"]["parameters"]["properties"]["steps"]
+    assert prop == {"type": "array", "items": {"type": "object"}}

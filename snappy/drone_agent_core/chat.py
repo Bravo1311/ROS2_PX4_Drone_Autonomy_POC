@@ -3,7 +3,8 @@ from drone_agent_core.ollama_model import OllamaModel
 from drone_agent_core.profile import Policy
 from drone_agent_core.robot import FakeRobot
 from drone_agent_core.session import Session
-from drone_agent_core.tools import build_registry
+from drone_agent_core.tools import build_registry, OBSERVE_TOOLS
+from drone_agent_core.plans import SUBMIT_PLAN
 
 import argparse
 
@@ -20,7 +21,7 @@ def make_robot(kind: str):
     return FakeRobot()
 
 def build_session(robot) -> Session:
-    registry = build_registry()
+    registry = build_registry(OBSERVE_TOOLS + (SUBMIT_PLAN, ))
     model = OllamaModel(model=MODEL_NAME, tools=registry.values())
     guard = Guard(Policy(), HARD_DENY)
     return Session(model, robot, guard, registry)

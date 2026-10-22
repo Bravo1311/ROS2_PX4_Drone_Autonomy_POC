@@ -139,3 +139,14 @@ def submit_plan(raw_steps, limits: PlanLimits = PlanLimits()) -> str:
     if errors:
         return f"PLAN REJECTED:\n" + "\n".join(f"  {e}" for e in errors)
     return render_card(plan, limits)
+
+def _signature(t: ToolDef) -> str:
+    return f"{t.name}({', '.join(f'{k}: {v.__name__}' for k, v in t.params.items())})"
+
+SUBMIT_PLAN = ToolDef(
+    "submit_plan",
+    'Propose a mission as a list of steps, each {"skill}: name, "args": {...}}. Skills' 
+    + "; ".join(_signature(t) for t in MISSION_SKILLS)
+    + ". This only drafts a plan card for the operator. Nothing is flown.",
+    Risk.ANNOTATE, None, {"steps": list},
+)

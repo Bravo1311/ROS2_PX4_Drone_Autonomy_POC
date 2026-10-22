@@ -6,6 +6,7 @@ from drone_agent_core.guard import Decision, Guard, Verdict
 from drone_agent_core.ratelimit import RateLimiter
 from drone_agent_core.tools import ToolDef, validate
 from drone_agent_core.robot import RobotPort, RobotUnavailable
+from drone_agent_core.plans import submit_plan
 
 # Rules after which the turn is over, whatever the model asks next.
 END_TURN_RULES = ("budget", "invalid_cap")
@@ -99,6 +100,8 @@ class Session:
             data = [asdict(d) for d in self.robot.get_detections()]
         elif call.name == "list_ros_graph":
             data = self.robot.list_ros_graph(call.args["kind"])
+        elif call.name == "submit_plan":
+            return submit_plan(call.args["steps"])
         else:
             return "this tool has no implementation yet"
         return json.dumps(data)

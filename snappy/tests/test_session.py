@@ -3,11 +3,14 @@ from drone_agent_core.profile import Policy
 from drone_agent_core.robot import Detection, FakeRobot, RobotUnavailable
 from drone_agent_core.session import ModelReply, Session, ToolCall, ModelError
 from drone_agent_core.tools import OBSERVE_TOOLS, ToolDef, build_registry
+from drone_agent_core.plans import SUBMIT_PLAN
 
 RUN_MISSION = ToolDef("run_mission", "Start a mission.", Risk.MOTION)
 RAW = ToolDef("raw_setpoint", "Raw setpoint.", Risk.OBSERVE, "/fmu/in/trajectory_setpoint")
 REGISTRY = build_registry(OBSERVE_TOOLS + (RUN_MISSION, RAW))
 DENY_LIST = ("/fmu/in/*", "*cmd_vel*")
+PLAN_REGISTRY = build_registry(OBSERVE_TOOLS + (SUBMIT_PLAN,))
+STEPS = [{"skill": "takeoff", "args": {"altitude_m": 5}}, {"skill": "land"}]
 
 
 class ScriptedModel:
@@ -126,3 +129,20 @@ def test_model_error_is_reported_and_turn_is_rolled_back():
     answer = session.handle_user_message("hi")
     assert answer.startswith("Model error:")
     assert session.messages == []
+
+def plan_session(**policy):
+    replies = [call("submit_plan", steps=STEPS), ModelReply("Drafted.")]
+    guard = Guard(Policy(**policy), DENY_LIST)
+    return Session(ScriptedModel(replies), FakeRobot(), guard, PLAN_REGISTRY)
+
+
+def test_submit_plan_returns_a_card_to_the_model():
+    session = plan_session()
+    assert session.handle_user_message("take off to 5 m and land") == "Drafted."
+    assert "PLAN " in tool_messages(session)[0]
+
+
+def test_submit_plan_is_denied_in_observe_only_mode():
+    session = plan_session(autonomy="observe")
+    session.handle_user_message("take off to 5 m and land")
+    assert tool_messages(session)[0].startswith("DENIED (observe_only)")
