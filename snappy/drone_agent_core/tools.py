@@ -30,6 +30,8 @@ def validate(tool: ToolDef | None, args: dict) -> str | None:
         value = args[name]
         if isinstance(value, bool) and expected is not bool:
             return f"argument {name} must be {expected.__name__}"
+        if expected is float and isinstance(value, int):
+            continue
         if not isinstance(value, expected):
             return f"argument {name} must be {expected.__name__}"
     if tool.name == "list_ros_graph" and args["kind"] not in GRAPH_KINDS:

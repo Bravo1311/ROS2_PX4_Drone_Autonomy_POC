@@ -39,3 +39,9 @@ def test_list_ros_graph_rejects_unknown_kind():
     tool = build_registry()["list_ros_graph"]
     assert validate(tool, {"kind": "topic"}) is not None
     assert validate(tool, {"kind": "topics"}) is None
+
+def test_integer_is_accepted_for_a_float_parameter():
+    tool = ToolDef("t", "d", Risk.OBSERVE, None, {"x": float})
+    assert validate(tool, {"x": 3.0}) is None
+    assert validate(tool, {"x": 3}) is not None      # LLMs output 3, not 3.0
+    assert validate(tool, {"x": True}) is not None
