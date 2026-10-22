@@ -1,0 +1,7 @@
+policy:
+  start_armed: false
+  autonomy: supervised
+  approval_ttl_s: 60
+  max_calls_per_turn: 10
+  repeat_limit: 3
+  max_invalid_per_turn: 3
