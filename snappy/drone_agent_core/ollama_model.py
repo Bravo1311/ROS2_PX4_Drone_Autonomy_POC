@@ -15,14 +15,19 @@ DEFAULT_SYSTEM_PROMPT = (
     "You can only observe and not move, arm or command the drone. If asked to, say so plainly. "
 )
 
-JSON_TYPES = {str: "string", int: "integer", float: "number", bool: "boolean"}
+JSON_TYPES = {str: "string", int: "integer", float: "number", bool: "boolean", list: "array"}
 
 class OllamaError(ModelError):
     """The Ollama server cannot be reached or answered badly"""
 
 def tool_schema(tool: ToolDef) -> dict:
     """Turns a ToolDef into a JSON that tells the model what it may call"""
-    properties = {name: {"type": JSON_TYPES[kind]}for name, kind in tool.params.items()}
+    properties = {}
+    for name, kind in tool.params.items():
+        prop = {"type": JSON_TYPES[kind]}
+        if kind is list:
+            prop["items"] = {"type": "object"}
+        properties[name] = prop
     return {
         "type": "function",
         "function": {

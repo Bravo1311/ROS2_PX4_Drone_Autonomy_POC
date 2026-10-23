@@ -3,12 +3,22 @@ from drone_agent_core.profile import Policy
 from drone_agent_core.robot import Detection, FakeRobot, RobotUnavailable
 from drone_agent_core.session import ModelReply, Session, ToolCall, ModelError
 from drone_agent_core.tools import OBSERVE_TOOLS, ToolDef, build_registry
+from drone_agent_core.plans import SUBMIT_PLAN, plan_hash, parse_plan
 
 RUN_MISSION = ToolDef("run_mission", "Start a mission.", Risk.MOTION)
 RAW = ToolDef("raw_setpoint", "Raw setpoint.", Risk.OBSERVE, "/fmu/in/trajectory_setpoint")
 REGISTRY = build_registry(OBSERVE_TOOLS + (RUN_MISSION, RAW))
 DENY_LIST = ("/fmu/in/*", "*cmd_vel*")
+PLAN_REGISTRY = build_registry(OBSERVE_TOOLS + (SUBMIT_PLAN,))
+STEPS = [{"skill": "takeoff", "args": {"altitude_m": 5}}, {"skill": "land"}]
 
+
+class Clock:
+    def __init__(self):
+        self.now = 0.0
+
+    def __call__(self):
+        return self.now
 
 class ScriptedModel:
     def __init__(self, replies):
@@ -39,10 +49,21 @@ def make_session(replies, robot=None, **policy):
     guard = Guard(Policy(**policy), DENY_LIST)
     return Session(ScriptedModel(replies), robot, guard, REGISTRY), robot
 
+def plan_session(**policy):
+    replies = [call("submit_plan", steps=STEPS), ModelReply("Drafted.")]
+    guard = Guard(Policy(**policy), DENY_LIST)
+    return Session(ScriptedModel(replies), FakeRobot(), guard, PLAN_REGISTRY)
+
 
 def tool_messages(session):
     """fetches what the model was told after each call"""
     return [m["content"] for m in session.messages if m["role"] == "tool"]
+
+
+def pending_session():
+    session = plan_session()
+    session.handle_user_message("take off to 5 m and land")
+    return session
 
 def test_empty_model_reply_is_reported_as_an_error():
     guard = Guard(Policy(), DENY_LIST)
@@ -126,3 +147,49 @@ def test_model_error_is_reported_and_turn_is_rolled_back():
     answer = session.handle_user_message("hi")
     assert answer.startswith("Model error:")
     assert session.messages == []
+
+def test_submit_plan_returns_a_card_to_the_model():
+    session = plan_session()
+    assert session.handle_user_message("take off to 5 m and land") == "Drafted."
+    assert "PLAN " in tool_messages(session)[0]
+
+
+def test_submit_plan_is_denied_in_observe_only_mode():
+    session = plan_session(autonomy="observe")
+    session.handle_user_message("take off to 5 m and land")
+    assert tool_messages(session)[0].startswith("DENIED (observe_only)")
+
+def test_submitted_plan_becomes_pending_with_its_hash():
+    session = plan_session()
+    session.handle_user_message("take off to 5 m and land")
+    assert session.pending.hash == plan_hash(parse_plan(STEPS))
+
+def test_approve_with_the_right_hash_clears_the_pending_plan():
+    s = pending_session()
+    assert s.approve(s.pending.hash[:12]).startswith("APPROVED")
+    assert s.pending is None
+
+
+def test_approve_with_a_wrong_or_short_hash_is_refused():
+    s = pending_session()
+    assert "does not match" in s.approve("0" * 12)
+    assert "does not match" in s.approve(s.pending.hash[:3])
+    assert s.pending is not None
+
+
+def test_reject_clears_the_pending_plan_and_nothing_pending_is_safe():
+    s = pending_session()
+    assert s.reject() == "Plan rejected."
+    assert s.pending is None
+    assert s.reject() == "Nothing to reject."
+    assert s.approve("abcdefgh") == "Nothing to approve."
+
+def test_approval_expires():
+    clock = Clock()
+    replies = [call("submit_plan", steps=STEPS), ModelReply("Drafted.")]
+    session = Session(ScriptedModel(replies), FakeRobot(), Guard(Policy(), DENY_LIST),
+                      PLAN_REGISTRY, clock=clock, approval_ttl_s=60)
+    session.handle_user_message("take off to 5 m and land")
+    clock.now = 61.0
+    assert "expired" in session.approve(session.pending.hash[:12])
+    assert session.pending is None

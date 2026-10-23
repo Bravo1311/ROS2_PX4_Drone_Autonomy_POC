@@ -1,25 +1,37 @@
 import json
-from dataclasses import asdict, dataclass, field
+import time
 from typing import Protocol
 
+from dataclasses import asdict, dataclass, field
 from drone_agent_core.guard import Decision, Guard, Verdict
 from drone_agent_core.ratelimit import RateLimiter
 from drone_agent_core.tools import ToolDef, validate
 from drone_agent_core.robot import RobotPort, RobotUnavailable
+from drone_agent_core.plans import Plan, plan_hash, review_plan
 
 # Rules after which the turn is over, whatever the model asks next.
 END_TURN_RULES = ("budget", "invalid_cap")
+
 
 @dataclass(frozen=True)
 class ToolCall:
     name: str
     args: dict = field(default_factory=dict)
 
+
 @dataclass(frozen=True)
 class ModelReply:
     """what the model returns -> tool calls or only text"""
     text: str = ""
     tool_calls: tuple[ToolCall, ...] = ()
+
+
+@dataclass(frozen=True)
+class PendingPlan:
+    plan: Plan
+    hash: str
+    submitted_at: float
+
 
 class ModelPort(Protocol):
     def reply(self, messages: list[dict]) -> ModelReply: ...
@@ -33,13 +45,17 @@ def wrap_result(name: str, payload: str) -> str:
 
 class Session:
     def __init__(self, model: ModelPort, robot: RobotPort, guard: Guard,
-                 registry: dict[str, ToolDef], limiter: RateLimiter | None = None):
+                 registry: dict[str, ToolDef], limiter: RateLimiter | None = None,
+                 clock=time.monotonic, approval_ttl_s: float = 60):
         self.model = model
         self.robot = robot
         self.guard = guard
         self.registry = registry
         self.limiter = limiter or RateLimiter({})
         self.messages: list[dict] = []
+        self._clock = clock
+        self._approval_ttl_s = approval_ttl_s
+        self.pending: PendingPlan | None = None
 
     def handle_user_message(self, text: str) -> str:
         "new user message starts a new turn"
@@ -99,6 +115,29 @@ class Session:
             data = [asdict(d) for d in self.robot.get_detections()]
         elif call.name == "list_ros_graph":
             data = self.robot.list_ros_graph(call.args["kind"])
+        elif call.name == "submit_plan":
+            plan, text = review_plan(call.args["steps"])
+            if plan is not None:
+                self.pending = PendingPlan(plan, plan_hash(plan), self._clock())
+            return text
         else:
             return "this tool has no implementation yet"
         return json.dumps(data)
+    
+    def approve(self, hash_prefix: str) -> str:
+        p = self.pending
+        if p is None:
+            return "Nothing to approve."
+        if self._clock() - p.submitted_at > self._approval_ttl_s:
+            self.pending = None
+            return "The plan has expired. Ask for it again."
+        if len(hash_prefix) < 8 or not p.hash.startswith(hash_prefix.lower()):
+            return f"That hash does not match the pending plan {p.hash[:12]}."
+        self.pending = None
+        return f"APPROVED {p.hash[:12]}. Dry run: nothing was executed."
+
+    def reject(self) -> str:
+        if self.pending is None:
+            return "Nothing to reject."
+        self.pending = None
+        return "Plan rejected."
