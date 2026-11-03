@@ -120,6 +120,35 @@ Pitfalls found while building it:
 
 Limits of this milestone: the hash covers the steps, not the limits in force; the executor's own clamps (Milestone 3) are the real safety. The compiler cannot know if the drone is armed or whether a takeoff will succeed.
 
+## 4c. Milestone 3 design decisions (made by the user, 2026-11-03)
+
+Decided in order, one question at a time, before looking at any reference design.
+
+1. **The executor is a separate ROS node**, not part of the chat process. A chat crash or hang must not leave the drone with nobody in charge; the executor can keep a plan, hold position or stop by itself.
+2. **Snappy talks to it through a ROS action** (goal = plan JSON and its hash; feedback = current step; result = success or the reason it stopped; cancel built in). Chosen over a hand-built start service, status topic and stop service, which would rebuild the same thing. The goal carries the hash so the executor can recompute it before flying. The executor runs one mission at a time and rejects a second goal.
+
+3. **The executor moves the drone through the existing mux**, as a new agent source, not straight to `/fmu/in/*` and not through Nav2. So the mux's mode arbitration, ENU to NED conversion, yaw alignment and the LIDAR safety filter stay in the path, and the hard-deny list stays true.
+
+4. **The human wins, and the plan pauses.** Fresh gamepad input pre-empts the agent source; the executor holds position and keeps the plan (state: running, paused). This needs a mux change (agent source below TELEOP). ROS actions have no pause, so "paused" is the executor's own state, reported through feedback, and resume and cancel need their own path (open).
+
+5. **The operator must resume.** A paused plan holds position until the operator types a resume command (or cancels). Resume continues from the current step; goto targets are absolute, so the drone flies there from wherever the human left it. The plan is not resumed automatically, and the approval (hash) still refers to the same plan. Open: how resume and cancel reach the executor (a service next to the action), and whether a pause has a maximum length.
+
+6. **`stop` means stop and hold position, never land** (as in section 5). Landing is a separate deliberate command; `/emergency` lands immediately.
+7. **If Snappy or its heartbeat goes silent, the executor holds position** (decided 2026-11-04). This replaces the older section 5 line "heartbeat lost: short grace, then land". Holding does not end by itself, so the battery-critical trigger (countdown, then land) is what finally brings the drone down if nobody returns.
+
+8. **The executor has its own hard limits** (max altitude, max speed, geofence), separate from `PlanLimits` and at least as strict. They are enforced on every command the executor sends, whatever the plan says, and a clamp is reported in the feedback. If the compiler's limits are loosened by mistake, the executor still holds. The mux's own velocity clamps are a third layer. The executor's limits must never be looser than the compiler's; a test should enforce that.
+9. **Build order:** a small pure-Python executor core first (plan runner, one velocity controller per skill, pause/resume state, clamps, a fake mux that records commands), then the ROS node around it as early as possible (action server, mux agent source, heartbeat). Keep the core minimal so ROS work is not delayed.
+
+Decisions 4, 5 and 7 supersede two older lines in section 5: "the executor aborts the mission on joystick override and never silently resumes" (now: pause, operator resumes) and "heartbeat lost: land" (now: hold).
+
+Facts about the mux today that shape the rest (read from `px4_offboard_mux.py`, 2026-11-03):
+- Source priority is `AUTO (landing) > NAV2 > TELEOP > IDLE`. Each of AUTO and NAV2 wins only while its enable flag is on and its command is fresh. TELEOP is the lowest. "The gamepad overrides" therefore means "the other source is switched off", not priority. An agent source that yields to the human needs a deliberate change here.
+- The mux consumes `Twist` velocity commands only (per source topic, e.g. `/nav_velocity_cmd`), publishes the chosen one as `/cmd_vel_raw`, and flies the LIDAR-filtered `/cmd_vel_safe`. A stale safe command means hover.
+- It clamps velocity and yaw rate itself, and sets zero setpoints unless armed and in offboard mode. Arming is done through `/arm_message`, which is separate from the guard's `armed`.
+- Consequence: the executor has no position setpoints to send. Each skill (takeoff, goto, hold, land) must be a small closed-loop velocity controller that reads telemetry.
+
+Still open: where the agent ranks against the gamepad and what happens to a running plan when the human takes over, what the executor clamps, what `stop` means, what happens when Snappy disappears, and what is tested without ROS.
+
 ## 5. Priorities and emergencies
 
 - Tier 0 (reflex): stop and deterministic triggers. Tier 1 (express): land/RTL proposals, jump the queue, need confirmation. Tier 2 (normal): everything else, paused while a Tier 1 is pending.
