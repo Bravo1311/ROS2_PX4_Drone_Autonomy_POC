@@ -17,3 +17,12 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .ruff_cache/
+
+# API keys for the VLM experiments
+px4_drone_intelligence/config/keys.yaml
+
+# local scratch: archives, screenshots, TF frame dumps
+*.zip
+Screenshot from *.png
+frames_*.gv
+frames_*.pdf
