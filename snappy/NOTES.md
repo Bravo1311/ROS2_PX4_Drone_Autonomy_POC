@@ -139,6 +139,8 @@ Decided in order, one question at a time, before looking at any reference design
 8. **The executor has its own hard limits** (max altitude, max speed, geofence), separate from `PlanLimits` and at least as strict. They are enforced on every command the executor sends, whatever the plan says, and a clamp is reported in the feedback. If the compiler's limits are loosened by mistake, the executor still holds. The mux's own velocity clamps are a third layer. The executor's limits must never be looser than the compiler's; a test should enforce that.
 9. **Build order:** a small pure-Python executor core first (plan runner, one velocity controller per skill, pause/resume state, clamps, a fake mux that records commands), then the ROS node around it as early as possible (action server, mux agent source, heartbeat). Keep the core minimal so ROS work is not delayed.
 
+10. **`goto` starts with our own direct velocity controller** (also for takeoff, hold, land). Nav2 is a possible second backend behind the same skill interface, added later for obstacle-aware routing; it only covers x and y, needs SLAM and the planner running, would need the executor to cancel and re-send its goal on pause and resume, and the NAV2 mux source currently outranks teleop (conflicts with decision 4). Until then the LIDAR safety filter gives reactive protection but no path planning: a direct goto can get stuck against a wall.
+
 Decisions 4, 5 and 7 supersede two older lines in section 5: "the executor aborts the mission on joystick override and never silently resumes" (now: pause, operator resumes) and "heartbeat lost: land" (now: hold).
 
 Facts about the mux today that shape the rest (read from `px4_offboard_mux.py`, 2026-11-03):
