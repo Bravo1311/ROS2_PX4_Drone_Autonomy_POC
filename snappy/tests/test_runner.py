@@ -17,7 +17,7 @@ def test_the_runner_starts_running_on_a_good_plan():
 
 def test_the_runner_refuses_a_plan_it_cannot_run():
     with pytest.raises(ValueError):
-        Runner(plan(Step("land")))                       # no land skill yet
+        Runner(plan(Step("landing")))                       # no land skill yet
     with pytest.raises(ValueError):
         Runner(plan())
 
@@ -62,3 +62,8 @@ def test_the_executor_limit_applies_even_when_the_skill_asks_for_more_speed():
                limits=ExecutorLimits(max_speed_mps=2.0), goto_cfg=fast)
     v = r.tick((0, 0, 5), 0.0).velocity
     assert v == pytest.approx((2.0, 0.0, 0.0))
+    
+def test_a_land_step_finishes_at_the_ground():
+    r = Runner(plan(Step("land")))
+    assert r.tick((0, 0, 3.0), 0.0).velocity[2] < 0
+    assert r.tick((0, 0, 0.1), 1.0).state is RunState.DONE
