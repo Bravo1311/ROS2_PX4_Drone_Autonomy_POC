@@ -149,7 +149,7 @@ def _signature(t: ToolDef) -> str:
 
 SUBMIT_PLAN = ToolDef(
     "submit_plan",
-    'Propose a mission as a list of steps, each {"skill}: name, "args": {...}}. Skills' 
+    'Propose a mission as a list of steps, each {"skill": name, "args": {...}}. Skills: ' 
     + "; ".join(_signature(t) for t in MISSION_SKILLS)
     + ". This only drafts a plan card for the operator. Nothing is flown.",
     Risk.ANNOTATE, None, {"steps": list},

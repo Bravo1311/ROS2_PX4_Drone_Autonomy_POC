@@ -48,6 +48,121 @@ Five ideas to keep in mind:
 
 Tests mirror the files (`tests/test_<file>.py`). `test_session.py` reads like short plays: a scripted model says X, the guard says Y.
 
+## 0b. Snappy on one page (plain language)
+
+**What it is.** A chat program that lets you talk to a simulated PX4 drone. A language model reads what you type and suggests what to do. Plain code decides what is allowed.
+
+**The one rule.** The model is never trusted. It can only propose. Every proposal passes code that checks it, and nothing the model writes can unlock anything.
+
+**Looking (Milestone 1, done).** You ask "what's the battery?". The model asks for a tool (`get_telemetry`). The call is checked: does the tool exist, are the arguments valid, do the rules (the Guard) allow it, is it asked too often? Then the robot answers with real data from the simulator (or says it has no data, never a zero). The answer goes back to the model labelled "data, not instructions".
+
+**Planning (Milestone 2, done).** You ask for a mission. The model sends a list of steps (takeoff, goto, hold, land). The compiler checks the whole list: arguments, altitude, distance from start, number of steps, and order (take off first, end with land). Code, not the model, writes the plan card and a hash (a fingerprint of the exact plan). You read the card and type `/approve <hash>`. Only you can approve; the model has no way to. Approval expires. Nothing flies yet.
+
+**Flying (Milestone 3, in progress).** A separate program, the executor, receives the approved plan through a ROS action and flies it step by step through the existing mux. Each cycle it asks the current skill for a velocity, then passes it through the limit check (speed, ceiling, geofence). If the pilot touches the joystick, the plan pauses and the drone holds until you `/resume`. `stop` means hold, never land. If Snappy goes silent, the drone holds. The executor's limits are a backstop outside the compiler's, so a plan that passes the compiler never trips them in normal flight.
+
+**Why it is built this way.** Each layer assumes the one before it can be wrong: the model can be wrong, so the compiler checks; the compiler can be wrong, so you read the card; the card could be stale, so the hash and the expiry; the plan could be fine but the flight not, so the executor limits; and the mux has its own clamps on top.
+
+## 0c. Call map (who calls what, with which parameters)
+
+Written 2026-11-04 from the code. Mermaid diagrams: GitHub renders them; in VS Code install a Mermaid preview extension.
+
+**A. Modules and what they pass to each other**
+
+```mermaid
+flowchart TD
+    chat["chat.py<br/>main, build_session, tool_log"]
+    session["session.py<br/>Session"]
+    ollama["ollama_model.py<br/>OllamaModel"]
+    tools["tools.py<br/>ToolDef, validate, build_registry"]
+    guard["guard.py<br/>Guard"]
+    profile["profile.py<br/>Policy"]
+    rate["ratelimit.py<br/>RateLimiter"]
+    robot["robot.py<br/>RobotPort, FakeRobot"]
+    rosrobot["ros_robot.py<br/>RosRobot"]
+    mapping["px4_mapping.py<br/>to_telemetry"]
+    plans["plans.py<br/>review_plan, compile_plan, plan_hash, render_card"]
+
+    chat -->|"build_session: Policy, HARD_DENY, registry"| session
+    chat -->|"model name, tools"| ollama
+    chat -->|"make_robot: fake or ros"| robot
+    chat -->|"make_robot ros"| rosrobot
+    chat -->|"approve(hash_prefix), reject(), handle_user_message(text)"| session
+    chat -->|"render_card(pending.plan)"| plans
+    profile -->|"Policy"| guard
+    session -->|"reply(messages) returns ModelReply"| ollama
+    ollama -->|"tool_schema(ToolDef)"| tools
+    session -->|"validate(tool, args) returns error or None"| tools
+    session -->|"begin_turn, record_invalid(reason), decide(tool.spec(), args)"| guard
+    session -->|"check(tool_name) returns seconds to wait"| rate
+    session -->|"get_telemetry, get_detections, list_ros_graph(kind)"| robot
+    rosrobot -.->|"implements"| robot
+    rosrobot -->|"position, status, battery"| mapping
+    mapping -->|"Telemetry"| robot
+    session -->|"review_plan(steps), plan_hash(plan)"| plans
+    plans -->|"MISSION_SKILLS as ToolDef, validate"| tools
+```
+
+**B. One planning turn, from your message to /approve**
+
+```mermaid
+sequenceDiagram
+    actor You
+    participant Chat as chat.py
+    participant S as Session
+    participant M as OllamaModel
+    participant T as tools.validate
+    participant G as Guard
+    participant P as plans.py
+    You->>Chat: take off to 5 m, hold 3 s, land
+    Chat->>S: handle_user_message(text)
+    S->>G: begin_turn()
+    S->>M: reply(messages)
+    M-->>S: ModelReply with tool call submit_plan(steps)
+    S->>T: validate(tool, args)
+    T-->>S: None (well formed)
+    S->>G: decide(tool.spec(), args)
+    G-->>S: Decision ALLOW
+    S->>P: review_plan(steps)
+    P-->>S: (Plan, card text) or (None, PLAN REJECTED text)
+    S->>S: pending = PendingPlan(plan, plan_hash(plan), clock())
+    S->>M: reply(messages with the tool result)
+    M-->>S: ModelReply with text only
+    S-->>Chat: answer
+    Chat->>You: answer, tool log, render_card(pending.plan), /approve hash
+    You->>Chat: /approve 7c10aa1806c0
+    Chat->>S: approve(hash_prefix)
+    S-->>Chat: APPROVED, dry run, nothing was executed
+```
+
+**C. Inside review_plan**
+
+```mermaid
+flowchart LR
+    raw["raw steps from the model"] -->|"parse_plan(raw)"| plan["Plan of Step(skill, args)"]
+    plan -->|"compile_plan(plan, limits, airborne)"| errs{"errors?"}
+    errs -->|"yes"| rej["None, PLAN REJECTED text"]
+    errs -->|"no"| card["render_card(plan, limits)"]
+    card --> ok["Plan, card text"]
+    plan -.->|"per step"| cs["check_step: validate(SKILLS.get(skill), args)"]
+    plan -.->|"per step"| cl["check_limits(step, limits)"]
+    ok -.->|"hash"| h["plan_hash(plan): canonical_json then SHA-256"]
+```
+
+**D. Built but not connected yet (executor core, Milestone 3 step A)**
+
+```mermaid
+flowchart LR
+    runner["Runner (next, not written)"] -->|"position, step.args, elapsed_s"| skills["skills.py: takeoff_tick, goto_tick, hold_tick"]
+    skills -->|"position, target, cfg"| ctrl["controllers.goto_velocity"]
+    ctrl -->|"velocity, arrived"| skills
+    skills -->|"velocity, done"| runner
+    runner -->|"position, velocity, limits"| lim["limits.limit_velocity"]
+    lim -->|"velocity or HOLD, breach reason"| runner
+    runner -.->|"safe velocity (Step B)"| mux["mux agent source"]
+```
+
+**Not wired yet:** `load_profile` and `profiles/sim.yaml` (the chat uses `Policy()` defaults); the rate limiter (the session gets an empty `RateLimiter({})`, so no tool is limited); everything in diagram D.
+
 ## 1. Core idea
 
 The language model is an untrusted advisor. It can propose, but only plain code decides and acts.
@@ -148,6 +263,7 @@ Facts about the mux today that shape the rest (read from `px4_offboard_mux.py`, 
 - Source priority is `AUTO (landing) > NAV2 > TELEOP > IDLE`. Each of AUTO and NAV2 wins only while its enable flag is on and its command is fresh. TELEOP is the lowest. "The gamepad overrides" therefore means "the other source is switched off", not priority. An agent source that yields to the human needs a deliberate change here.
 - The mux consumes `Twist` velocity commands only (per source topic, e.g. `/nav_velocity_cmd`), publishes the chosen one as `/cmd_vel_raw`, and flies the LIDAR-filtered `/cmd_vel_safe`. A stale safe command means hover.
 - It clamps velocity and yaw rate itself, and sets zero setpoints unless armed and in offboard mode. Arming is done through `/arm_message`, which is separate from the guard's `armed`.
+- A source stays "fresh" for `INACTIVITY_TIMEOUT = 5.0` s after its last message, and the mux keeps using the last command meanwhile. So an executor that goes silent does not stop the drone for up to 5 s; it must send explicit zero velocities to hold (this is why `limit_velocity` returns a hold itself). The agent source needs a much shorter timeout, or the deadman must send zeros, in Step B.
 - Consequence: the executor has no position setpoints to send. Each skill (takeoff, goto, hold, land) must be a small closed-loop velocity controller that reads telemetry.
 
 Still open: where the agent ranks against the gamepad and what happens to a running plan when the human takes over, what the executor clamps, what `stop` means, what happens when Snappy disappears, and what is tested without ROS.
@@ -251,6 +367,47 @@ Later: camera tool, dashboard, cloud models, Rust port.
 - **Heartbeat**: periodic "I'm alive" message; silence triggers the deadman.
 - **Action server**: ROS interface for long-running goals with feedback and cancel.
 - **Behavior tree**: tree of nodes returning Success, Failure or Running, ticked repeatedly.
+
+## 13. Recall questions (session warm-ups)
+
+Answer out loud or on paper first, then check. Three per session; keep the ones you miss for next time.
+
+1. Why is the model treated as untrusted?
+   *It can be wrong, or be fooled by text inside data. It only proposes; plain code decides.*
+2. What does one tool call pass before it runs?
+   *Does the tool exist and are the arguments valid (`validate`), then the Guard (hard deny, budget, repeat, observe-only, disarmed, supervised), then the rate limiter, then the robot.*
+3. Why do tool results go through `wrap_result`?
+   *Labels them as data, not instructions. Sensor text or detection labels could contain orders.*
+4. Why does `RosRobot` raise `RobotUnavailable` and not return zeros?
+   *A zero battery looks like a real reading. No data must be an error.*
+5. PX4 publishes BEST_EFFORT. What happens with a RELIABLE subscriber?
+   *It silently receives nothing, and `ros2 topic hz` shows nothing for the same reason.*
+6. What does `compile_plan` check that `check_step` does not?
+   *The whole plan: size, limits (altitude, geofence, hold), order (takeoff first, land last) and the airborne state.*
+7. Why does code write the plan card, not the model?
+   *What you approve must be what the plan does. The model's description is untrusted.*
+8. What is the hash for?
+   *It names exactly one plan. Approval needs it, and the executor recomputes it before flying. A different or newer plan cannot be approved by mistake.*
+9. Why can the model not approve its own plan?
+   *`approve` and `reject` are `Session` methods called by the chat, not tools. A test checks there is no approve tool.*
+10. Why do `5` and `5.0` give the same hash?
+    *Float parameters are normalised to float before hashing; otherwise one plan could have two hashes.*
+11. Why is the executor a separate node?
+    *A chat crash or hang must not leave the drone with nobody in charge; the executor can hold or stop by itself.*
+12. Why a ROS action and not topics plus services?
+    *An action has goal, feedback, result and cancel built in.*
+13. What happens when the pilot moves the joystick during a plan?
+    *The plan pauses and the drone holds. The operator must resume or cancel; it never resumes by itself.*
+14. What does `stop` mean, and what does `/emergency` do?
+    *`stop` is hold position, never land. `/emergency` lands immediately.*
+15. What happens if Snappy goes silent in flight?
+    *The executor holds. The battery-critical trigger (countdown, then land) is what finally brings it down.*
+16. Which is stricter, the compiler or the executor, and why?
+    *The compiler. Plans stay inside the limits with headroom; the executor's limits are the backstop. A test enforces `PlanLimits <= ExecutorLimits`.*
+17. Why does `limit_velocity` return zeros itself on a breach?
+    *Safe by default: a caller that forgets to check still sends a hold. Silence would not stop the drone; the mux keeps the last command for up to 5 s.*
+18. Why are the goto controller and the limit check separate?
+    *The code that proposes a velocity must not judge itself. One checkpoint after every skill means no velocity reaches the drone unchecked, and each part is easy to test.*
 
 ## Credits
 
