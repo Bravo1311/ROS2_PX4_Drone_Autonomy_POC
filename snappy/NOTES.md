@@ -257,6 +257,10 @@ Decided in order, one question at a time, before looking at any reference design
 
 10. **`goto` starts with our own direct velocity controller** (also for takeoff, hold, land). Nav2 is a possible second backend behind the same skill interface, added later for obstacle-aware routing; it only covers x and y, needs SLAM and the planner running, would need the executor to cancel and re-send its goal on pause and resume, and the NAV2 mux source currently outranks teleop (conflicts with decision 4). Until then the LIDAR safety filter gives reactive protection but no path planning: a direct goto can get stuck against a wall.
 
+11. **The runner detects commands that are not being followed, with both a progress check and a step timeout** (user's choice, 2026-11-04). Found while reviewing the fake-drone test, which assumes a perfect drone that does exactly what it is told: without a watchdog a stuck, disarmed or overridden drone keeps `goto` commanding forever. The progress check reacts early (distance to the step's goal must shrink by a minimum within a window, otherwise abort with "no progress"); the step timeout is the backstop (a maximum duration per step, otherwise abort with "step timed out"). Both abort like a limit breach: hold, reason kept, never resumes by itself. Needs a "remaining distance" per skill (takeoff: altitude gap, goto: distance to target, land: altitude above touchdown; hold has none, only the timeout).
+
+12. **A step's timeout is derived from the step** (user's choice, 2026-11-04): 3 times the expected duration plus 10 s of slack. Expected duration is computed at the step's first tick from the drone's real position (distance divided by the skill's speed; a hold's own seconds). The factor and slack are constants in code or the executor profile, never set by the plan, so the model cannot loosen a safety number.
+
 Decisions 4, 5 and 7 supersede two older lines in section 5: "the executor aborts the mission on joystick override and never silently resumes" (now: pause, operator resumes) and "heartbeat lost: land" (now: hold).
 
 Facts about the mux today that shape the rest (read from `px4_offboard_mux.py`, 2026-11-03):

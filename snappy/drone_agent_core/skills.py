@@ -1,3 +1,5 @@
+import math
+
 from drone_agent_core.controllers import GotoConfig, Vec3, goto_velocity
 from drone_agent_core.limits import HOLD
 
@@ -23,3 +25,27 @@ def goto_tick(position: Vec3, args: dict, elapsed_s: float, cfg: GotoConfig = Go
 
 
 SKILL_TICKS = {"takeoff": takeoff_tick, "goto": goto_tick, "hold": hold_tick, "land": land_tick}
+
+
+def takeoff_expected_s(position: Vec3, args: dict, cfg: GotoConfig) -> float:
+    return abs(args["altitude_m"] - position[2]) / cfg.max_speed_mps
+
+
+def goto_expected_s(position: Vec3, args: dict, cfg: GotoConfig) -> float:
+    return math.dist(position, (args["x"], args["y"], args["altitude_m"])) / cfg.max_speed_mps
+
+
+def hold_expected_s(position: Vec3, args: dict, cfg: GotoConfig) -> float:
+    return float(args["seconds"])
+
+
+def land_expected_s(position: Vec3, args: dict, cfg: GotoConfig) -> float:
+    return max(0.0, position[2] - TOUCHDOWN_ALTITUDE_M) / LAND_SPEED_MPS
+
+
+SKILL_EXPECTED_S = {
+    "takeoff": takeoff_expected_s,
+    "goto": goto_expected_s,
+    "hold": hold_expected_s,
+    "land": land_expected_s,
+}

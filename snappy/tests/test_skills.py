@@ -1,5 +1,13 @@
+import pytest
+
+from drone_agent_core.controllers import GotoConfig
 from drone_agent_core.limits import HOLD
-from drone_agent_core.skills import hold_tick, takeoff_tick, goto_tick, land_tick, SKILL_TICKS
+from drone_agent_core.skills import (
+    SKILL_EXPECTED_S, SKILL_TICKS, goto_expected_s, goto_tick, hold_expected_s, hold_tick,
+    land_expected_s, land_tick, takeoff_expected_s, takeoff_tick,
+)
+
+CFG = GotoConfig()          # max speed 1.5 m/s
 
 
 def test_hold_stays_put_and_finishes_after_its_time():
@@ -39,3 +47,15 @@ def test_land_descends_straight_down_at_a_fixed_speed():
 
 def test_land_is_done_near_the_ground():
     assert land_tick((2.0, 3.0, 0.1), {}, 0.0) == (HOLD, True)
+
+
+def test_expected_durations():
+    assert takeoff_expected_s((0.0, 0.0, 0.0), {"altitude_m": 5}, CFG) == pytest.approx(5 / 1.5)
+    assert goto_expected_s((0.0, 0.0, 5.0), {"x": 10.0, "y": 0.0, "altitude_m": 5.0}, CFG) == pytest.approx(10 / 1.5)
+    assert hold_expected_s((0.0, 0.0, 5.0), {"seconds": 3}, CFG) == 3.0
+    assert land_expected_s((0.0, 0.0, 4.15), {}, CFG) == pytest.approx(8.0)
+    assert land_expected_s((0.0, 0.0, 0.0), {}, CFG) == 0.0
+
+
+def test_every_skill_has_both_a_tick_and_an_expected_duration():
+    assert set(SKILL_EXPECTED_S) == set(SKILL_TICKS)
