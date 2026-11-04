@@ -6,6 +6,7 @@ from drone_agent_core.skills import (
     SKILL_EXPECTED_S, SKILL_TICKS, goto_expected_s, goto_tick, hold_expected_s, hold_tick,
     land_expected_s, land_tick, takeoff_expected_s, takeoff_tick,
 )
+from drone_agent_core.plans import SKILLS
 
 CFG = GotoConfig()          # max speed 1.5 m/s
 
@@ -59,3 +60,6 @@ def test_expected_durations():
 
 def test_every_skill_has_both_a_tick_and_an_expected_duration():
     assert set(SKILL_EXPECTED_S) == set(SKILL_TICKS)
+
+def test_every_catalog_skill_has_an_implementation():
+    assert set(SKILLS) == set(SKILL_TICKS)
