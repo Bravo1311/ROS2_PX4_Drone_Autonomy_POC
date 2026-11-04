@@ -67,3 +67,65 @@ def test_a_land_step_finishes_at_the_ground():
     r = Runner(plan(Step("land")))
     assert r.tick((0, 0, 3.0), 0.0).velocity[2] < 0
     assert r.tick((0, 0, 0.1), 1.0).state is RunState.DONE
+    
+def test_a_step_that_never_finishes_times_out():
+    runner = Runner(Plan((Step("takeoff", {"altitude_m": 3.0}), Step("land"))))
+    # expected = 3/1.5 = 2 s, so deadline = 3*2 + 10 = 16 s
+    assert runner.tick((0.0, 0.0, 0.0), 0.0).state is RunState.RUNNING
+    result = runner.tick((0.0, 0.0, 0.0), 16.1)    # still on the ground
+    assert result.state is RunState.ABORTED
+    assert result.velocity == HOLD
+    assert "step 1 (takeoff) timed out" in result.message
+    
+    
+def test_a_paused_runner_holds_and_resumes_the_same_step():
+    runner = Runner(Plan((Step("takeoff", {"altitude_m": 3.0}), Step("land"))))
+    runner.tick((0.0, 0.0, 0.0), 0.0)
+    runner.pause(1.0)
+    paused = runner.tick((0.0, 0.0, 1.0), 2.0)
+    assert paused.state is RunState.PAUSED and paused.velocity == HOLD and paused.step == 0
+    runner.resume(100.0)
+    assert runner.tick((0.0, 0.0, 1.0), 100.1).state is RunState.RUNNING
+
+
+def test_the_pause_does_not_count_against_the_step_timeout():
+    runner = Runner(Plan((Step("takeoff", {"altitude_m": 3.0}), Step("land"))))
+    runner.tick((0.0, 0.0, 0.0), 0.0)             # deadline is 16 s
+    runner.pause(1.0)
+    runner.resume(501.0)                           # 500 s pause, deadline moves to 516 s
+    assert runner.tick((0.0, 0.0, 0.0), 510.0).state is RunState.RUNNING
+    assert runner.tick((0.0, 0.0, 0.0), 517.0).state is RunState.ABORTED
+
+
+def test_a_pause_does_not_shorten_or_extend_a_hold():
+    runner = Runner(Plan((Step("takeoff", {"altitude_m": 3.0}), Step("hold", {"seconds": 3.0}), Step("land"))))
+    runner.tick((0.0, 0.0, 3.0), 0.0)              # takeoff already at its target, hold begins
+    runner.tick((0.0, 0.0, 3.0), 1.0)              # hold clock starts here
+    runner.pause(2.0)
+    runner.resume(102.0)                           # 100 s pause
+    assert runner.tick((0.0, 0.0, 3.0), 103.0).step == 1    # 2 s of hold used, still holding
+    assert runner.tick((0.0, 0.0, 3.0), 104.1).step == 2    # 3 s used, hold done
+    
+def test_an_aborted_runner_cannot_be_paused_or_resumed():
+    runner = Runner(Plan((Step("takeoff", {"altitude_m": 3.0}), Step("land"))))
+    assert runner.tick((0.0, 0.0, 0.0), 0.0).state is RunState.RUNNING
+    aborted = runner.tick((0.0, 0.0, 0.0), 20.0)        # past the 16 s deadline
+    assert aborted.state is RunState.ABORTED
+
+    runner.pause(21.0)
+    assert runner.state is RunState.ABORTED             # pause did not turn it into PAUSED
+    runner.resume(30.0)
+    assert runner.state is RunState.ABORTED             # resume did not revive it
+
+    after = runner.tick((0.0, 0.0, 3.0), 31.0)          # even if the drone now reaches the target
+    assert after.state is RunState.ABORTED
+    assert after.velocity == HOLD
+    assert after.message == aborted.message
+
+
+def test_resume_on_a_runner_that_was_never_paused_does_nothing():
+    runner = Runner(Plan((Step("takeoff", {"altitude_m": 3.0}), Step("land"))))
+    runner.tick((0.0, 0.0, 0.0), 0.0)
+    runner.resume(5.0)
+    assert runner.state is RunState.RUNNING
+    assert runner.tick((0.0, 0.0, 0.0), 16.1).state is RunState.ABORTED    # deadline was not moved
