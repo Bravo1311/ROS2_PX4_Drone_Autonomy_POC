@@ -1,0 +1,13 @@
+# goal: what the client demands
+string plan_json
+string plan_hash
+
+---
+# result: the final outcome, sent once when the action ends
+bool success
+string message
+
+---
+# feedback: progress, sent repeatedly while it runs
+uint32 step 
+string state

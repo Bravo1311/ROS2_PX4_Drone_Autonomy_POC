@@ -39,6 +39,9 @@ from px4_msgs.msg import (
     VehicleCommand,
     VehicleStatus,
 )
+from px4_agent_interfaces.msg import ControlState
+from px4_offboard.source_select import choose_source, teleop_is_active
+
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import (
@@ -125,6 +128,19 @@ class PX4OffboardMux(Node):
         self.create_subscription(Twist, '/autoland_velocity_cmd', self.marker_cb, qos_teleop)
         # self.create_subscription(Twist, "/autoland_velocity_cmd", self.marker_cb, qos_teleop)
         self.create_subscription(Twist, '/nav_velocity_cmd', self.nav_cb, qos_teleop)
+        self.create_subscription(Twist, '/agent_velocity_cmd', self.agent_cb, qos_teleop)
+
+        # Who is flying and whether the vehicle is armed (latched, so late subscribers get it)
+        self.state_pub = self.create_publisher(
+            ControlState,
+            '/control_state',
+            QoSProfile(
+                reliability=QoSReliabilityPolicy.RELIABLE,
+                durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+                history=QoSHistoryPolicy.KEEP_LAST,
+                depth=1,
+            ),
+        )
 
         self.create_subscription(Bool, '/enable_auto_land', self.enable_auto_cb, qos_px4)
         self.create_subscription(Bool, '/enable_nav_cmd', self.enable_nav_cb, qos_px4)
@@ -150,6 +166,10 @@ class PX4OffboardMux(Node):
         self.last_teleop_t = 0.0
         self.last_auto_t = 0.0
         self.last_nav_t = 0.0
+        self.agent_cmd = Twist()
+        self.last_agent_t = 0.0
+        self.last_teleop_active_t = 0.0
+        self.published_state = None
         self.auto_enabled = False
         self.nav_enabled = False
 
@@ -179,7 +199,13 @@ class PX4OffboardMux(Node):
     def teleop_cb(self, msg: Twist):
         self.teleop_cmd = msg
         self.last_teleop_t = self._now()
+        if teleop_is_active(msg.linear.x, msg.linear.y, msg.linear.z, msg.angular.z):
+            self.last_teleop_active_t = self.last_teleop_t
         # self.get_logger().warn("TELEOP RX", throttle_duration_sec=0.5)
+
+    def agent_cb(self, msg: Twist):
+        self.agent_cmd = msg
+        self.last_agent_t = self._now()
 
     def marker_cb(self, msg: Twist):
         self.auto_cmd = msg
@@ -271,27 +297,32 @@ class PX4OffboardMux(Node):
                 self.get_logger().info('ARM command sent - offboard warmup complete.')
 
     def select_cmd_body(self):
-        now = self._now()
-        teleop_fresh = (now - self.last_teleop_t) <= INACTIVITY_TIMEOUT
-        auto_fresh = (now - self.last_auto_t) <= INACTIVITY_TIMEOUT
-        nav_fresh = (now - self.last_nav_t) <= INACTIVITY_TIMEOUT
+        src = choose_source(
+            self._now(),
+            INACTIVITY_TIMEOUT,
+            auto_on=self.auto_enabled,
+            auto_t=self.last_auto_t,
+            nav_on=self.nav_enabled,
+            nav_t=self.last_nav_t,
+            teleop_t=self.last_teleop_t,
+            teleop_active_t=self.last_teleop_active_t,
+            agent_t=self.last_agent_t,
+        )
+        cmd = {
+            'AUTO': self.auto_cmd,
+            'NAV2': self.nav_cmd,
+            'TELEOP': self.teleop_cmd,
+            'AGENT': self.agent_cmd,
+            'IDLE': Twist(),
+        }[src]
+        fresh = src != 'IDLE'
 
-        if self.auto_enabled and auto_fresh:
-            src = 'AUTO'
-            cmd = self.auto_cmd
-            fresh = True
-        elif self.nav_enabled and nav_fresh:
-            src = 'NAV2'
-            cmd = self.nav_cmd
-            fresh = True
-        elif teleop_fresh:
-            src = 'TELEOP'
-            cmd = self.teleop_cmd
-            fresh = True
-        else:
-            src = 'IDLE'
-            cmd = Twist()
-            fresh = False
+        state = (src, self.armed, self.offboard_active)
+        if state != self.published_state:
+            self.published_state = state
+            self.state_pub.publish(
+                ControlState(source=src, armed=self.armed, offboard=self.offboard_active)
+            )
 
         if fresh and not is_finite_twist(cmd):
             self.get_logger().error(
