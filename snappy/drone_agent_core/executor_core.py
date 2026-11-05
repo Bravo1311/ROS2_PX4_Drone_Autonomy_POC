@@ -4,6 +4,7 @@ from drone_agent_core.controllers import Vec3
 from drone_agent_core.frames import world_to_body
 from drone_agent_core.goal import accept_goal 
 from drone_agent_core.limits import HOLD
+from drone_agent_core.plans import AIRBORNE_ABOVE_M
 from drone_agent_core.runner import Runner
 
 OVERRIDING_SOURCES = {"AUTO", "NAV2", "TELEOP"}        # other sources of offboard commands
@@ -35,13 +36,15 @@ class ExecutorCore:
     def busy(self) -> None:
         return self._runner is not None
     
-    def start(self, plan_json: str, plan_hash: str, control: Control) -> str | None:
+    def start(self, plan_json: str, plan_hash: str, control: Control, position: Vec3 | None) -> str | None:
         """None if the goal is accepted, else the reason it is refused"""
         if self._runner is not None:
             return "goal rejected: a plan is already running"
         if not control.armed:
             return "goal rejected: vehicle is not armed"
-        runner, error = accept_goal(plan_json, plan_hash)
+        if position is None:
+            return "goal rejected: position unavailable"
+        runner, error = accept_goal(plan_json, plan_hash, airborne=position[2] > AIRBORNE_ABOVE_M)
         if error is not None:
             return error
         self._runner = runner

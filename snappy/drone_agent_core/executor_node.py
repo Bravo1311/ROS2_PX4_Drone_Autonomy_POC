@@ -64,7 +64,9 @@ class ExecutorNode(Node):
     def _execute(self, goal_handle):
         goal = goal_handle.request
         with self.lock:
-            error = self.core.start(goal.plan_json, goal.plan_hash, self._control)
+            pose = self._pose.get(self.now())
+            position = pose[0] if pose is not None else None
+            error = self.core.start(goal.plan_json, goal.plan_hash, self._control, position)
         if error is not None:
             goal_handle.abort()
             return ExecutePlan.Result(success=False, message=error)

@@ -8,6 +8,9 @@ from drone_agent_core.guard import Risk
 from drone_agent_core.tools import ToolDef, build_registry, validate
 
 
+AIRBORNE_ABOVE_M = 0.5      # above this altitude the drone counts as in the air
+
+
 @dataclass(frozen=True)
 class Step:
     skill: str
@@ -98,8 +101,9 @@ def describe_step(step: Step) -> str:
         return "land"
     raise ValueError(f"no description for skill {step.skill}")
 
-def render_card(plan: Plan, limits: PlanLimits = PlanLimits()) -> str:
-    errors = compile_plan(plan, limits)
+def render_card(plan: Plan, limits: PlanLimits = PlanLimits(), airborne: bool | None = False) -> str:
+    """airborne: True, False, or None when the starting state is unknown (treated as on the ground)"""
+    errors = compile_plan(plan, limits, bool(airborne))
     if errors:
         raise ValueError("cannot render a plan that does not compile:" + "; ".join(errors))
     args = [_normalized_args(s) for s in plan.steps]
@@ -112,6 +116,10 @@ def render_card(plan: Plan, limits: PlanLimits = PlanLimits()) -> str:
     lines.append(f"  highest {highest:g} m (limit {limits.max_altitude_m:g}), "
                  f"farthest {farthest:g} m from start (limit {limits.geofence_radius_m:g}), "
                  f"holding {held:g} s")
+    if airborne is None:
+        lines.append("  Start state unknown: assuming on the ground.")
+    else:
+        lines.append("  Starts in the air." if airborne else "  Starts on the ground.")
     lines.append("  Nothing runs: dry run only.")
     return "\n".join(lines)
 
@@ -129,20 +137,20 @@ def parse_plan(raw) -> Plan:
         steps.append(Step(item["skill"], dict(args)))
     return Plan(tuple(steps))
 
-def review_plan(raw_steps, limits: PlanLimits = PlanLimits()) -> tuple[Plan | None, str]:
+def review_plan(raw_steps, limits: PlanLimits = PlanLimits(), airborne: bool | None = False) -> tuple[Plan | None, str]:
     """The plan if it compiled (else None), plus the text to show."""
     try:
         plan = parse_plan(raw_steps)
     except ValueError as e:
         return None, f"PLAN REJECTED: {e}"
-    errors = compile_plan(plan, limits)
+    errors = compile_plan(plan, limits, bool(airborne))
     if errors:
         return None, f"PLAN REJECTED:\n" + "\n".join(f"  {e}" for e in errors)
-    return plan, render_card(plan, limits)
+    return plan, render_card(plan, limits, airborne)
 
-def submit_plan(raw_steps, limits: PlanLimits = PlanLimits()) -> str:
+def submit_plan(raw_steps, limits: PlanLimits = PlanLimits(), airborne: bool | None = False) -> str:
     """What the model is told after proposing a plan: errors to fix, or the card"""
-    return review_plan(raw_steps, limits)[1]
+    return review_plan(raw_steps, limits, airborne)[1]
 
 def _signature(t: ToolDef) -> str:
     return f"{t.name}({', '.join(f'{k}: {v.__name__}' for k, v in t.params.items())})"

@@ -71,6 +71,13 @@ class Guard:
                 "Too many malformed tool calls this turn"
             )
         return Decision(Verdict.DENY, "invalid", reason)
+    
+    def check_motion_allowed(self) -> Decision:
+        if self._policy.autonomy == "observe":
+            return Decision(Verdict.DENY, "observe_only", "the agent is in observe only mode")
+        if not self.armed:
+            return Decision(Verdict.DENY, "disarmed", "the agent is disabled; type /enable")
+        return Decision(Verdict.ALLOW)
 
     def decide(self, tool: ToolSpec, args: dict | None = None):
         # matches ros names against forbidden ones

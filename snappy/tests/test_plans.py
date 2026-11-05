@@ -136,3 +136,27 @@ def test_submit_plan_lists_compiler_errors():
 
 def test_submit_plan_reports_a_bad_shape():
     assert submit_plan("takeoff").startswith("PLAN REJECTED: steps must be a list")
+
+def test_a_plan_without_takeoff_is_valid_when_airborne():
+    plan = Plan((Step("goto", {"x": 5.0, "y": 0.0, "altitude_m": 5.0}), Step("land")))
+    assert compile_plan(plan, airborne=True) == []
+    assert "takeoff first" in "; ".join(compile_plan(plan))
+
+
+def test_takeoff_is_refused_when_already_airborne():
+    plan = Plan((Step("takeoff", {"altitude_m": 5.0}), Step("land")))
+    assert "already airborne" in "; ".join(compile_plan(plan, airborne=True))
+
+
+def test_the_card_says_when_the_plan_starts_in_the_air():
+    plan = Plan((Step("land"),))
+    assert "Starts in the air." in render_card(plan, airborne=True)
+    assert "Starts in the air." not in render_card(Plan((Step("takeoff", {"altitude_m": 5.0}), Step("land"))))
+
+
+def test_the_card_always_says_where_the_plan_starts():
+    plan = Plan((Step("takeoff", {"altitude_m": 5.0}), Step("land")))
+    assert "Starts on the ground." in render_card(plan)
+    assert "Starts on the ground." in render_card(plan, airborne=False)
+    assert "Start state unknown: assuming on the ground." in render_card(plan, airborne=None)
+    assert "Starts in the air." in render_card(Plan((Step("land"),)), airborne=True)
