@@ -129,3 +129,13 @@ def test_resume_on_a_runner_that_was_never_paused_does_nothing():
     runner.resume(5.0)
     assert runner.state is RunState.RUNNING
     assert runner.tick((0.0, 0.0, 0.0), 16.1).state is RunState.ABORTED    # deadline was not moved
+    
+def test_abort_stops_a_running_or_paused_plan_and_keeps_the_first_reason():
+    runner = Runner(Plan((Step("takeoff", {"altitude_m": 3.0}), Step("land"))))
+    runner.tick((0.0, 0.0, 0.0), 0.0)
+    runner.abort("vehicle disarmed")
+    after = runner.tick((0.0, 0.0, 0.0), 1.0)
+    assert after.state is RunState.ABORTED and after.velocity == HOLD
+    assert after.message == "vehicle disarmed"
+    runner.abort("something else")
+    assert runner.message == "vehicle disarmed"

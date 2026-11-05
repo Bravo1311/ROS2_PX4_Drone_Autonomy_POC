@@ -80,3 +80,8 @@ class Runner:
             self._step_deadline += pause_length
         self._paused_at = None
         self.state = RunState.RUNNING
+        
+    def abort(self, reason: str) -> None:
+        if self.state in (RunState.RUNNING, RunState.PAUSED):
+            self.state = RunState.ABORTED
+            self.message = reason
