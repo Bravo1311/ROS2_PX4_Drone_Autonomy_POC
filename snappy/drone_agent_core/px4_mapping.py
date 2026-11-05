@@ -1,3 +1,4 @@
+import math
 from drone_agent_core.robot import Telemetry
 
 ARMED = 2   # PX4 VehicleStatus.arming_state: 1 = disarmed, 2 = armed
@@ -19,3 +20,11 @@ def to_telemetry(position, status, battery) -> Telemetry:
         armed=status.arming_state == ARMED,
         mode=NAV_STATES.get(status.nav_state, f"NAV_{status.nav_state}"),
     )
+    
+def to_pose(position):
+    """((ENU), yaw) from a PX4 local position, or None if PX4 says it is not valid"""
+    if not (position.xy_valid and position.z_valid):
+        return None
+    if not all(math.isfinite(v) for v in (position.x, position.y, position.z, position.heading)):
+        return None
+    return (position.y, position.x, -position.z), position.heading
