@@ -17,6 +17,10 @@ def test_zero_teleop_does_not_block_a_fresh_agent():
     assert pick(teleop_t=NOW - 0.05, agent_t=NOW - 0.1) == 'AGENT'
 
 
+def test_centred_sticks_alone_are_teleop_idle_not_teleop():
+    assert pick(teleop_t=NOW - 0.05) == 'TELEOP_IDLE'
+
+
 def test_moving_the_sticks_beats_the_agent():
     assert pick(teleop_t=NOW, teleop_active_t=NOW - 0.1, agent_t=NOW) == 'TELEOP'
 
@@ -28,7 +32,7 @@ def test_teleop_stays_in_charge_for_the_holdoff_then_the_agent_may_continue():
 
 def test_a_silent_agent_is_dropped_after_half_a_second():
     assert pick(agent_t=NOW - 0.6) == 'IDLE'
-    assert pick(agent_t=NOW - 0.6, teleop_t=NOW) == 'TELEOP'
+    assert pick(agent_t=NOW - 0.6, teleop_t=NOW) == 'TELEOP_IDLE'
 
 
 def test_auto_and_nav_still_outrank_everything():

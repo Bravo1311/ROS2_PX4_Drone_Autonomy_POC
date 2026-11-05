@@ -12,7 +12,7 @@ def teleop_is_active(linear_x, linear_y, linear_z, angular_z) -> bool:
 
 def choose_source(now, inactivity_timeout, *, auto_on, auto_t, nav_on, nav_t,
                   teleop_t, teleop_active_t, agent_t) -> str:
-    """Priority: AUTO > NAV2 > active TELEOP > AGENT > idle (zero) TELEOP > IDLE."""
+    """Priority: AUTO > NAV2 > active TELEOP > AGENT > TELEOP_IDLE (sticks centred) > IDLE."""
     if auto_on and now - auto_t <= inactivity_timeout:
         return 'AUTO'
     if nav_on and now - nav_t <= inactivity_timeout:
@@ -22,5 +22,5 @@ def choose_source(now, inactivity_timeout, *, auto_on, auto_t, nav_on, nav_t,
     if now - agent_t <= AGENT_TIMEOUT_S:
         return 'AGENT'
     if now - teleop_t <= inactivity_timeout:
-        return 'TELEOP'
+        return 'TELEOP_IDLE'
     return 'IDLE'

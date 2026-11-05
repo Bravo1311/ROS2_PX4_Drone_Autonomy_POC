@@ -312,6 +312,7 @@ class PX4OffboardMux(Node):
             'AUTO': self.auto_cmd,
             'NAV2': self.nav_cmd,
             'TELEOP': self.teleop_cmd,
+            'TELEOP_IDLE': self.teleop_cmd,
             'AGENT': self.agent_cmd,
             'IDLE': Twist(),
         }[src]
