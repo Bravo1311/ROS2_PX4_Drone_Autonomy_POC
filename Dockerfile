@@ -14,6 +14,8 @@ ARG PX4_ROS_COM_REF=86e9aeb20e55a4673fa8a9f1c29ea06a6c5ad1af
 # v2.4.2 no longer builds: its superbuild clones Fast-DDS branch 2.12.x, which was deleted upstream.
 # v3.0.1 is the version used on the host.
 ARG XRCE_REF=v3.0.1
+# Fast-DDS release the agent's superbuild builds (it floats on branch 3.x by default).
+ARG FASTDDS_TAG=v3.1.3
 
 
 # ============================================================================
@@ -45,7 +47,7 @@ RUN git init -q /opt/PX4-Autopilot && \
     git submodule update --init --recursive --depth 1
 
 WORKDIR /opt/PX4-Autopilot
-RUN bash Tools/setup/ubuntu.sh --no-sim-tools --no-nuttx
+RUN PIP_IGNORE_INSTALLED=1 bash Tools/setup/ubuntu.sh --no-sim-tools --no-nuttx
 
 # Custom Gazebo models/worlds (walls, aruco, x500_mono_cam_down, ...)
 COPY px4_custom/ /tmp/px4_custom/
@@ -62,6 +64,7 @@ RUN source /opt/ros/${ROS_DISTRO}/setup.bash && \
 FROM ${BASE_IMAGE} AS xrce
 ARG BUILD_JOBS
 ARG XRCE_REF
+ARG FASTDDS_TAG
 RUN apt-get update && apt-get install -y --no-install-recommends \
         cmake \
         g++ \
@@ -73,6 +76,10 @@ RUN git init -q /tmp/agent && \
     git remote add origin https://github.com/eProsima/Micro-XRCE-DDS-Agent.git && \
     git fetch --depth 1 origin ${XRCE_REF} && \
     git checkout -q FETCH_HEAD && \
+    # The agent's superbuild clones Fast-DDS from the moving branch 3.x, whose head no longer
+    # compiles with GCC 13 (-Werror=exceptions). Pin the 3.1 release the agent was written for.
+    grep -q 'set(_fastdds_tag 3.x)' CMakeLists.txt && \
+    sed -i "s/set(_fastdds_tag 3.x)/set(_fastdds_tag ${FASTDDS_TAG})/" CMakeLists.txt && \
     cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && \
     cmake --build build --parallel "${BUILD_JOBS}" && \
     cmake --install build
@@ -115,6 +122,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         ros-${ROS_DISTRO}-ros-gz \
         ros-${ROS_DISTRO}-ros-gz-bridge \
         ros-${ROS_DISTRO}-ros-gz-image \
+        ros-${ROS_DISTRO}-rosbridge-server \
         ros-${ROS_DISTRO}-slam-toolbox \
     && rm -rf /var/lib/apt/lists/*
 
