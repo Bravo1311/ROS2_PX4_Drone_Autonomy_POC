@@ -39,7 +39,9 @@ from px4_msgs.msg import (
     VehicleCommand,
     VehicleStatus,
 )
+from px4_offboard.speed_limits import check_limit
 import rclpy
+from rcl_interfaces.msg import SetParametersResult
 from rclpy.node import Node
 from rclpy.qos import (
     qos_profile_sensor_data,
@@ -60,9 +62,12 @@ ST_OFFBOARD_REQUESTED = 2
 ST_READY = 3
 OFFBOARD_REQUEST_DELAY_S = 0.2  # gap between requesting OFFBOARD and sending ARM
 
-VEL_LIMIT_XY = 3.0
-VEL_LIMIT_Z = 2.0
-YAW_RATE_LIMIT = 2.0
+# Defaults only: the real limits are the ROS parameters max_xy_velocity / max_z_velocity /
+# max_yaw_rate, normally set in config/speed_limits.yaml (changeable live with ros2 param set).
+# This is the last stop before PX4, so keep max_xy_velocity >= the teleop's xy_velocity_max.
+DEFAULT_VEL_LIMIT_XY = 3.0
+DEFAULT_VEL_LIMIT_Z = 2.0
+DEFAULT_YAW_RATE_LIMIT = 2.0
 
 SAFE_TIMEOUT_S = 1.0
 
@@ -79,6 +84,18 @@ class PX4OffboardMux(Node):
 
     def __init__(self):
         super().__init__('px4_offboard_mux')
+        # Speed limits (validated; a bad value is rejected and the old one kept)
+        self.declare_parameter('max_xy_velocity', DEFAULT_VEL_LIMIT_XY)
+        self.declare_parameter('max_z_velocity', DEFAULT_VEL_LIMIT_Z)
+        self.declare_parameter('max_yaw_rate', DEFAULT_YAW_RATE_LIMIT)
+        self.vel_limit_xy = float(self.get_parameter('max_xy_velocity').value)
+        self.vel_limit_z = float(self.get_parameter('max_z_velocity').value)
+        self.yaw_rate_limit = float(self.get_parameter('max_yaw_rate').value)
+        self.add_on_set_parameters_callback(self.on_parameters)
+        self.get_logger().info(
+            f'Speed limits: xy {self.vel_limit_xy} m/s, z {self.vel_limit_z} m/s, '
+            f'yaw {self.yaw_rate_limit} rad/s'
+        )
 
         qos_px4 = QoSProfile(
             reliability=QoSReliabilityPolicy.BEST_EFFORT,
@@ -299,13 +316,33 @@ class PX4OffboardMux(Node):
             )
             cmd = Twist()
             fresh = False
+        if max(abs(cmd.linear.x), abs(cmd.linear.y)) > self.vel_limit_xy:
+            self.get_logger().warn(
+                f'{src} asked for more than max_xy_velocity ({self.vel_limit_xy} m/s); '
+                'clipping. Raise the parameter (config/speed_limits.yaml) to go faster.',
+                throttle_duration_sec=5.0,
+            )
 
         out = Twist()
-        out.linear.x = clamp(cmd.linear.x, -VEL_LIMIT_XY, VEL_LIMIT_XY)
-        out.linear.y = clamp(cmd.linear.y, -VEL_LIMIT_XY, VEL_LIMIT_XY)
-        out.linear.z = clamp(cmd.linear.z, -VEL_LIMIT_Z, VEL_LIMIT_Z)
-        out.angular.z = clamp(cmd.angular.z, -YAW_RATE_LIMIT, YAW_RATE_LIMIT)
+        out.linear.x = clamp(cmd.linear.x, -self.vel_limit_xy, self.vel_limit_xy)
+        out.linear.y = clamp(cmd.linear.y, -self.vel_limit_xy, self.vel_limit_xy)
+        out.linear.z = clamp(cmd.linear.z, -self.vel_limit_z, self.vel_limit_z)
+        out.angular.z = clamp(cmd.angular.z, -self.yaw_rate_limit, self.yaw_rate_limit)
         return src, out, fresh
+
+    def on_parameters(self, params):
+        for param in params:
+            reason = check_limit(param.name, param.value)
+            if reason:
+                return SetParametersResult(successful=False, reason=reason)
+        for param in params:
+            if param.name == 'max_xy_velocity':
+                self.vel_limit_xy = float(param.value)
+            elif param.name == 'max_z_velocity':
+                self.vel_limit_z = float(param.value)
+            elif param.name == 'max_yaw_rate':
+                self.yaw_rate_limit = float(param.value)
+        return SetParametersResult(successful=True)
 
     def loop(self):
         self.publish_mode()
@@ -351,7 +388,7 @@ class PX4OffboardMux(Node):
                 yaw_error = math.atan2(
                     math.sin(desired_yaw - self.yaw), math.cos(desired_yaw - self.yaw)
                 )
-                yawspeed = clamp(1.0 * yaw_error, -YAW_RATE_LIMIT, YAW_RATE_LIMIT)
+                yawspeed = clamp(1.0 * yaw_error, -self.yaw_rate_limit, self.yaw_rate_limit)
             else:
                 yawspeed = 0.0
         else:

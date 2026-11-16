@@ -22,7 +22,9 @@
 
 
 from geometry_msgs.msg import Twist
+from px4_offboard.speed_limits import check_limit
 import rclpy
+from rcl_interfaces.msg import SetParametersResult
 from rclpy.node import Node
 from rclpy.qos import (
     QoSDurabilityPolicy,
@@ -46,9 +48,11 @@ BUTTON_X = 3  # X button → Enable auto-hover (throttle = 0.5)
 BUTTON_Y = 4  # Y button → Emergency stop (disarm + zero throttle)
 BUTTON_SELECT = 10  # Select button -> Toggle nav2 control
 
-# Movement parameters
-XY_VELOCITY_MAX = 1.2  # m/s for horizontal movement
-YAW_RATE_MAX = 1.5  # rad/s for yaw rotation
+# Movement parameters. These are the defaults only: the real values are the ROS parameters
+# xy_velocity_max / yaw_rate_max, normally set in config/speed_limits.yaml (changeable live:
+# ros2 param set /teleop_joystick xy_velocity_max 3.0).
+DEFAULT_XY_VELOCITY_MAX = 1.2  # m/s for horizontal movement
+DEFAULT_YAW_RATE_MAX = 1.5  # rad/s for yaw rotation
 HOVER_THROTTLE = 0.5  # Neutral throttle position for hovering
 
 # Deadzone for joystick axes
@@ -108,10 +112,32 @@ class JoystickTeleop(Node):
         self.declare_parameter('controller_type', 'EVOFOX')
         self.controller_type = self.get_parameter('controller_type').value
 
+        # Speed limits (validated; a bad value is rejected and the old one kept)
+        self.declare_parameter('xy_velocity_max', DEFAULT_XY_VELOCITY_MAX)
+        self.declare_parameter('yaw_rate_max', DEFAULT_YAW_RATE_MAX)
+        self.xy_velocity_max = float(self.get_parameter('xy_velocity_max').value)
+        self.yaw_rate_max = float(self.get_parameter('yaw_rate_max').value)
+        self.add_on_set_parameters_callback(self.on_parameters)
+        self.get_logger().info(
+            f'Speed limits: xy {self.xy_velocity_max} m/s, yaw {self.yaw_rate_max} rad/s'
+        )
+
         # Create timer to publish at constant rate
         self.create_timer(0.05, self.publish_velocity)  # 20 Hz
 
         self.print_instructions()
+
+    def on_parameters(self, params):
+        for param in params:
+            reason = check_limit(param.name, param.value)
+            if reason:
+                return SetParametersResult(successful=False, reason=reason)
+        for param in params:
+            if param.name == 'xy_velocity_max':
+                self.xy_velocity_max = float(param.value)
+            elif param.name == 'yaw_rate_max':
+                self.yaw_rate_max = float(param.value)
+        return SetParametersResult(successful=True)
 
     def print_instructions(self):
         self.get_logger().info('\n' + '=' * 60)
@@ -243,12 +269,12 @@ class JoystickTeleop(Node):
         vx_raw = axes[AXIS_RIGHT_STICK_UD] if len(axes) > AXIS_RIGHT_STICK_UD else 0.0
         vy_raw = -axes[AXIS_RIGHT_STICK_LR] if len(axes) > AXIS_RIGHT_STICK_LR else 0.0
 
-        vx = self.apply_deadzone(vx_raw) * XY_VELOCITY_MAX
-        vy = self.apply_deadzone(vy_raw) * XY_VELOCITY_MAX
+        vx = self.apply_deadzone(vx_raw) * self.xy_velocity_max
+        vy = self.apply_deadzone(vy_raw) * self.xy_velocity_max
 
         # LEFT stick Left/Right → Yaw rotation
         yaw_raw = -axes[AXIS_LEFT_STICK_LR] if len(axes) > AXIS_LEFT_STICK_LR else 0.0
-        yaw_rate = self.apply_deadzone(yaw_raw) * YAW_RATE_MAX
+        yaw_rate = self.apply_deadzone(yaw_raw) * self.yaw_rate_max
 
         # LEFT stick Up/Down → Throttle (DIRECT mapping)
         if self.auto_hover:

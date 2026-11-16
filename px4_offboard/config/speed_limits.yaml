@@ -1,0 +1,24 @@
+# Speed limits for joystick flight. THE ONE PLACE to change them.
+#
+# After editing run:  colcon build --packages-select px4_offboard   (the file is installed)
+# Or change one live, without rebuilding (use a decimal point, these are floats):
+#   ros2 param set /teleop_joystick xy_velocity_max 3.0
+#   ros2 param set /px4_offboard_mux max_xy_velocity 5.0
+#
+# Two limits apply in series, so raise BOTH together:
+#   joystick full deflection -> teleop_joystick (xy_velocity_max)
+#                            -> px4_offboard_mux (max_xy_velocity)  <- last stop before PX4
+# The mux warns "clipping" if the teleop asks for more than its ceiling.
+# Values above 12 m/s (PX4's own MPC_XY_VEL_MAX) are rejected.
+# The lidar safety filter (px4_lidar safety_vel_filter) can still slow you near obstacles.
+
+teleop_joystick:
+  ros__parameters:
+    xy_velocity_max: 4.0   # m/s horizontal at full stick (code default 1.2)
+    yaw_rate_max: 1.5      # rad/s
+
+px4_offboard_mux:
+  ros__parameters:
+    max_xy_velocity: 4.0   # m/s ceiling for every source (code default 3.0)
+    max_z_velocity: 2.0    # m/s
+    max_yaw_rate: 2.0      # rad/s

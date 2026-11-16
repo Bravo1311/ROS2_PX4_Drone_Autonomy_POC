@@ -46,10 +46,15 @@ def generate_launch_description():
         emulate_tty=True,  # This ensures Python's print() statements are shown
     )
 
+    speed_limits = os.path.join(
+        get_package_share_directory('px4_offboard'), 'config', 'speed_limits.yaml'
+    )
+
     joystick_teleop_node = Node(
         package=package_name,
         executable='teleop_joystick.py',
         name='teleop_joystick',
+        parameters=[speed_limits],
         output='screen',
         emulate_tty=True,  # This ensures Python's print() statements are shown
     )
