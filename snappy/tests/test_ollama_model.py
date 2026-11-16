@@ -123,3 +123,9 @@ def test_list_parameter_becomes_an_array():
     tool = ToolDef("t", "d", Risk.ANNOTATE, None, {"steps": list})
     prop = tool_schema(tool)["function"]["parameters"]["properties"]["steps"]
     assert prop == {"type": "array", "items": {"type": "object"}}
+
+def test_the_system_prompt_names_every_mission_skill():
+    from drone_agent_core.ollama_model import DEFAULT_SYSTEM_PROMPT
+    from drone_agent_core.plans import SKILLS
+    for name in SKILLS:
+        assert f"{name}(" in DEFAULT_SYSTEM_PROMPT, name

@@ -67,6 +67,20 @@ def run_command(session: Session, text: str) -> str:
         return simple[word]()
     return f"Unknown command {word}. {HELP}"
 
+def converse(session: Session, text: str, label: str = "Snappy> ") -> str:
+    """Everything the operator sees for one line: a command's reply, or the model's answer
+    with its tool log and, if a plan was drafted, the plan card. Used by the terminal and the web API."""
+    if text.startswith("/"):
+        return run_command(session, text)
+    before = session.pending
+    start = len(session.messages)
+    answer = session.handle_user_message(text)
+    parts = [f"{label}{answer}", tool_log(session, start)]
+    if session.pending is not None and session.pending is not before:
+        parts.append(render_card(session.pending.plan, airborne=session.pending.airborne))
+        parts.append(f"   /approve {session.pending.hash[:12]}   or   /reject ")
+    return "\n".join(parts)
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--robot", choices=["fake", "ros"], default="fake")
@@ -89,17 +103,7 @@ def main():
                 continue
             if text == "/quit":
                 break
-            if text.startswith("/"):
-                print(run_command(session, text))
-                continue
-            before = session.pending
-            start = len(session.messages)
-            answer = session.handle_user_message(text)
-            print("Snappy> ", answer)
-            print(tool_log(session, start))
-            if session.pending is not None and session.pending is not before:
-                print(render_card(session.pending.plan, airborne=session.pending.airborne))
-                print(f"   /approve {session.pending.hash[:12]}   or   /reject ")
+            print(converse(session, text))
     finally:
         for closable in (executor, robot):      # executor first: robot.close() shuts rclpy down
             if hasattr(closable, "close"):
