@@ -101,6 +101,7 @@ docker compose -f docker-compose.yaml -f docker-compose.dev.yaml up -d
 What it does:
 
 - Mounts the live repo from the host at `/ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick`, over the copy baked into the image.
+- Mounts the custom sim assets (`x500_vio`, `vio_textures`, `vio_rich.sdf`) into PX4's model and world folders, because PX4 loads them from `/opt/PX4-Autopilot`, not from the repo. Edit them in `px4_custom/` and restart PX4; no copying. A new custom model needs its own line in `docker-compose.dev.yaml`.
 - Adds three named volumes, `ws_build`, `ws_install` and `ws_log`, on `/ws/build`, `/ws/install` and `/ws/log`. `colcon build` is therefore incremental (it survives `docker compose down`), and no root-owned build files appear in your repo.
 
 Workflow: **edit on the host** (your editor, git), **build and run inside the container**.

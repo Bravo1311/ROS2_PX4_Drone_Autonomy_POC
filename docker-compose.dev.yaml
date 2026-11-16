@@ -5,6 +5,12 @@ services:
     volumes:
       # your live repo over the copy baked into the image
       - .:/ws/src/ROS2-PX4_Drone_Teleoperation_Using_Joystick
+      # custom sim assets: PX4 loads these from /opt, so mount them live (no manual cp).
+      # One mount per asset: mounting the whole models/ dir would hide PX4's stock models
+      # (x500), which x500_vio includes.
+      - ./px4_custom/models/x500_vio:/opt/PX4-Autopilot/Tools/simulation/gz/models/x500_vio
+      - ./px4_custom/models/vio_textures:/opt/PX4-Autopilot/Tools/simulation/gz/models/vio_textures
+      - ./px4_custom/worlds/vio_rich.sdf:/opt/PX4-Autopilot/Tools/simulation/gz/worlds/vio_rich.sdf
       # colcon output lives in named volumes: builds are incremental across restarts and no
       # root-owned build/ install/ log/ folders land in your repo. A new volume is filled from
       # the image's /ws/build, /ws/install, /ws/log the first time it is used.
