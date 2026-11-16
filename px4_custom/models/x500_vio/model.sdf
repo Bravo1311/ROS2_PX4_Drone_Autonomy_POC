@@ -38,9 +38,68 @@
       </sensor>
     </link>
 
+     <!-- VIO IMU: its own link at the body origin (= the IMU frame), with bias + noise -->
+    <link name='vio_imu_link'>
+      <pose relative_to='base_link'>0 0 0 0 0 0</pose>
+      <inertial>
+        <mass>0.001</mass>
+        <inertia>
+          <ixx>1e-7</ixx><ixy>0</ixy><ixz>0</ixz>
+          <iyy>1e-7</iyy><iyz>0</iyz>
+          <izz>1e-7</izz>
+        </inertia>
+      </inertial>
+      <sensor name='vio_imu' type='imu'>
+        <gz_frame_id>vio_imu_link</gz_frame_id>
+        <always_on>1</always_on>
+        <update_rate>250</update_rate>
+        <topic>/vio/imu</topic>
+        <imu>
+          <angular_velocity>
+            <x><noise type='gaussian'>
+              <stddev>2.683e-3</stddev>
+              <dynamic_bias_stddev>8.23e-4</dynamic_bias_stddev>
+              <dynamic_bias_correlation_time>3600</dynamic_bias_correlation_time>
+            </noise></x>
+            <y><noise type='gaussian'>
+              <stddev>2.683e-3</stddev>
+              <dynamic_bias_stddev>8.23e-4</dynamic_bias_stddev>
+              <dynamic_bias_correlation_time>3600</dynamic_bias_correlation_time>
+            </noise></y>
+            <z><noise type='gaussian'>
+              <stddev>2.683e-3</stddev>
+              <dynamic_bias_stddev>8.23e-4</dynamic_bias_stddev>
+              <dynamic_bias_correlation_time>3600</dynamic_bias_correlation_time>
+            </noise></z>
+          </angular_velocity>
+          <linear_acceleration>
+            <x><noise type='gaussian'>
+              <stddev>3.162e-2</stddev>
+              <dynamic_bias_stddev>0.1273</dynamic_bias_stddev>
+              <dynamic_bias_correlation_time>3600</dynamic_bias_correlation_time>
+            </noise></x>
+            <y><noise type='gaussian'>
+              <stddev>3.162e-2</stddev>
+              <dynamic_bias_stddev>0.1273</dynamic_bias_stddev>
+              <dynamic_bias_correlation_time>3600</dynamic_bias_correlation_time>
+            </noise></y>
+            <z><noise type='gaussian'>
+              <stddev>3.162e-2</stddev>
+              <dynamic_bias_stddev>0.1273</dynamic_bias_stddev>
+              <dynamic_bias_correlation_time>3600</dynamic_bias_correlation_time>
+            </noise></z>
+          </linear_acceleration>
+        </imu>
+      </sensor>
+    </link>
+
     <joint name='VioCameraJoint' type='fixed'>
       <parent>base_link</parent>
       <child>vio_camera_link</child>
+    </joint>
+    <joint name='VioImuJoint' type='fixed'>
+      <parent>base_link</parent>
+      <child>vio_imu_link</child>
     </joint>
   </model>
 </sdf>
