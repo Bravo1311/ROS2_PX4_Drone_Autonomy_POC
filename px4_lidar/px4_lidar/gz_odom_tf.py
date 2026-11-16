@@ -37,13 +37,20 @@ class GzOdomTF(Node):
     def __init__(self):
         super().__init__('gz_odom_tf')
 
-        self.declare_parameter('model_name', 'x500_mono_cam_down_0')
-        self.declare_parameter('gz_topic', '/world/walls/dynamic_pose/info')
+        # No built-in world/model names: perception.launch.py passes them from its launch args.
+        self.declare_parameter('model_name', '')
+        self.declare_parameter('gz_topic', '')
         self.declare_parameter('parent_frame', 'odom')
         self.declare_parameter('child_frame', 'base_link')
 
         self.model_name = self.get_parameter('model_name').value
         self.gz_topic = self.get_parameter('gz_topic').value
+        if not self.model_name or not self.gz_topic:
+            raise ValueError(
+                'gz_odom_tf needs the parameters model_name (e.g. x500_mono_cam_down_0) and '
+                'gz_topic (e.g. /world/<world>/dynamic_pose/info); '
+                'start it with: ros2 launch px4_bringup perception.launch.py'
+            )
         self.parent_frame = self.get_parameter('parent_frame').value
         self.child_frame = self.get_parameter('child_frame').value
 

@@ -23,10 +23,15 @@
 
 import os
 
+from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, ExecuteProcess, TimerAction
+from launch.actions import DeclareLaunchArgument, ExecuteProcess, IncludeLaunchDescription, TimerAction
 from launch.substitutions import LaunchConfiguration, TextSubstitution
 from launch_ros.actions import Node
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch_xml.launch_description_sources import XMLLaunchDescriptionSource
+
+from px4_bringup import sim_config
 
 
 def generate_launch_description():
@@ -39,17 +44,40 @@ def generate_launch_description():
 
     declare_world = DeclareLaunchArgument(
         'world',
-        default_value='walls',
+        default_value=sim_config.world_name(),
         description=(
             'Gazebo world name (without .sdf), must be discoverable via '
-            'GZ_SIM_RESOURCE_PATH.'
+            'GZ_SIM_RESOURCE_PATH. Default: $PX4_GZ_WORLD, see px4_bringup/sim_config.py.'
         ),
     )
 
     declare_vehicle = DeclareLaunchArgument(
         'vehicle',
-        default_value='gz_x500_mono_cam_down',
-        description='PX4 SITL vehicle target (e.g., gz_x500_mono_cam_down).',
+        default_value=sim_config.vehicle_target(),
+        description='PX4 SITL vehicle target. Default: $PX4_VEHICLE, see px4_bringup/sim_config.py.',
+    )
+
+    # /clock for every use_sim_time node, whichever other launch files are running.
+    sim_clock = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(
+                get_package_share_directory('px4_bringup'), 'launch', 'sim_clock.launch.py'
+            )
+        ),
+        launch_arguments={'world': world}.items(),
+    )
+
+    # Dashboard link: port 2019 is what the dashboard expects, and the address keeps
+    # rosbridge (no authentication) on this computer; the dashboard server proxies to it.
+    rosbridge_launch = IncludeLaunchDescription(
+        XMLLaunchDescriptionSource(
+            os.path.join(
+                get_package_share_directory('rosbridge_server'),
+                'launch',
+                'rosbridge_websocket_launch.xml',
+            )
+        ),
+        launch_arguments={'port': '2019', 'address': '127.0.0.1'}.items(),
     )
 
     # ---- Resource paths ----
@@ -96,6 +124,8 @@ def generate_launch_description():
         [
             declare_world,
             declare_vehicle,
+            rosbridge_launch,
+            sim_clock,
             ExecuteProcess(cmd=['bash', '-lc', px4_bash_cmd], output='screen', name='px4_sitl'),
             TimerAction(
                 period=5.0,

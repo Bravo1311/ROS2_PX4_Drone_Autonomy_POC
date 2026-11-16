@@ -29,6 +29,8 @@ from launch.actions import DeclareLaunchArgument, TimerAction
 from launch.substitutions import LaunchConfiguration, TextSubstitution
 from launch_ros.actions import Node
 
+from px4_bringup import sim_config
+
 
 def generate_launch_description():
     world = LaunchConfiguration('world')
@@ -36,12 +38,16 @@ def generate_launch_description():
 
     declare_world = DeclareLaunchArgument(
         'world',
-        default_value='walls',
-        description='Gazebo world name (must match what PX4 started).',
+        default_value=sim_config.world_name(),
+        description='Gazebo world name (must match what PX4 started). Default: $PX4_GZ_WORLD.',
     )
     declare_drone = DeclareLaunchArgument(
-        'drone', default_value='x500_mono_cam_down_0', description='Gazebo model instance name.'
+        'drone',
+        default_value=sim_config.drone_name(),
+        description='Gazebo model instance name. Default derived from $PX4_VEHICLE.',
     )
+
+    # The /clock bridge lives in sim_clock.launch.py (started by minimal.launch.py).
 
     # ---- Camera topics ----
     image_topic = [
@@ -59,15 +65,24 @@ def generate_launch_description():
         TextSubstitution(text='/link/camera_link/sensor/camera/camera_info'),
     ]
 
+    odom_topic = [
+        TextSubstitution(text='/model/'),
+        drone,
+        TextSubstitution(text='/odometry_with_covariance'),
+    ]
+
     odom_bridge = Node(
         package='ros_gz_bridge',
         executable='parameter_bridge',
         name='odom_bridge',
         output='screen',
         arguments=[
-            '/model/x500_mono_cam_down_0/odometry_with_covariance'
-            '@nav_msgs/msg/Odometry'
-            '[gz.msgs.OdometryWithCovariance'
+            odom_topic
+            + [
+                TextSubstitution(
+                    text='@nav_msgs/msg/Odometry[gz.msgs.OdometryWithCovariance'
+                )
+            ]
         ],
         parameters=[{'use_sim_time': True}],
     )
@@ -122,7 +137,13 @@ def generate_launch_description():
         parameters=[
             {
                 'use_sim_time': True,
-                'odom_topic': '/model/x500_mono_cam_down_0/odometry_with_covariance',
+                # Both come from the launch arguments; the node has no built-in defaults.
+                'model_name': drone,
+                'gz_topic': [
+                    TextSubstitution(text='/world/'),
+                    world,
+                    TextSubstitution(text='/dynamic_pose/info'),
+                ],
                 'parent_frame': 'odom',
                 'child_frame': 'base_link',
             }
@@ -191,19 +212,6 @@ def generate_launch_description():
         ],
     )
 
-    # ---- Clock bridge ----
-    # Prefer world-scoped Gazebo clock -> ROS /clock
-    # NOTE: We hardcode the remap for the default world "walls".
-    # If you launch with a different world name, update the remap accordingly.
-    clock_bridge = Node(
-        package='ros_gz_bridge',
-        executable='parameter_bridge',
-        name='clock_bridge',
-        output='screen',
-        arguments=['/world/walls/clock@rosgraph_msgs/msg/Clock@gz.msgs.Clock'],
-        remappings=[('/world/walls/clock', '/clock')],
-    )
-
     costmap_params = os.path.join(
         get_package_share_directory('px4_lidar'), 'config', 'local_costmap.yaml'
     )
@@ -238,8 +246,7 @@ def generate_launch_description():
         [
             declare_world,
             declare_drone,
-            # Start clock + sensor bridges immediately
-            clock_bridge,
+            # Start sensor bridges immediately (/clock comes from sim_clock.launch.py)
             lidar_bridge,
             camera_bridge,
             odom_bridge,

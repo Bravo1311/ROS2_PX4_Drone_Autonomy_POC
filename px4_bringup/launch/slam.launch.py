@@ -30,6 +30,8 @@ from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PythonExpression
 
+from px4_bringup import sim_config
+
 
 def generate_launch_description():
     world = LaunchConfiguration('world')
@@ -105,8 +107,8 @@ def generate_launch_description():
 
     return LaunchDescription(
         [
-            DeclareLaunchArgument('world', default_value='walls'),
-            DeclareLaunchArgument('drone', default_value='x500_mono_cam_down_0'),
+            DeclareLaunchArgument('world', default_value=sim_config.world_name()),
+            DeclareLaunchArgument('drone', default_value=sim_config.drone_name()),
             DeclareLaunchArgument('use_sim_time', default_value='true'),
             DeclareLaunchArgument(
                 'mode', default_value='mapping', description='mapping | localization'

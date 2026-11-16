@@ -15,7 +15,8 @@ setup(
         # launch files
         (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
         # configs
-        (os.path.join('share', package_name, 'config'), glob('config/*.yaml')),
+        (os.path.join('share', package_name, 'config'),
+         glob('config/*.yaml') + glob('config/*.env')),
         # optional maps folder (safe even if empty)
         (os.path.join('share', package_name, 'maps'), glob('maps/*')),
         (os.path.join('share', package_name, 'rviz'), glob('rviz/*.rviz')),

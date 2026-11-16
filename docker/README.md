@@ -150,6 +150,18 @@ Prefer paths that resolve at runtime, so the same code works on the host and in 
 - The `PX4_DIR` environment variable (set in the image) for the PX4 checkout. `minimal.launch.py` reads it and falls back to the old host path.
 - Launch arguments or ROS parameters for anything else (maps, weights, params files).
 
+### Which world and vehicle
+
+The world and vehicle are never typed into launch files or nodes. They are declared once, in `px4_bringup/config/sim.env`:
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `PX4_GZ_WORLD` | `walls` | Gazebo world (the `.sdf` name without extension) |
+| `PX4_VEHICLE` | `gz_x500_mono_cam_down` | PX4 `make` target |
+| `PX4_GZ_INSTANCE` | `0` | Instance number; the Gazebo model name `x500_mono_cam_down_0` is derived from the two above |
+
+To switch, edit that file and run `colcon build --packages-select px4_bringup` (the file is installed with the package, like every other config). Every launch file (through `px4_bringup/sim_config.py`) and `docker/start_sim.sh` then agree. For a one-off run, a variable in your shell wins over the file (`PX4_GZ_WORLD=vio_rich ros2 launch ...`), and a launch argument (`world:=...`) wins for that launch. Secrets and host paths stay in the git-ignored `.env`. `/clock` is bridged by `sim_clock.launch.py`, which `minimal.launch.py` includes; with `start_sim.sh` run it yourself.
+
 The `/home/bravo1311/px4_ros2_ws` symlink in the image points at `/ws` only so the existing commands that contain absolute paths keep working. It is a compatibility workaround, not a design to rely on. Once those commands and files use runtime-resolved paths, the symlink can be removed from the `Dockerfile`.
 
 ## Troubleshooting
